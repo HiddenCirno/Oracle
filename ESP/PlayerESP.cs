@@ -115,34 +115,34 @@ namespace Oracle.ESP
                     }
                 }
                 //基于动态颜色叠加绘制
-                // 1. 头部 (Head)
+                //头部 (Head)
                 GL.Color(GetDynamicLimbColor(player, EBodyPart.Head, finalColor));
                 DrawBoneLine(cam, head, neck);
-                // 2. 胸部 (Chest)
+                //胸部 (Chest)
                 GL.Color(GetDynamicLimbColor(player, EBodyPart.Chest, finalColor));
                 DrawBoneLine(cam, neck, spine3);
-                // 3. 胃部 (Stomach)
+                //胃部 (Stomach)
                 GL.Color(GetDynamicLimbColor(player, EBodyPart.Stomach, finalColor));
                 DrawBoneLine(cam, spine3, pelvis);
-                // 4. 左手 (LeftArm)
+                //左手 (LeftArm)
                 GL.Color(GetDynamicLimbColor(player, EBodyPart.LeftArm, finalColor));
                 DrawBoneLine(cam, neck, lShoulder);
                 DrawBoneLine(cam, lShoulder, lUpperarm);
                 DrawBoneLine(cam, lUpperarm, lForearm);
                 DrawBoneLine(cam, lForearm, lPalm);
-                // 5. 右手 (RightArm)
+                //右手 (RightArm)
                 GL.Color(GetDynamicLimbColor(player, EBodyPart.RightArm, finalColor));
                 DrawBoneLine(cam, neck, rShoulder);
                 DrawBoneLine(cam, rShoulder, rUpperarm);
                 DrawBoneLine(cam, rUpperarm, rForearm);
                 DrawBoneLine(cam, rForearm, rPalm);
-                // 6. 左腿 (LeftLeg)
+                //左腿 (LeftLeg)
                 GL.Color(GetDynamicLimbColor(player, EBodyPart.LeftLeg, finalColor));
                 DrawBoneLine(cam, pelvis, lThigh1);
                 DrawBoneLine(cam, lThigh1, lKnee);
                 DrawBoneLine(cam, lKnee, lCalf);
                 DrawBoneLine(cam, lCalf, lFoot);
-                // 7. 右腿 (RightLeg)
+                //右腿 (RightLeg)
                 GL.Color(GetDynamicLimbColor(player, EBodyPart.RightLeg, finalColor));
                 DrawBoneLine(cam, pelvis, rThigh1);
                 DrawBoneLine(cam, rThigh1, rKnee);
@@ -179,81 +179,143 @@ namespace Oracle.ESP
                     //提取玩家信息
                     string name = "Unknown";
                     string side = "Bot";
+                    string sideText = "Unknown";
+                    string level = "";
                     if (player.Profile != null && player.Profile.Info != null)
                     {
-                        name = player.Profile.Info.Nickname; //需要一个Locale转换, 等会找找在哪, 应该在狗牌生成部分
-                        side = player.Profile.Info.Side.ToString();
+                        var info = player.Profile.Info;
+                        //name = player.Profile.Info.Nickname; //需要一个Locale转换, 等会找找在哪, 应该在狗牌生成部分
+                        name = GStruct21.ConvertToLatinic(info.Nickname);
+                        string bossSide = $"<color=#CE0000>Boss {name}</color>";
+                        side = info.Side.ToString();
                         //动态改变字体颜色以区分阵营
                         if (side == "Savage")
                         //Scav/Boss/AI
                         {
-                            textStyle.normal.textColor = Color.yellow;
+                            //botRole在哪来着....
+                            //在这呢
+                            //role安全处理
+                            var role = info.Settings?.Role.ToString().ToLower() ?? "assault";
+                            //暴力阵营识别, 从上到下按优先级倒序, 确保正确覆盖
+                            sideText = $"<color=#FFFF8B>Scav {name}</color>";
+                            if (role.Contains("boss"))
+                            {
+                                sideText = bossSide;
+                            }
+                            //卡班护卫狙击手和狙击AI
+                            if (role == "bossboarsniper" || role == "marksman")
+                            {
+                                sideText = $"<color=#00FA9A>狙击Scav {name}</color>";
+                            }
+                            //灯塔/储备站/实验室美军
+                            if (role == "pmcbot" || role == "exusec")
+                            {
+                                sideText = $"<color=#7300A6>美军 {name}</color>";
+                            }
+                            //boss小弟
+                            if (role.Contains("follower") || role == "tagillahelperagro")
+                            {
+                                sideText = $"<color=#FF2DE9>护卫 {name}</color>";
+                            }
+                            //邪教徒
+                            if (role.Contains("sectant"))
+                            {
+                                sideText = $"<color=#ADFF2F>邪教徒 {name}</color>";
+                            }
+                            //圣诞老人
+                            if (role == "gifter")
+                            {
+                                sideText = $"<color=#00FFFF>圣诞老人 {name}</color>";
+                            }
+                            switch (role)
+                            {
+                                //特殊处理
+                                case "followerbirdeye":
+                                case "followerbigpipe":
+                                case "infectedtagilla":
+                                case "sectantoni":
+                                case "sectantpredvestnik":
+                                case "sectantprizark":
+                                    {
+                                        sideText = bossSide;
+                                    }
+                                    break;
+                            }
                         }
                         else
                         //PMC
                         //塔科夫严格意义上的阵营只有PMC和Scav两种, PMC之外的所有类型的AI都是Savage靠botRole做区分的
                         {
-                            textStyle.normal.textColor = Color.red;
+                            //textStyle.normal.textColor = Color.red;
+                            //PMC只有两个阵营
+                            level = $"<color=#7FFF00>{info.Level}级</color>";
+                            sideText = side == "Usec" ? $"<color=#007CFF>Usec {name}</color>" : $"<color=#FF8C00>Bear {name}</color>";
                         }
                     }
+                    textStyle.richText = true;
                     //合并字符串
                     //其实想改改, 比如把阵营什么的颜色显示分开, 不知道能不能直接用<color>标签
-                    string espText = $"[{side}] {name} [{distance}m]";
+                    //可以, 真棒
+                    string espText = $"{level} {sideText} <color=#FFFF00>{distance}米</color>";
                     //转换坐标并绘制
                     float screenX = textScreenPos.x;
                     float screenY = Screen.height - textScreenPos.y;
                     //用Rect绘制一个不可见方框, 保证文本居中
                     GUI.Label(new Rect(screenX - 100, screenY - 20, 200, 40), espText, textStyle);
-
-                    DrawPlayerHealthBar(cam, player);
-
                 }
+            }
+        }
+        public static void DrawAllPlayerHealthBars(Camera cam)
+        {
+            //功能开关
+            if (!PlayerESPCfg.EnablePlayerESP.Value) return;
+            if (!PlayerESPCfg.EnablePlayerHealthBarESP.Value) return;
+            //againandagainandagain....遍历和检查, 一模一样
+            foreach (Player player in PluginsCore.CorrectGameWorld.AllAlivePlayersList)
+            {
+                if (player == null || player == PluginsCore.CorrectPlayer) continue;
+                if (!IsInRange(PlayerESPCfg.ESPMaxDistance.Value, PluginsCore.CorrectPlayer.Transform.position, player.Transform.position))
+                {
+                    continue;
+                }
+                //绘制血条
+                DrawPlayerHealthBar(cam, player);
             }
         }
         public static void DrawPlayerHealthBar(Camera cam, Player player)
         {
-            // 防空检查
+            //空指针防御
             if (player == null || player.HealthController == null) return;
-
-            // 1. 获取脚底的物理 3D 坐标
+            //读取脚底的坐标
             Vector3 feetWorldPos = player.Transform.position;
             Vector3 feetScreenPos = cam.WorldToScreenPoint(feetWorldPos);
-
-            // 2. 深度/背身检查：如果人在背后，直接不画
+            //深度检查
             if (feetScreenPos.z <= 0.01f) return;
-
-            // 3. 获取血量
+            //血量获取
             GetPlayerTotalHealth(player, out float curHp, out float maxHp);
+            //百分比变色
             if (maxHp <= 0) return;
-
             float hpPercent = curHp / maxHp;
-
-            // 4. 转换 GUI 坐标系 (反转 Y 轴)
+            //反转Y轴适配坐标
             float screenX = feetScreenPos.x;
             float screenY = Screen.height - feetScreenPos.y;
-
-            // 5. 排版设定：固定宽度，居中对齐，稍微向下偏移防止踩线
+            //排版
             float barWidth = 60f;
             float barHeight = 4f;
             float barX = screenX - (barWidth / 2f);
             float barY = screenY + 5f; // 放在脚底下边缘 5 像素的位置
-
-            // 6. 开始绘制 (必须保存和还原 GUI.color)
+            //绘制
             Color oldGuiColor = GUI.color;
-
-            // 绘制背景 (暗灰色底槽)
+            //暗灰色底槽背景
             GUI.color = new Color(0.2f, 0.2f, 0.2f, 0.8f);
             GUI.DrawTexture(new Rect(barX, barY, barWidth, barHeight), Texture2D.whiteTexture);
-
-            // 绘制前景 (按比例缩放，动态变色)
+            //按百分比动态变化的前景色
             Color hpColor = Color.green;
             if (hpPercent < 0.5f) hpColor = Color.yellow;
             if (hpPercent < 0.25f) hpColor = Color.red;
-
             GUI.color = hpColor;
             GUI.DrawTexture(new Rect(barX, barY, barWidth * hpPercent, barHeight), Texture2D.whiteTexture);
-
-            // 还原环境颜色
+            //还原颜色
             GUI.color = oldGuiColor;
         }
         //提取Transform的坐标
@@ -360,25 +422,23 @@ namespace Oracle.ESP
             }
             return false;
         }
-        // 安全获取玩家全身总血量和总生命上限
+        //安全获取玩家总血量和生命上限
         public static void GetPlayerTotalHealth(Player player, out float currentHp, out float maxHp)
         {
             currentHp = 0f;
             maxHp = 0f;
-
+            //空指针防御
             if (player == null || player.HealthController == null) return;
-
-            // 塔科夫真实的 7 个受击判定区
+            //部位定义
             EBodyPart[] parts = {
-                EBodyPart.Head, 
-                EBodyPart.Chest, 
+                EBodyPart.Head,
+                EBodyPart.Chest,
                 EBodyPart.Stomach,
-                EBodyPart.LeftArm, 
+                EBodyPart.LeftArm,
                 EBodyPart.RightArm,
-                EBodyPart.LeftLeg, 
+                EBodyPart.LeftLeg,
                 EBodyPart.RightLeg
             };
-
             foreach (EBodyPart part in parts)
             {
                 var partHealth = player.HealthController.GetBodyPartHealth(part, false);
@@ -386,31 +446,29 @@ namespace Oracle.ESP
                 maxHp += partHealth.Maximum;
             }
         }
+        //动态计算骨骼颜色
         public static Color GetDynamicLimbColor(Player player, EBodyPart part, Color baseColor)
         {
-            if (player == null || player.HealthController == null || !PlayerESPCfg.EnablePlayerHealthBarESP.Value) return baseColor;
-
+            //空指针防御和功能开关检查合并
+            if (player == null || player.HealthController == null || !PlayerESPCfg.EnablePlayerBoneESPHealthMode.Value) return baseColor;
+            //读取血量
             var bodyPartHealth = player.HealthController.GetBodyPartHealth(part, false);
-
-            // 1. 损毁判定 (血量归零)
+            //肢体损毁
             if (bodyPartHealth.Current <= 0.01f)
             {
                 return Color.magenta; // 肢体黑了，强制高亮紫
             }
-
+            //计算
             float max = bodyPartHealth.Maximum;
             if (max <= 0) return baseColor;
-
-            // 2. 计算血量百分比 (0.0 到 1.0)
+            //计算血量百分比
             float healthPercent = bodyPartHealth.Current / max;
-
-            // 3. ⭐ 神奇的 Color.Lerp 渐变魔法
-            // 参数1：目标颜色 (大残时的蓝色 Color.blue 或 Color.cyan)
-            // 参数2：基础颜色 (满血时的红/黄/绿)
-            // 参数3：插值比例 (血量百分比)
-            // 当 healthPercent = 1 (满血) 时，完全显示 baseColor
-            // 当 healthPercent 接近 0 (大残) 时，无限趋近于 Color.blue
-            return Color.Lerp(Color.blue, baseColor, healthPercent);
+            //插值算法处理渐变
+            //全蓝或许不太妥当, 这里可以用超上限颜色压制渐变色吗?
+            //可以
+            float minLerp = 0.5f;
+            float lerpFactor = Mathf.Lerp(minLerp, 1.0f, healthPercent); 
+            return Color.Lerp(Color.blue, baseColor, lerpFactor);
         }
     }
     public class PlayerESPCfg

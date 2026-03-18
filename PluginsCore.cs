@@ -216,7 +216,7 @@ namespace Oracle
             GL.PopMatrix(); 
 
             PlayerESP.DrawPlayerText(cam, espTextStyle);
-
+            PlayerESP.DrawAllPlayerHealthBars(cam);
 
             LootESP.DrawLootText(cam, espTextStyle);
 
