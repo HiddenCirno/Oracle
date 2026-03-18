@@ -1,5 +1,6 @@
 ﻿using BepInEx.Configuration;
 using EFT;
+using EFT.HealthSystem;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -59,7 +60,8 @@ namespace Oracle.ESP
                 }
                 //决定绘制火柴人的颜色
                 //这里也许需要为后面的血条透视功能做修改
-                GL.Color(finalColor);
+                //没错, 血量叠加层已完成, 这里不要了, 注释掉
+                //GL.Color(finalColor);
                 //提取Bones引用
                 var bones = player.PlayerBones;
                 //查找所有需要的骨骼节点的坐标
@@ -112,27 +114,36 @@ namespace Oracle.ESP
                         rFoot = calfT.GetChild(0).position;
                     }
                 }
-                //开始绘制
-                //躯干部分
+                //基于动态颜色叠加绘制
+                // 1. 头部 (Head)
+                GL.Color(GetDynamicLimbColor(player, EBodyPart.Head, finalColor));
                 DrawBoneLine(cam, head, neck);
+                // 2. 胸部 (Chest)
+                GL.Color(GetDynamicLimbColor(player, EBodyPart.Chest, finalColor));
                 DrawBoneLine(cam, neck, spine3);
+                // 3. 胃部 (Stomach)
+                GL.Color(GetDynamicLimbColor(player, EBodyPart.Stomach, finalColor));
                 DrawBoneLine(cam, spine3, pelvis);
-                //左手部分
+                // 4. 左手 (LeftArm)
+                GL.Color(GetDynamicLimbColor(player, EBodyPart.LeftArm, finalColor));
                 DrawBoneLine(cam, neck, lShoulder);
                 DrawBoneLine(cam, lShoulder, lUpperarm);
                 DrawBoneLine(cam, lUpperarm, lForearm);
                 DrawBoneLine(cam, lForearm, lPalm);
-                //右手部分
+                // 5. 右手 (RightArm)
+                GL.Color(GetDynamicLimbColor(player, EBodyPart.RightArm, finalColor));
                 DrawBoneLine(cam, neck, rShoulder);
                 DrawBoneLine(cam, rShoulder, rUpperarm);
                 DrawBoneLine(cam, rUpperarm, rForearm);
                 DrawBoneLine(cam, rForearm, rPalm);
-                //左腿部分
+                // 6. 左腿 (LeftLeg)
+                GL.Color(GetDynamicLimbColor(player, EBodyPart.LeftLeg, finalColor));
                 DrawBoneLine(cam, pelvis, lThigh1);
                 DrawBoneLine(cam, lThigh1, lKnee);
                 DrawBoneLine(cam, lKnee, lCalf);
                 DrawBoneLine(cam, lCalf, lFoot);
-                //右腿部分
+                // 7. 右腿 (RightLeg)
+                GL.Color(GetDynamicLimbColor(player, EBodyPart.RightLeg, finalColor));
                 DrawBoneLine(cam, pelvis, rThigh1);
                 DrawBoneLine(cam, rThigh1, rKnee);
                 DrawBoneLine(cam, rKnee, rCalf);
@@ -193,8 +204,57 @@ namespace Oracle.ESP
                     float screenY = Screen.height - textScreenPos.y;
                     //用Rect绘制一个不可见方框, 保证文本居中
                     GUI.Label(new Rect(screenX - 100, screenY - 20, 200, 40), espText, textStyle);
+
+                    DrawPlayerHealthBar(cam, player);
+
                 }
             }
+        }
+        public static void DrawPlayerHealthBar(Camera cam, Player player)
+        {
+            // 防空检查
+            if (player == null || player.HealthController == null) return;
+
+            // 1. 获取脚底的物理 3D 坐标
+            Vector3 feetWorldPos = player.Transform.position;
+            Vector3 feetScreenPos = cam.WorldToScreenPoint(feetWorldPos);
+
+            // 2. 深度/背身检查：如果人在背后，直接不画
+            if (feetScreenPos.z <= 0.01f) return;
+
+            // 3. 获取血量
+            GetPlayerTotalHealth(player, out float curHp, out float maxHp);
+            if (maxHp <= 0) return;
+
+            float hpPercent = curHp / maxHp;
+
+            // 4. 转换 GUI 坐标系 (反转 Y 轴)
+            float screenX = feetScreenPos.x;
+            float screenY = Screen.height - feetScreenPos.y;
+
+            // 5. 排版设定：固定宽度，居中对齐，稍微向下偏移防止踩线
+            float barWidth = 60f;
+            float barHeight = 4f;
+            float barX = screenX - (barWidth / 2f);
+            float barY = screenY + 5f; // 放在脚底下边缘 5 像素的位置
+
+            // 6. 开始绘制 (必须保存和还原 GUI.color)
+            Color oldGuiColor = GUI.color;
+
+            // 绘制背景 (暗灰色底槽)
+            GUI.color = new Color(0.2f, 0.2f, 0.2f, 0.8f);
+            GUI.DrawTexture(new Rect(barX, barY, barWidth, barHeight), Texture2D.whiteTexture);
+
+            // 绘制前景 (按比例缩放，动态变色)
+            Color hpColor = Color.green;
+            if (hpPercent < 0.5f) hpColor = Color.yellow;
+            if (hpPercent < 0.25f) hpColor = Color.red;
+
+            GUI.color = hpColor;
+            GUI.DrawTexture(new Rect(barX, barY, barWidth * hpPercent, barHeight), Texture2D.whiteTexture);
+
+            // 还原环境颜色
+            GUI.color = oldGuiColor;
         }
         //提取Transform的坐标
         public static Vector3? GetBonePos(Transform t)
@@ -300,6 +360,58 @@ namespace Oracle.ESP
             }
             return false;
         }
+        // 安全获取玩家全身总血量和总生命上限
+        public static void GetPlayerTotalHealth(Player player, out float currentHp, out float maxHp)
+        {
+            currentHp = 0f;
+            maxHp = 0f;
+
+            if (player == null || player.HealthController == null) return;
+
+            // 塔科夫真实的 7 个受击判定区
+            EBodyPart[] parts = {
+                EBodyPart.Head, 
+                EBodyPart.Chest, 
+                EBodyPart.Stomach,
+                EBodyPart.LeftArm, 
+                EBodyPart.RightArm,
+                EBodyPart.LeftLeg, 
+                EBodyPart.RightLeg
+            };
+
+            foreach (EBodyPart part in parts)
+            {
+                var partHealth = player.HealthController.GetBodyPartHealth(part, false);
+                currentHp += partHealth.Current;
+                maxHp += partHealth.Maximum;
+            }
+        }
+        public static Color GetDynamicLimbColor(Player player, EBodyPart part, Color baseColor)
+        {
+            if (player == null || player.HealthController == null || !PlayerESPCfg.EnablePlayerHealthBarESP.Value) return baseColor;
+
+            var bodyPartHealth = player.HealthController.GetBodyPartHealth(part, false);
+
+            // 1. 损毁判定 (血量归零)
+            if (bodyPartHealth.Current <= 0.01f)
+            {
+                return Color.magenta; // 肢体黑了，强制高亮紫
+            }
+
+            float max = bodyPartHealth.Maximum;
+            if (max <= 0) return baseColor;
+
+            // 2. 计算血量百分比 (0.0 到 1.0)
+            float healthPercent = bodyPartHealth.Current / max;
+
+            // 3. ⭐ 神奇的 Color.Lerp 渐变魔法
+            // 参数1：目标颜色 (大残时的蓝色 Color.blue 或 Color.cyan)
+            // 参数2：基础颜色 (满血时的红/黄/绿)
+            // 参数3：插值比例 (血量百分比)
+            // 当 healthPercent = 1 (满血) 时，完全显示 baseColor
+            // 当 healthPercent 接近 0 (大残) 时，无限趋近于 Color.blue
+            return Color.Lerp(Color.blue, baseColor, healthPercent);
+        }
     }
     public class PlayerESPCfg
     {
@@ -307,6 +419,8 @@ namespace Oracle.ESP
         internal static ConfigEntry<bool> EnablePlayerESP { get; set; }
         internal static ConfigEntry<bool> EnablePlayerInfoESP { get; set; }
         internal static ConfigEntry<bool> EnablePlayerBoneESP { get; set; }
+        internal static ConfigEntry<bool> EnablePlayerHealthBarESP { get; set; }
+        internal static ConfigEntry<bool> EnablePlayerBoneESPHealthMode { get; set; }
         internal static ConfigEntry<int> ESPMaxDistance { get; set; }
         public static void Initialize(ConfigFile config)
         {
@@ -321,6 +435,18 @@ namespace Oracle.ESP
                 "启用玩家信息透视",
                 true,
                 "可以透视玩家的信息，包括等级，阵营，名字等"
+            );
+            EnablePlayerHealthBarESP = config.Bind<bool>(
+                "透视设置",
+                "启用玩家血条透视",
+                true,
+                "可以透视玩家的血条"
+            );
+            EnablePlayerBoneESPHealthMode = config.Bind<bool>(
+                "透视设置",
+                "启用玩家骨骼透视血量叠加",
+                true,
+                "启用后透视骨骼会根据肢体的血量损耗向蓝色发生渐变，损毁的部位会变成紫色"
             );
             EnablePlayerBoneESP = config.Bind<bool>(
                 "透视设置",

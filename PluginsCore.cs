@@ -55,6 +55,7 @@ namespace Oracle
             espTextStyle.fontSize = 12;
             espTextStyle.fontStyle = FontStyle.Bold;
             espTextStyle.alignment = TextAnchor.MiddleCenter;
+            espTextStyle.richText = true;
 
             StartCoroutine(LootScannerCoroutine());
         }
@@ -216,7 +217,9 @@ namespace Oracle
 
             PlayerESP.DrawPlayerText(cam, espTextStyle);
 
+
             LootESP.DrawLootText(cam, espTextStyle);
+
         }
 
         
