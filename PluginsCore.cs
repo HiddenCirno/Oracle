@@ -3,9 +3,13 @@ using BepInEx.Configuration;
 using EFT;
 using HarmonyLib;
 using Oracle.ESP;
+using SPT.Common.Http;
 using System;
+using Newtonsoft.Json;
 using System.Collections.Generic;
 using UnityEngine;
+using Oracle.Utils;
+using System.Linq;
 
 namespace Oracle
 {
@@ -21,11 +25,19 @@ namespace Oracle
 
         public Material espMaterial;
 
+        public Dictionary<string, int> HandbookDict;
+
         public void Awake()
         {
             var harmony = new Harmony(PluginsInfo.GUID);
             harmony.PatchAll();
             PlayerESPCfg.Initialize(Config);
+            var rawHandbookData = Oracle.Utils.HandbookClass.GetHandbookData("白昼和黑夜等同吗？义人和罪人等同吗？倘若人生来软弱，弱者们又该从哪位神明处寻求安宁？现在，我赐予各位直视太阳的权利，此时此地，尔等只需静听，此处再无神明，创造乐园的，乃是人之君王！");
+            //var handbook = ;
+            HandbookDict = JsonConvert.DeserializeObject<Oracle.Utils.HandbookClass.HandbookResponse>(rawHandbookData).Data.Items
+        .GroupBy(x => x.Id) // 防止原版数据有极其罕见的重复ID导致字典报错
+        .ToDictionary(g => g.Key, g => g.First().Price);
+            //Console.WriteLine($"我看看怎么个事: {handbook.Data.Categories.FirstOrDefault().Id}");
         }
         public void Start()
         {
@@ -46,6 +58,7 @@ namespace Oracle
 
             StartCoroutine(LootScannerCoroutine());
         }
+        
         private System.Collections.IEnumerator LootScannerCoroutine()
         {
             while (true)

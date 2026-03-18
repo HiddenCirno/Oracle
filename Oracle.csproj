@@ -27,6 +27,11 @@
 	  <Reference Include="I:\TKF\EscapeFromTarkov_Data\Managed\Assembly-CSharp.dll">
 		  <Private>False</Private>
 	  </Reference>
+	  
+	  <Reference Include="Newtonsoft.Json">
+	    <HintPath>I:\TKF\EscapeFromTarkov_Data\Managed\Newtonsoft.Json.dll</HintPath>
+	    <Private>False</Private>
+	  </Reference>
   </ItemGroup>
 
 </Project>
