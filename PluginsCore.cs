@@ -40,7 +40,7 @@ namespace Oracle
 
             // ⭐ 新增：初始化文字样式
             espTextStyle = new GUIStyle();
-            espTextStyle.fontSize = 14;
+            espTextStyle.fontSize = 12;
             espTextStyle.fontStyle = FontStyle.Bold;
             espTextStyle.alignment = TextAnchor.MiddleCenter;
 
@@ -72,8 +72,8 @@ namespace Oracle
                 // 注意：具体的集合名称可能因 SPT 版本而异，用 VS 智能提示点出来
                 foreach (var lootItem in CorrectGameWorld.LootItems.GetValuesEnumerator())
                 {
-                    // 过滤掉已经被捡走的、或者无效的空对象
-                    if (lootItem == null || lootItem.gameObject == null) continue;
+                    // 过滤掉已经被捡走的、无效的空对象或者未启用的战利品
+                    if (lootItem == null || lootItem.gameObject == null || lootItem.gameObject.activeSelf == false) continue;
 
                     // 尽早进行距离校验，避免对全图 3000 个物品做无效处理
                     float dist = Vector3.Distance(playerPos, lootItem.transform.position);
@@ -126,7 +126,7 @@ namespace Oracle
 
             PlayerESP.DrawPlayerText(cam, espTextStyle);
 
-            Oracle.ESP.LootESP.DrawLootText(cam, espTextStyle);
+            LootESP.DrawLootText(cam, espTextStyle);
         }
 
         
