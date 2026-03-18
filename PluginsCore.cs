@@ -190,6 +190,9 @@ namespace Oracle
         //毕竟物品价值也是个问题, 纯客户端绝对绝对不可能拿到物品价格
         //除非注入原版路由
         //再议
+        //已经搞定, 现在透视有了就差自瞄和无后座了, 我其实就需要这几个功能, 尸体透视也不需要, 简单的透视自瞄搞定
+        //拆分配置, 规划fov透视, 修改调整
+        //现在是2026年3月18日, 18:03分, 开工!
         public void OnGUI()
         {
             if (CorrectGameWorld == null || CorrectPlayer == null || CorrectGameWorld.AllAlivePlayersList == null) return;
