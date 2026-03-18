@@ -335,26 +335,25 @@ namespace Oracle.ESP
             // 这时候才是真正的“巧合向心，无实战危险”。
             return false;
         }
-        public class PlayerESPCfg
+    }
+    public class PlayerESPCfg
+    {
+        internal static ConfigEntry<bool> EnablePlayerESP { get; set; }
+        internal static ConfigEntry<int> ESPMaxDistance { get; set; }
+        public static void Initialize(ConfigFile config)
         {
-            internal static ConfigEntry<bool> EnablePlayerESP { get; set; }
-            internal static ConfigEntry<int> ESPMaxDistance { get; set; }
-            public static void Initialize(ConfigFile config)
-            {
-                EnablePlayerESP = config.Bind<bool>(
-                    "透视设置",
-                    "启用玩家透视",
-                    true,
-                    "玩家透视总开关，包括骨骼，玩家信息等");
-                ESPMaxDistance = config.Bind<int>(
-                    "透视设置",
-                    "透视范围",
-                    200,
-                    new ConfigDescription("透视可见的范围",
-                        new AcceptableValueRange<int>(50, 1000),
-                        Array.Empty<object>()));
-            }
+            EnablePlayerESP = config.Bind<bool>(
+                "透视设置",
+                "启用玩家透视",
+                true,
+                "玩家透视总开关，包括骨骼，玩家信息等");
+            ESPMaxDistance = config.Bind<int>(
+                "透视设置",
+                "透视范围",
+                200,
+                new ConfigDescription("透视可见的范围",
+                    new AcceptableValueRange<int>(50, 1000),
+                    Array.Empty<object>()));
         }
-
     }
 }

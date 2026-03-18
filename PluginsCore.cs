@@ -2,9 +2,10 @@
 using BepInEx.Configuration;
 using EFT;
 using HarmonyLib;
-using System;
-using UnityEngine;
 using Oracle.ESP;
+using System;
+using System.Collections.Generic;
+using UnityEngine;
 
 namespace Oracle
 {
@@ -24,7 +25,7 @@ namespace Oracle
         {
             var harmony = new Harmony(PluginsInfo.GUID);
             harmony.PatchAll();
-            PlayerESP.PlayerESPCfg.Initialize(Config);
+            PlayerESPCfg.Initialize(Config);
         }
         public void Start()
         {
@@ -42,6 +43,58 @@ namespace Oracle
             espTextStyle.fontSize = 14;
             espTextStyle.fontStyle = FontStyle.Bold;
             espTextStyle.alignment = TextAnchor.MiddleCenter;
+
+            StartCoroutine(LootScannerCoroutine());
+        }
+        private System.Collections.IEnumerator LootScannerCoroutine()
+        {
+            while (true)
+            {
+                // 等待 1 秒
+                yield return new WaitForSeconds(1f);
+
+                // 如果没进战局，就跳过这次扫描
+                if (CorrectGameWorld == null || CorrectPlayer == null || CorrectGameWorld.LootItems == null)
+                {
+                    continue;
+                }
+
+                // 创建一个临时列表来存放这次扫描的结果
+                List<Oracle.ESP.LootData> tempLootList = new List<Oracle.ESP.LootData>();
+
+                // 获取玩家当前坐标，用于计算距离
+                Vector3 playerPos = CorrectPlayer.Transform.position;
+
+                // 假设这是你未来从配置文件读取的最大物资透视距离
+                float maxLootDistance = 100f;
+
+                // 遍历塔科夫原生的物资列表 (GameWorld.LootList / LootItems)
+                // 注意：具体的集合名称可能因 SPT 版本而异，用 VS 智能提示点出来
+                foreach (var lootItem in CorrectGameWorld.LootItems.GetValuesEnumerator())
+                {
+                    // 过滤掉已经被捡走的、或者无效的空对象
+                    if (lootItem == null || lootItem.gameObject == null) continue;
+
+                    // 尽早进行距离校验，避免对全图 3000 个物品做无效处理
+                    float dist = Vector3.Distance(playerPos, lootItem.transform.position);
+                    if (dist > maxLootDistance) continue;
+
+                    // 提取物品名字 (SPT/EFT 源码里，物品名字的获取路径可能比较深)
+                    // 通常在 lootItem.Item.Name 或者 lootItem.Name，先用最简单的顶住
+                    string itemName = lootItem.Item != null ? lootItem.Item.ShortName.Localized() : lootItem.Name;
+
+                    // 把符合条件的数据塞进临时列表
+                    tempLootList.Add(new Oracle.ESP.LootData
+                    {
+                        Position = lootItem.transform.position,
+                        Name = itemName,
+                        Distance = Mathf.RoundToInt(dist)
+                    });
+                }
+
+                // ⭐ 原子级替换：用新的列表覆盖全局缓存，供 OnGUI 瞬间读取
+                Oracle.ESP.LootESP.CachedLootList = tempLootList;
+            }
         }
         //文本绘制
         //然后是遮挡检测射线检测和配置拆分
@@ -72,6 +125,8 @@ namespace Oracle
             GL.PopMatrix(); 
 
             PlayerESP.DrawPlayerText(cam, espTextStyle);
+
+            Oracle.ESP.LootESP.DrawLootText(cam, espTextStyle);
         }
 
         
