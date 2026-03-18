@@ -1,0 +1,32 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.1</TargetFramework>
+    <Nullable>enable</Nullable>
+	  <OutDir>I:\TKF\BepInEx\plugins</OutDir>
+	  <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+	  <AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>
+  </PropertyGroup>
+
+  <ItemGroup>
+	  <Reference Include="I:\TKF\BepInEx\core\0Harmony.dll">
+		  <Private>False</Private>
+	  </Reference>
+	  <Reference Include="I:\TKF\BepInEx\core\BepInEx.dll">
+		  <Private>False</Private>
+	  </Reference>
+	  
+	  <Reference Include="I:\TKF\BepInEx\plugins\spt\*.dll">
+		  <Private>False</Private>
+	  </Reference>
+
+	  <Reference Include="I:\TKF\EscapeFromTarkov_Data\Managed\UnityEngine*.dll">
+		  <Private>False</Private>
+	  </Reference>
+	  
+	  <Reference Include="I:\TKF\EscapeFromTarkov_Data\Managed\Assembly-CSharp.dll">
+		  <Private>False</Private>
+	  </Reference>
+  </ItemGroup>
+
+</Project>
