@@ -32,7 +32,7 @@ namespace Oracle.ESP
             {   //过滤非自己和空玩家
                 if (player == null || player == PluginsCore.CorrectPlayer || player.PlayerBones == null) continue;
                 //距离计算, 如果超出透视范围则不绘制, 跳过
-                if (!IsInRange(PlayerESPCfg.ESPMaxDistance.Value, PluginsCore.CorrectPlayer.Transform.position, player.Transform.position))
+                if (!IsInRange(PlayerESPCfg.PlayerESPMaxDistance.Value, PluginsCore.CorrectPlayer.Transform.position, player.Transform.position))
                 {
                     continue;
                 }
@@ -161,7 +161,7 @@ namespace Oracle.ESP
             {
                 //照常检查和计算距离, 同DrawPlayerBone
                 if (player == null || player == PluginsCore.CorrectPlayer || player.PlayerBones == null) continue;
-                if (!IsInRange(PlayerESPCfg.ESPMaxDistance.Value, PluginsCore.CorrectPlayer.Transform.position, player.Transform.position))
+                if (!IsInRange(PlayerESPCfg.PlayerESPMaxDistance.Value, PluginsCore.CorrectPlayer.Transform.position, player.Transform.position))
                 {
                     continue;
                 }
@@ -274,7 +274,7 @@ namespace Oracle.ESP
             foreach (Player player in PluginsCore.CorrectGameWorld.AllAlivePlayersList)
             {
                 if (player == null || player == PluginsCore.CorrectPlayer) continue;
-                if (!IsInRange(PlayerESPCfg.ESPMaxDistance.Value, PluginsCore.CorrectPlayer.Transform.position, player.Transform.position))
+                if (!IsInRange(PlayerESPCfg.PlayerESPMaxDistance.Value, PluginsCore.CorrectPlayer.Transform.position, player.Transform.position))
                 {
                     continue;
                 }
@@ -495,41 +495,41 @@ namespace Oracle.ESP
         internal static ConfigEntry<bool> EnablePlayerBoneESP { get; set; }
         internal static ConfigEntry<bool> EnablePlayerHealthBarESP { get; set; }
         internal static ConfigEntry<bool> EnablePlayerBoneESPHealthMode { get; set; }
-        internal static ConfigEntry<int> ESPMaxDistance { get; set; }
+        internal static ConfigEntry<int> PlayerESPMaxDistance { get; set; }
         public static void Initialize(ConfigFile config)
         {
             EnablePlayerESP = config.Bind<bool>(
-                "透视设置",
+                "玩家透视",
                 "启用玩家透视",
                 true,
                 "玩家透视总开关，包括骨骼，玩家信息等"
             );
             EnablePlayerInfoESP = config.Bind<bool>(
-                "透视设置",
+                "玩家透视",
                 "启用玩家信息透视",
                 true,
                 "可以透视玩家的信息，包括等级，阵营，名字等"
             );
             EnablePlayerHealthBarESP = config.Bind<bool>(
-                "透视设置",
+                "玩家透视",
                 "启用玩家血条透视",
                 true,
                 "可以透视玩家的血条"
             );
             EnablePlayerBoneESPHealthMode = config.Bind<bool>(
-                "透视设置",
+                "玩家透视",
                 "启用玩家骨骼透视血量叠加",
                 true,
                 "启用后透视骨骼会根据肢体的血量损耗向蓝色发生渐变，损毁的部位会变成紫色"
             );
             EnablePlayerBoneESP = config.Bind<bool>(
-                "透视设置",
+                "玩家透视",
                 "启用玩家骨骼透视",
                 true,
                 "可以透视玩家骨骼，也就是经典的火柴人透视（真的有人会关掉它只启用别的功能吗……）"
             );
-            ESPMaxDistance = config.Bind<int>(
-                "透视设置",
+            PlayerESPMaxDistance = config.Bind<int>(
+                "玩家透视",
                 "透视范围",
                 200,
                 new ConfigDescription(
