@@ -10,6 +10,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using Oracle.Utils;
 using System.Linq;
+using EFT.Ballistics;
 
 namespace Oracle
 {
@@ -33,6 +34,8 @@ namespace Oracle
             harmony.PatchAll();
             PlayerESPCfg.Initialize(Config);
             LootESPCfg.Initialize(Config);
+            AimbotCfg.Initialize(Config);
+            HotKeyManager.Initialize(Config);
             var rawHandbookData = Oracle.Utils.HandbookClass.GetHandbookData("白昼和黑夜等同吗？义人和罪人等同吗？倘若人生来软弱，弱者们又该从哪位神明处寻求安宁？现在，我赐予各位直视太阳的权利，此时此地，尔等只需静听，此处再无神明，创造乐园的，乃是人之君王！");
             //var handbook = ;
             HandbookDict = JsonConvert.DeserializeObject<Oracle.Utils.HandbookClass.HandbookResponse>(rawHandbookData).Data.Items
@@ -60,6 +63,10 @@ namespace Oracle
 
             StartCoroutine(LootESP.LootScannerCoroutine());
         }
+        public void Update()
+        {
+            HotKeyManager.KeyStatusUpdate();
+        }
         
         //文本绘制
         //然后是遮挡检测射线检测和配置拆分
@@ -72,9 +79,12 @@ namespace Oracle
         //拆分配置, 规划fov透视, 修改调整
         //现在是2026年3月18日, 18:03分, 开工!
         public void OnGUI()
-        {   
+        {
+            //全局绘制开关
+            if (!HotKeyManager.UniGUI.Value) return;
             //ESP范围
-            Oracle.ESP.LootESP.DrawLootFOVCircle();
+            Oracle.ESP.LootESP.DrawLootFOVCircle(); 
+            Oracle.ESP.Aimbot.DrawAimbotFOVCircle();
             if (CorrectGameWorld == null || CorrectPlayer == null || CorrectGameWorld.AllAlivePlayersList == null) return;
 
             // ⭐ 核心锁：只在重绘阶段调用，杜绝 GC 和延迟
@@ -97,7 +107,9 @@ namespace Oracle
             PlayerESP.DrawPlayerText(cam, espTextStyle);
             PlayerESP.DrawAllPlayerHealthBars(cam);
 
-            LootESP.DrawLootText(cam, espTextStyle);
+            LootESP.DrawLootText(cam, espTextStyle); 
+            Oracle.ESP.Aimbot.UpdateTarget(cam);
+            Oracle.ESP.Aimbot.DrawTargetLine(cam);
 
         }
 
