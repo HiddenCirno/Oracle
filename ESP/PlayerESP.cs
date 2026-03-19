@@ -185,7 +185,15 @@ namespace Oracle.ESP
                     {
                         var info = player.Profile.Info;
                         //name = player.Profile.Info.Nickname; //需要一个Locale转换, 等会找找在哪, 应该在狗牌生成部分
-                        name = GStruct21.ConvertToLatinic(info.Nickname);
+                        //name = GStruct21.ConvertToLatinic(info.Nickname);
+                        if (IsAllEnglish(info.Nickname))
+                        {
+                            name = info.Nickname; // 全英文直接用，节省 ConvertToLatinic
+                        }
+                        else
+                        {
+                            name = GStruct21.ConvertToLatinic(info.Nickname);
+                        }
                         string bossSide = $"<color=#CE0000>Boss {name}</color>";
                         side = info.Side.ToString();
                         //动态改变字体颜色以区分阵营
@@ -483,8 +491,19 @@ namespace Oracle.ESP
                 targetColor = new Color(0.35f, 0f, 0f);
             }
             float minLerp = 0.5f;
-            float lerpFactor = Mathf.Lerp(minLerp, 1.0f, healthPercent); 
+            float lerpFactor = Mathf.Lerp(minLerp, 1.0f, healthPercent);
             return Color.Lerp(targetColor, baseColor, lerpFactor);
+        }
+        public static bool IsAllEnglish(string str)
+        {
+            for (int i = 0; i < str.Length; i++)
+            {
+                char c = str[i];
+                // 允许大写 A-Z，小写 a-z，以及空格、连字符、单引号
+                if ((c < 'A' || c > 'Z') && (c < 'a' || c > 'z') && c != ' ')// && c != '-' && c != '\'')
+                    return false;
+            }
+            return true;
         }
     }
     public class PlayerESPCfg

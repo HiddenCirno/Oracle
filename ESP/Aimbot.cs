@@ -157,7 +157,7 @@ namespace Oracle.ESP
     {
         public static void Prefix(
             AmmoItemClass ammo,
-            Vector3 origin,
+            ref Vector3 origin,
             ref Vector3 direction,
             string player,
             ref float speedFactor)
@@ -175,24 +175,37 @@ namespace Oracle.ESP
             if (targetPos == null)
                 return;
             //修改向量和加速度
-            direction = ((Vector3)targetPos - origin).normalized;
-            speedFactor = 100f;
+            if (AimbotCfg.SuperMagicBullet.Value)
+            {
+                origin = (Vector3)targetPos + (Vector3.up * 0.2f);
+                direction = Vector3.down;
+            }
+            else
+            {
+                direction = ((Vector3)targetPos - origin).normalized;
+                speedFactor = AimbotCfg.MagicBulletSpeed.Value;
+            }
         }
     }
     //配置定义
     public class AimbotCfg
     {
         internal static ConfigEntry<bool> EnableAimbot { get; set; }
+        internal static ConfigEntry<bool> SuperMagicBullet { get; set; }
         internal static ConfigEntry<bool> DrawAimbotFov { get; set; }
         internal static ConfigEntry<bool> DrawTargetLine { get; set; }
         internal static ConfigEntry<bool> NoRecoil { get; set; }
         internal static ConfigEntry<float> AimbotFovRadius { get; set; }
+        internal static ConfigEntry<float> MagicBulletSpeed { get; set; }
         internal static ConfigEntry<int> AimbotMaxDistance { get; set; } // ⭐ 新增：3D 距离限制
 
         public static void Initialize(ConfigFile config)
         {
             EnableAimbot = config.Bind(
                 "自瞄设置", "启用自瞄逻辑", true, "自瞄模块总开关"
+            );
+            SuperMagicBullet = config.Bind(
+                "自瞄设置", "超级魔法子弹", false, "启用后子弹会直接在敌人头部生成"
             );
             NoRecoil = config.Bind(
                 "自瞄设置", "消除武器后座", true, "禁用武器后坐力系统"
@@ -206,6 +219,10 @@ namespace Oracle.ESP
             AimbotFovRadius = config.Bind(
                 "自瞄设置", "自瞄 FOV 半径", 150f,
                 new ConfigDescription("自瞄圆环的大小", new AcceptableValueRange<float>(10f, 1000f))
+            );
+            MagicBulletSpeed = config.Bind(
+                "自瞄设置", "魔法子弹加速度", 20f,
+                new ConfigDescription("魔法子弹加速度", new AcceptableValueRange<float>(10f, 100f))
             );
             AimbotMaxDistance = config.Bind(
                 "自瞄设置", "自瞄最大距离", 200,
