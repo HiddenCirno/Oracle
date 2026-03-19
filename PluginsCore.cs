@@ -72,7 +72,9 @@ namespace Oracle
         //拆分配置, 规划fov透视, 修改调整
         //现在是2026年3月18日, 18:03分, 开工!
         public void OnGUI()
-        {
+        {   
+            //ESP范围
+            Oracle.ESP.LootESP.DrawLootFOVCircle();
             if (CorrectGameWorld == null || CorrectPlayer == null || CorrectGameWorld.AllAlivePlayersList == null) return;
 
             // ⭐ 核心锁：只在重绘阶段调用，杜绝 GC 和延迟

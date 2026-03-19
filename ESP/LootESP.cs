@@ -17,6 +17,8 @@ namespace Oracle.ESP
     }
     public class LootESP
     {
+        //约束范围
+        private static Material lineMaterial;
         //全局缓存list, 唯一
         public static List<LootData> CachedLootList = new List<LootData>();
         //全局容器缓存, 唯一
@@ -36,22 +38,35 @@ namespace Oracle.ESP
         //绘制方法
         public static void DrawLootText(Camera cam, GUIStyle textStyle)
         {
-            //空值防御和总开关
             if (CachedLootList == null || CachedLootList.Count == 0 || !LootESPCfg.EnableLootESP.Value) return;
+            //查找中心
+            Vector2 screenCenter = new Vector2(Screen.width / 2f, Screen.height / 2f);
+            float fovRadius = LootESPCfg.LootESPFovRange.Value;
+            //富文本防御, 避免问题
+            textStyle.richText = true;
+            textStyle.normal.textColor = Color.white;
             foreach (LootData loot in CachedLootList)
-            {   //深度检测, 计算, 绘制....
+            {
                 Vector3 screenPos = cam.WorldToScreenPoint(loot.Position);
                 if (screenPos.z > 0.01f)
                 {
                     float screenX = screenPos.x;
-                    //float screenY = Screen.height - screenPos.y;
-                    //新偏移计算, 用于展开容器战利品表
+                    //展开容器战利品表
                     float screenY = Screen.height - screenPos.y + loot.YOffset;
-                    //string priceStr = loot.Price >= 10000 ? (loot.Price / 10000) + "万" : loot.Price.ToString();
-                    string espText = $"{loot.Name}";// {loot.Distance}米 {priceStr}";//格式化直接在生成数据步骤完成
-                    //上色
-                    textStyle.normal.textColor = loot.ItemColor;
-                    //绘制
+                    //FOV计算
+                    if (LootESPCfg.EnableLootESPFov.Value)
+                    {
+                        //白名单绘制
+                        if (loot.Price < LootESPCfg.LootESPFovMinPrice.Value)
+                        {
+                            Vector2 itemScreenPos = new Vector2(screenX, screenY);
+                            float distToCenter = Vector2.Distance(screenCenter, itemScreenPos);
+                            //脱离范围
+                            if (distToCenter > fovRadius) continue;
+                        }
+                    }
+                    string espText = $"{loot.Name}";
+                    // 绘制
                     GUI.Label(new Rect(screenX - 100, screenY - 20, 200, 40), espText, textStyle);
                 }
             }
@@ -162,17 +177,32 @@ namespace Oracle.ESP
         }
         public static void DrawCircle(Vector2 center, float radius, Color color, int segments = 64)
         {
-            // 如果你的管线没有预先调用 GL.Begin(GL.LINES)，这里需要注意环境，
-            // 但既然你这是画在物资透视的层级，只要不在其他 GL.Vertex 中间打断即可。
+            //画圆
+            if (Event.current.type != EventType.Repaint) return;
+            //材质初始化
+            if (!lineMaterial)
+            {
+                lineMaterial = new Material(Shader.Find("Hidden/Internal-Colored"));
+                lineMaterial.hideFlags = HideFlags.HideAndDontSave;
+                lineMaterial.SetInt("_SrcBlend", (int)UnityEngine.Rendering.BlendMode.SrcAlpha);
+                lineMaterial.SetInt("_DstBlend", (int)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
+                lineMaterial.SetInt("_Cull", (int)UnityEngine.Rendering.CullMode.Off);
+                lineMaterial.SetInt("_ZWrite", 0);
+            }
+            //启用材质
+            lineMaterial.SetPass(0);
+            //矩阵绘制(在OnGUI内全局绘制的前面, 此处有End就无问题, 否则会炸掉队列)
+            GL.PushMatrix();
+            GL.LoadPixelMatrix();
+            //绘制
+            GL.Begin(GL.LINES);
             GL.Color(color);
             float angleStep = 2f * Mathf.PI / segments;
-
             for (int i = 0; i < segments; i++)
             {
                 float angle1 = i * angleStep;
                 float angle2 = (i + 1) * angleStep;
 
-                // 计算线段的两个端点坐标
                 float x1 = center.x + Mathf.Cos(angle1) * radius;
                 float y1 = center.y + Mathf.Sin(angle1) * radius;
                 float x2 = center.x + Mathf.Cos(angle2) * radius;
@@ -181,6 +211,19 @@ namespace Oracle.ESP
                 GL.Vertex3(x1, y1, 0);
                 GL.Vertex3(x2, y2, 0);
             }
+            GL.End();
+            GL.PopMatrix();
+        }
+        //画圆方法
+        public static void DrawLootFOVCircle()
+        {
+            //是否可见
+            if (!LootESPCfg.ShowLootESPFov.Value) return;
+            //查找中心和半径
+            Vector2 screenCenter = new Vector2(Screen.width / 2f, Screen.height / 2f);
+            float fovRadius = LootESPCfg.LootESPFovRange.Value;
+            //绘制
+            DrawCircle(screenCenter, fovRadius, new Color(0.8f, 1f, 1f, 0.4f), 64);
         }
     }
     public class LootESPCfg
@@ -193,6 +236,7 @@ namespace Oracle.ESP
         internal static ConfigEntry<bool> EnableLootESPFov { get; set; }
         internal static ConfigEntry<bool> ShowLootESPFov { get; set; }
         internal static ConfigEntry<int> LootESPFovRange { get; set; }
+        internal static ConfigEntry<int> LootESPFovMinPrice { get; set; }
         internal static ConfigEntry<bool> ShowItemFullName { get; set; }
         public static void Initialize(ConfigFile config)
         {
@@ -258,6 +302,15 @@ namespace Oracle.ESP
                 "显示物品全名",
                 false,
                 "使用物品全名显示透视"
+            );
+            LootESPFovMinPrice = config.Bind<int>(
+                "物资透视",
+                "约束透视白名单价格",
+                150000,
+                new ConfigDescription(
+                    "显示在约束范围外的物品最低价格",
+                    new AcceptableValueRange<int>(1000, 1000000)
+                )
             );
         }
     }
