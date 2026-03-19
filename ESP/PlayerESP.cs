@@ -466,9 +466,25 @@ namespace Oracle.ESP
             //插值算法处理渐变
             //全蓝或许不太妥当, 这里可以用超上限颜色压制渐变色吗?
             //可以
+            //还是有一点点问题
+            //明天修改下方法定义, 根据骨骼原色传入渐变目标色试试
+            //根据传入颜色确定目标颜色
+            Color targetColor;
+            if (baseColor == ColorSafe) // 当前是绿色
+            {
+                targetColor = Color.blue;
+            }
+            else if (baseColor == ColorWarning) // 当前是黄色
+            {
+                targetColor = Color.red;
+            }
+            else // 当前是红色 (ColorDangerous)
+            {
+                targetColor = new Color(0.35f, 0f, 0f);
+            }
             float minLerp = 0.5f;
             float lerpFactor = Mathf.Lerp(minLerp, 1.0f, healthPercent); 
-            return Color.Lerp(Color.blue, baseColor, lerpFactor);
+            return Color.Lerp(targetColor, baseColor, lerpFactor);
         }
     }
     public class PlayerESPCfg
