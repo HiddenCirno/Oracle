@@ -147,7 +147,8 @@ namespace Oracle.ESP
             int minPriceThreshold = LootESPCfg.LootESPMinPrice.Value;
             if (itemPrice < minPriceThreshold || itemKey == "55d7217a4bdc2d86028b456d") return;
             //价值格式化
-            string priceStr = itemPrice >= 10000 ? (itemPrice / 10000) + "万" : itemPrice.ToString();
+            string priceStr = itemPrice >= 10000 ? (itemPrice / 10000f).ToString("0.#") + "万" : itemPrice.ToString();
+            //string priceStr = itemPrice >= 10000 ? (itemPrice / 10000) + "万" : itemPrice.ToString();
             //颜色转码
             Color iColor = GetColorByPrice(itemPrice);
             string hexColor = ColorUtility.ToHtmlStringRGB(iColor);

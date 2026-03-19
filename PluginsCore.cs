@@ -93,7 +93,10 @@ namespace Oracle
             Camera cam = Camera.main;
             if (cam == null) return;
 
-            GL.PushMatrix();
+            GL.PushMatrix(); 
+            //AI说缺了这句, 真的假的?我用着没问题啊?
+            //对你奶奶个腿, 计算方式不一样, AI又骗我
+            //GL.LoadPixelMatrix();
             espMaterial.SetPass(0);
             // 改为画线模式
             GL.Begin(GL.LINES);
