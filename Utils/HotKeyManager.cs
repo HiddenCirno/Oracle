@@ -17,6 +17,8 @@ namespace Oracle.Utils
         internal static ConfigEntry<KeyCode> ContainerLootESPKey { get; set; }
         internal static ConfigEntry<KeyCode> AimbotKey { get; set; }
         internal static ConfigEntry<KeyCode> LootESPNameModeKey { get; set; }
+        internal static ConfigEntry<KeyCode>SpawnItemKey { get; set; }
+        internal static ConfigEntry<string> TargetItemId { get; set; }
         internal static ConfigEntry<KeyCode> UniGUIKey { get; set; }
         internal static ConfigEntry<bool> UniGUI { get; set; }
         public static void KeyStatusUpdate()
@@ -91,6 +93,18 @@ namespace Oracle.Utils
             {
                 LootESPCfg.ShowItemFullName.Value = !LootESPCfg.ShowItemFullName.Value;
             }
+            if (Input.GetKeyDown(SpawnItemKey.Value))
+            {
+                ItemSpawner.SpawnItemIntoInventory(PluginsCore.CorrectPlayer, TargetItemId.Value);
+                //LootESPCfg.EnableContainerLootESP.Value = !LootESPCfg.EnableContainerLootESP.Value;
+                //var value = LootESPCfg.EnableContainerLootESP.Value;
+                //NotificationManagerClass.DisplayMessageNotification(
+                //    $"容器物资透视已{(value ? "启用" : "禁用")}!",
+                //    ENotificationDurationType.Default,
+                //    value ? ENotificationIconType.Default : ENotificationIconType.Alert,
+                //    null
+                //);
+            }
         }
         public static void Initialize(ConfigFile config)
         {
@@ -146,6 +160,18 @@ namespace Oracle.Utils
                 "启用绘制",
                 true,
                 "启用绘制"
+            );
+            SpawnItemKey = config.Bind<KeyCode>(
+                "快捷键设置",
+                "生成物品",
+                KeyCode.KeypadDivide,
+                "按下后生成物品"
+            );
+            TargetItemId = config.Bind(
+                "虚空造物 (Spawner)",                // 配置文件中的分类/区块名称
+                "物品 Template ID",                  // 配置项的名称
+                "59faff1d86f7746c51718c9c",          // 默认值 (比如这里填个比特币的ID)
+                "请输入你想生成的物品的24位16进制ID" // 在F12菜单中显示的悬浮提示
             );
         }
     }
