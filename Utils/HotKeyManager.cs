@@ -18,7 +18,6 @@ namespace Oracle.Utils
         internal static ConfigEntry<KeyCode> AimbotKey { get; set; }
         internal static ConfigEntry<KeyCode> LootESPNameModeKey { get; set; }
         internal static ConfigEntry<KeyCode>SpawnItemKey { get; set; }
-        internal static ConfigEntry<string> TargetItemId { get; set; }
         internal static ConfigEntry<KeyCode> UniGUIKey { get; set; }
         internal static ConfigEntry<bool> UniGUI { get; set; }
         public static void KeyStatusUpdate()
@@ -95,7 +94,7 @@ namespace Oracle.Utils
             }
             if (Input.GetKeyDown(SpawnItemKey.Value))
             {
-                ItemSpawner.SpawnItemIntoInventory(PluginsCore.CorrectPlayer, TargetItemId.Value);
+                ItemSpawner.SpawnItemIntoInventory(PluginsCore.CorrectPlayer, ItemSpawnerCfg.TargetItemId.Value);
                 //LootESPCfg.EnableContainerLootESP.Value = !LootESPCfg.EnableContainerLootESP.Value;
                 //var value = LootESPCfg.EnableContainerLootESP.Value;
                 //NotificationManagerClass.DisplayMessageNotification(
@@ -166,12 +165,6 @@ namespace Oracle.Utils
                 "生成物品",
                 KeyCode.KeypadDivide,
                 "按下后生成物品"
-            );
-            TargetItemId = config.Bind(
-                "虚空造物 (Spawner)",                // 配置文件中的分类/区块名称
-                "物品 Template ID",                  // 配置项的名称
-                "59faff1d86f7746c51718c9c",          // 默认值 (比如这里填个比特币的ID)
-                "请输入你想生成的物品的24位16进制ID" // 在F12菜单中显示的悬浮提示
             );
         }
     }

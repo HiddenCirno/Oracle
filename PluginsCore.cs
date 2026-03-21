@@ -1,16 +1,17 @@
 ﻿using BepInEx;
 using BepInEx.Configuration;
 using EFT;
+using EFT.Ballistics;
 using HarmonyLib;
+using Newtonsoft.Json;
 using Oracle.ESP;
+using Oracle.Utils;
 using SPT.Common.Http;
 using System;
-using Newtonsoft.Json;
 using System.Collections.Generic;
-using UnityEngine;
-using Oracle.Utils;
 using System.Linq;
-using EFT.Ballistics;
+using UnityEngine;
+using static Oracle.ESP.PlayerStatusEdit;
 
 namespace Oracle
 {
@@ -21,31 +22,35 @@ namespace Oracle
         public static Player CorrectPlayer { get; set; }
         public static GameWorld CorrectGameWorld { get; set; }
 
-        // ⭐ 新增：缓存 GUI 文本样式，拒绝 GC 卡顿
+        //绘制样式缓存
         public GUIStyle espTextStyle;
 
         public Material espMaterial;
-
+        //价格字典定义
         public static Dictionary<string, int> HandbookDict;
 
         public void Awake()
         {
             var harmony = new Harmony(PluginsInfo.GUID);
             harmony.PatchAll();
+            //配置初始化
             PlayerESPCfg.Initialize(Config);
             LootESPCfg.Initialize(Config);
             AimbotCfg.Initialize(Config);
+            ItemSpawnerCfg.Initialize(Config);
+            PlayerStatusEditCfg.Initialize(Config);
             HotKeyManager.Initialize(Config);
+            //价格字典拉取. 初始化
             var rawHandbookData = Oracle.Utils.HandbookClass.GetHandbookData("白昼和黑夜等同吗？义人和罪人等同吗？倘若人生来软弱，弱者们又该从哪位神明处寻求安宁？现在，我赐予各位直视太阳的权利，此时此地，尔等只需静听，此处再无神明，创造乐园的，乃是人之君王！");
             //var handbook = ;
             HandbookDict = JsonConvert.DeserializeObject<Oracle.Utils.HandbookClass.HandbookResponse>(rawHandbookData).Data.Items
-                .GroupBy(x => x.Id) // 防止原版数据有极其罕见的重复ID导致字典报错
+                .GroupBy(x => x.Id) //防止原版数据有极其罕见的重复ID导致字典报错
                 .ToDictionary(g => g.Key, g => g.First().Price);
             //Console.WriteLine($"我看看怎么个事: {handbook.Data.Categories.FirstOrDefault().Id}");
         }
         public void Start()
         {
-            // 初始化一段极其基础的着色器（Shader）材质，允许我们画出不受光照影响的纯色线条或色块
+            //初始化线条样式
             espMaterial = new Material(Shader.Find("Hidden/Internal-Colored"));
             espMaterial.hideFlags = HideFlags.HideAndDontSave;
             espMaterial.SetInt("_SrcBlend", (int)UnityEngine.Rendering.BlendMode.SrcAlpha);
@@ -53,21 +58,20 @@ namespace Oracle
             espMaterial.SetInt("_Cull", (int)UnityEngine.Rendering.CullMode.Off);
             espMaterial.SetInt("_ZWrite", 0);
             espMaterial.SetInt("_ZTest", (int)UnityEngine.Rendering.CompareFunction.Always);
-
-            // ⭐ 新增：初始化文字样式
+            //初始化文本样式
             espTextStyle = new GUIStyle();
             espTextStyle.fontSize = 12;
             espTextStyle.fontStyle = FontStyle.Bold;
             espTextStyle.alignment = TextAnchor.MiddleCenter;
             espTextStyle.richText = true;
-
+            //战利品扫描协程
             StartCoroutine(LootESP.LootScannerCoroutine());
         }
         public void Update()
         {
+            //快捷键监听
             HotKeyManager.KeyStatusUpdate();
         }
-        
         //文本绘制
         //然后是遮挡检测射线检测和配置拆分
         //物品透视....想想就难搞
@@ -85,38 +89,37 @@ namespace Oracle
             //ESP范围
             Oracle.ESP.LootESP.DrawLootFOVCircle(); 
             Oracle.ESP.Aimbot.DrawAimbotFOVCircle();
+            //空指针防御
             if (CorrectGameWorld == null || CorrectPlayer == null || CorrectGameWorld.AllAlivePlayersList == null) return;
-
-            // ⭐ 核心锁：只在重绘阶段调用，杜绝 GC 和延迟
+            //只在重绘调用
             if (Event.current.type != EventType.Repaint) return;
-
+            //空指针防御
             Camera cam = Camera.main;
             if (cam == null) return;
-
+            //绘制
             GL.PushMatrix(); 
             //AI说缺了这句, 真的假的?我用着没问题啊?
             //对你奶奶个腿, 计算方式不一样, AI又骗我
             //GL.LoadPixelMatrix();
             espMaterial.SetPass(0);
-            // 改为画线模式
+            //改为画线模式
+            //不知道这里能不能改, 那就不改了
+            //论屎山是怎么形成的
             GL.Begin(GL.LINES);
             GL.Color(Color.green); // 设定火柴人颜色为绿色
-
+            //玩家透视
             PlayerESP.DrawPlayerBone(cam);
-
+            //结束
             GL.End();
             GL.PopMatrix(); 
-
+            //其他绘制
             PlayerESP.DrawPlayerText(cam, espTextStyle);
             PlayerESP.DrawAllPlayerHealthBars(cam);
-
             LootESP.DrawLootText(cam, espTextStyle); 
             Oracle.ESP.Aimbot.UpdateTarget(cam);
             Oracle.ESP.Aimbot.DrawTargetLine(cam);
 
         }
-
-        
     }
     [HarmonyPatch(typeof(GameWorld), "OnGameStarted")]
     public class GameStartPatch
@@ -126,9 +129,10 @@ namespace Oracle
         {
             PluginsCore.CorrectGameWorld = __instance;
             PluginsCore.CorrectPlayer = __instance.MainPlayer;
+            //挂载脚本
+            __instance.MainPlayer.gameObject.AddComponent<PlayerStatusEditComponent>();
+            //缓存容器
             Oracle.ESP.LootESP.CachedContainers = UnityEngine.Object.FindObjectsOfType<EFT.Interactive.LootableContainer>();
-            //Console.WriteLine($"调试信息: {__instance.MainPlayer.gameObject.transform.localPosition.ToString()}");
-            //Console.WriteLine($"调试信息: {__instance.MainPlayer.PlayerBones}");
         }
     }
 }
