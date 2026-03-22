@@ -4,6 +4,7 @@ using EFT.Ballistics;
 using HarmonyLib;
 using System;
 using UnityEngine;
+using static GClass2175;
 
 namespace Oracle.ESP
 {
@@ -46,7 +47,7 @@ namespace Oracle.ESP
                 //距离过滤
                 if (!PlayerESP.IsInRange(maxDist, myPos, player.Transform.position)) continue;
                 //找头
-                Vector3? headPos = PlayerESP.GetBonePos(player.PlayerBones.Head);
+                Vector3? headPos = AimbotCfg.AimbotPartSetting.Value == "头部" ? PlayerESP.GetBonePos(player.PlayerBones.Head) : PlayerESP.GetBonePos(player.PlayerBones.Spine3);
                 if (!headPos.HasValue) continue;
                 //深度过滤
                 Vector3 screenPos = cam.WorldToScreenPoint(headPos.Value);
@@ -76,7 +77,7 @@ namespace Oracle.ESP
             //依旧功能开关+防御
             if (!AimbotCfg.EnableAimbot.Value || !AimbotCfg.DrawTargetLine.Value || LockedTarget == null || LockedTarget.PlayerBones == null) return;
             //找头
-            Vector3? headPos = PlayerESP.GetBonePos(LockedTarget.PlayerBones.Head);
+            Vector3? headPos = AimbotCfg.AimbotPartSetting.Value == "头部" ? PlayerESP.GetBonePos(Aimbot.LockedTarget.PlayerBones.Head) : PlayerESP.GetBonePos(Aimbot.LockedTarget.PlayerBones.Spine3);
             if (!headPos.HasValue) return;
             //3d转2d
             Vector3 screenPos = cam.WorldToScreenPoint(headPos.Value);
@@ -170,7 +171,7 @@ namespace Oracle.ESP
             if (player != PluginsCore.CorrectPlayer.ProfileId)
                 return;
             //找头
-            Vector3? targetPos = PlayerESP.GetBonePos(Aimbot.LockedTarget.PlayerBones.Head);
+            Vector3? targetPos = AimbotCfg.AimbotPartSetting.Value == "头部"? PlayerESP.GetBonePos(Aimbot.LockedTarget.PlayerBones.Head) : PlayerESP.GetBonePos(Aimbot.LockedTarget.PlayerBones.Spine3);
             //空值, 返回
             if (targetPos == null)
                 return;
@@ -197,7 +198,8 @@ namespace Oracle.ESP
         internal static ConfigEntry<bool> NoRecoil { get; set; }
         internal static ConfigEntry<float> AimbotFovRadius { get; set; }
         internal static ConfigEntry<float> MagicBulletSpeed { get; set; }
-        internal static ConfigEntry<int> AimbotMaxDistance { get; set; } // ⭐ 新增：3D 距离限制
+        internal static ConfigEntry<int> AimbotMaxDistance { get; set; }
+        internal static ConfigEntry<string> AimbotPartSetting { get; set; }
 
         public static void Initialize(ConfigFile config)
         {
@@ -227,6 +229,17 @@ namespace Oracle.ESP
             AimbotMaxDistance = config.Bind(
                 "自瞄设置", "自瞄最大距离", 200,
                 new ConfigDescription("自瞄生效的最大 3D 物理距离(米)", new AcceptableValueRange<int>(10, 1000))
+            );
+            AimbotPartSetting = config.Bind(
+                "自瞄设置",
+                "自瞄位置选择",
+                "头部",
+                new ConfigDescription(
+                    "选择背景样式",
+                    new AcceptableValueList<string>(
+                        "头部", "胸口"
+                    )
+                )
             );
         }
     }

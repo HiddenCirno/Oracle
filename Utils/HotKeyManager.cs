@@ -16,6 +16,7 @@ namespace Oracle.Utils
         internal static ConfigEntry<KeyCode> LooseLootESPKey { get; set; }
         internal static ConfigEntry<KeyCode> ContainerLootESPKey { get; set; }
         internal static ConfigEntry<KeyCode> AimbotKey { get; set; }
+        internal static ConfigEntry<KeyCode> ChangeAimTargetKey { get; set; }
         internal static ConfigEntry<KeyCode> LootESPNameModeKey { get; set; }
         internal static ConfigEntry<KeyCode>SpawnItemKey { get; set; }
         internal static ConfigEntry<KeyCode> UniGUIKey { get; set; }
@@ -88,6 +89,17 @@ namespace Oracle.Utils
                     null
                 );
             }
+            if (Input.GetKeyDown(ChangeAimTargetKey.Value))
+            {
+                AimbotCfg.AimbotPartSetting.Value = AimbotCfg.AimbotPartSetting.Value == "头部" ? "胸口" : "头部";
+                var value = AimbotCfg.AimbotPartSetting.Value;
+                NotificationManagerClass.DisplayMessageNotification(
+                    $"锁定部位切换到{value}",
+                    ENotificationDurationType.Default,
+                    ENotificationIconType.Default,
+                    null
+                );
+            }
             if (Input.GetKeyDown(LootESPNameModeKey.Value))
             {
                 LootESPCfg.ShowItemFullName.Value = !LootESPCfg.ShowItemFullName.Value;
@@ -95,14 +107,6 @@ namespace Oracle.Utils
             if (Input.GetKeyDown(SpawnItemKey.Value))
             {
                 ItemSpawner.SpawnItemIntoInventory(PluginsCore.CorrectPlayer, ItemSpawnerCfg.TargetItemId.Value);
-                //LootESPCfg.EnableContainerLootESP.Value = !LootESPCfg.EnableContainerLootESP.Value;
-                //var value = LootESPCfg.EnableContainerLootESP.Value;
-                //NotificationManagerClass.DisplayMessageNotification(
-                //    $"容器物资透视已{(value ? "启用" : "禁用")}!",
-                //    ENotificationDurationType.Default,
-                //    value ? ENotificationIconType.Default : ENotificationIconType.Alert,
-                //    null
-                //);
             }
         }
         public static void Initialize(ConfigFile config)
@@ -165,6 +169,12 @@ namespace Oracle.Utils
                 "生成物品",
                 KeyCode.KeypadDivide,
                 "按下后生成物品"
+            );
+            ChangeAimTargetKey = config.Bind<KeyCode>(
+                "快捷键设置",
+                "切换瞄准部位",
+                KeyCode.KeypadMultiply,
+                "按下切换瞄准的部位(头或胸)"
             );
         }
     }
