@@ -235,6 +235,10 @@ namespace Oracle.ESP
                             {
                                 sideText = $"<color=#00FFFF>圣诞老人 {name}</color>";
                             }
+                            if (role.Contains("black"))
+                            {
+                                sideText = $"<color=#DC143C>黑狐 {name}</color>";
+                            }
                             switch (role)
                             {
                                 //特殊处理
