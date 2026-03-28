@@ -235,6 +235,12 @@ namespace Oracle.ESP
                             {
                                 sideText = $"<color=#00FFFF>圣诞老人 {name}</color>";
                             }
+                            //BTR司机
+                            if (role.Contains("btr"))
+                            {
+                                sideText = $"<color=#228B22>BTR {name}</color>";
+                            }
+                            //wtt的黑狐AI
                             if (role.Contains("black"))
                             {
                                 sideText = $"<color=#DC143C>黑狐 {name}</color>";
