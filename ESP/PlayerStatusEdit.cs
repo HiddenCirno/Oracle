@@ -1,5 +1,6 @@
 ﻿using BepInEx.Configuration;
 using EFT;
+using HarmonyLib;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -46,12 +47,36 @@ namespace Oracle.ESP
             }
         }
     }
-
+    //Patch
+    [HarmonyPatch(typeof(Player), "ApplyDamageInfo")]
+    public class AntiFallenDamagePatch
+    {
+        public static bool Prefix(Player __instance, ref DamageInfoStruct damageInfo, EBodyPart bodyPartType, EBodyPartColliderType colliderType, float absorbed)
+        {
+            //仅自己判断
+            if (!__instance.IsYourPlayer)
+            {
+                return true;
+            }
+            else
+            {
+                //伤害类型过滤
+                if(damageInfo.DamageType == EDamageType.Fall)
+                {
+                    //阻拦
+                    damageInfo.Damage = 0;
+                    damageInfo.DidBodyDamage = 0;
+                }
+                return true;
+            }
+        }
+    }
     //配置定义
     public class PlayerStatusEditCfg
     {
 
         internal static ConfigEntry<bool> EnableInfiniteStamina { get; set; }
+        internal static ConfigEntry<bool> DisableFallenDamage { get; set; }
         public static void Initialize(ConfigFile config)
         {
             EnableInfiniteStamina = config.Bind(
@@ -59,6 +84,12 @@ namespace Oracle.ESP
                 "无限体力",
                 true,
                 "锁定跑步、举枪体力和屏息氧气为全满状态"
+            );
+            DisableFallenDamage = config.Bind(
+                "玩家属性",
+                "阻止摔落伤害",
+                true,
+                "防止玩家受到跌落伤害"
             );
         }
     }
