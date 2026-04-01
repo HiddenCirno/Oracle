@@ -53,22 +53,24 @@ namespace Oracle.ESP
     {
         public static bool Prefix(Player __instance, ref DamageInfoStruct damageInfo, EBodyPart bodyPartType, EBodyPartColliderType colliderType, float absorbed)
         {
+            //不知道是速度太快还是过滤问题，总之都改了
             //仅自己判断
-            if (!__instance.IsYourPlayer)
+            //if (!__instance.IsYourPlayer)
+            //{
+            //    return true;
+            //}
+            //else
+            //{
+            //伤害类型过滤
+            if (PlayerStatusEditCfg.DisableFallenDamage.Value && (damageInfo.DamageType == EDamageType.Fall || damageInfo.DamageType == EDamageType.Impact))
             {
-                return true;
+                //阻拦
+                damageInfo.Damage = 0;
+                damageInfo.DidBodyDamage = 0;
+                damageInfo.DelayedDamage = false;
             }
-            else
-            {
-                //伤害类型过滤
-                if(damageInfo.DamageType == EDamageType.Fall)
-                {
-                    //阻拦
-                    damageInfo.Damage = 0;
-                    damageInfo.DidBodyDamage = 0;
-                }
-                return true;
-            }
+            return true;
+            //}
         }
     }
     //配置定义
