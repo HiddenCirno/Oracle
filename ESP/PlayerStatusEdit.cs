@@ -1,5 +1,6 @@
 ﻿using BepInEx.Configuration;
 using EFT;
+using EFT.HealthSystem;
 using HarmonyLib;
 using System;
 using System.Collections.Generic;
@@ -54,6 +55,8 @@ namespace Oracle.ESP
         public static bool Prefix(Player __instance, ref DamageInfoStruct damageInfo, EBodyPart bodyPartType, EBodyPartColliderType colliderType, float absorbed)
         {
             //不知道是速度太快还是过滤问题，总之都改了
+            //奇怪, 为什么玩家Scav可以而玩家不行
+            //Fika干了什么?
             //仅自己判断
             //if (!__instance.IsYourPlayer)
             //{
@@ -62,9 +65,26 @@ namespace Oracle.ESP
             //else
             //{
             //伤害类型过滤
+            if (__instance == PluginsCore.CorrectPlayer&&PlayerStatusEditCfg.DisableFallenDamage.Value && (damageInfo.DamageType == EDamageType.Fall || damageInfo.DamageType == EDamageType.Impact))
+            {
+                //阻拦
+                damageInfo.Damage = 0;
+                damageInfo.DidBodyDamage = 0;
+                damageInfo.DelayedDamage = false;
+            }
+            return true;
+            //}
+        }
+    }//Patch
+    [HarmonyPatch(typeof(ActiveHealthController), "ApplyDamage")]
+    public class AntiFallenDamagePatch2
+    {
+        public static bool Prefix(ActiveHealthController __instance, EBodyPart bodyPart, ref float damage, ref DamageInfoStruct damageInfo)
+        {
             if (PlayerStatusEditCfg.DisableFallenDamage.Value && (damageInfo.DamageType == EDamageType.Fall || damageInfo.DamageType == EDamageType.Impact))
             {
                 //阻拦
+                damage = 0f;
                 damageInfo.Damage = 0;
                 damageInfo.DidBodyDamage = 0;
                 damageInfo.DelayedDamage = false;
