@@ -32,7 +32,7 @@ namespace Oracle.ESP
             //空值防御
             if (newItem == null) return;
             //强制物品为带勾状态
-            newItem.SpawnedInSession = true;
+            if(ItemSpawnerCfg.ForcedFiR.Value) newItem.SpawnedInSession = true;
             //满堆叠
             //堆叠无检查, 因此似乎理论存在强制堆叠的可能?
             //需要验证
@@ -109,6 +109,7 @@ namespace Oracle.ESP
     {
         internal static ConfigEntry<string> TargetItemId { get; set; }
         internal static ConfigEntry<bool> MaxStack { get; set; }
+        internal static ConfigEntry<bool> ForcedFiR { get; set; }
         internal static ConfigEntry<int> CustomStackSize { get; set; }
 
         public static void Initialize(ConfigFile config)
@@ -124,6 +125,12 @@ namespace Oracle.ESP
                 "强制最大堆叠",
                 false,
                 "刷出的物品为最大堆叠而不是单个"
+            );
+            ForcedFiR = config.Bind(
+                "虚空造物",
+                "强制物品带勾",
+                true,
+                "刷出的物品为战局中发现状态"
             );
             CustomStackSize = config.Bind(
                 "虚空造物",
