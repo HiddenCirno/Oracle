@@ -165,6 +165,9 @@ namespace Oracle.ESP
                 {
                     continue;
                 }
+                //过滤队友
+                string targetGroupId = player.Profile?.Info?.GroupId ?? "";
+                bool isTeammate = !string.IsNullOrEmpty(PluginsCore.CorrectGroupId) && targetGroupId == PluginsCore.CorrectGroupId;
                 //获取头部坐标, 这样信息才能悬浮于头顶
                 Vector3? headPos = GetBonePos(player.PlayerBones.Head);
                 if (!headPos.HasValue) continue;
@@ -195,6 +198,7 @@ namespace Oracle.ESP
                             name = GStruct21.ConvertToLatinic(info.Nickname);
                         }
                         string bossSide = $"<color=#CE0000>Boss {name}</color>";
+                        string friendlySide = "<color=#66CCFF>友军 </color>";
                         side = info.Side.ToString();
                         //动态改变字体颜色以区分阵营
                         if (side == "Savage")
@@ -259,6 +263,13 @@ namespace Oracle.ESP
                                     }
                                     break;
                             }
+                            //友军阵营过滤
+                            //不知道毒绿信号弹如何工作, 防止出现显示错误, 放在最后
+                            //友军标签为额外加值, 不影响阵营正常显示
+                            if (isTeammate)
+                            {
+                                sideText = $"{friendlySide}{sideText}";
+                            }
                         }
                         else
                         //PMC
@@ -267,7 +278,7 @@ namespace Oracle.ESP
                             //textStyle.normal.textColor = Color.red;
                             //PMC只有两个阵营
                             level = $"<color=#7FFF00>{info.Level}级</color>";
-                            sideText = side == "Usec" ? $"<color=#007CFF>Usec {name}</color>" : $"<color=#FF8C00>Bear {name}</color>";
+                            sideText = isTeammate ? side == "Usec" ? $"{friendlySide}<color=#007CFF>Usec {name}</color>" : $"{friendlySide}<color=#FF8C00>Bear {name}</color>" : side == "Usec" ? $"<color=#007CFF>Usec {name}</color>" : $"<color=#FF8C00>Bear {name}</color>";
                         }
                     }
                     textStyle.richText = true;

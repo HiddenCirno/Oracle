@@ -42,8 +42,12 @@ namespace Oracle.ESP
             //遍历求解
             foreach (Player player in PluginsCore.CorrectGameWorld.AllAlivePlayersList)
             {
+
                 //空值防御
                 if (player == null || player == PluginsCore.CorrectPlayer || player.PlayerBones == null) continue;
+                //过滤队友
+                string targetGroupId = player.Profile?.Info?.GroupId ?? "";
+                if (!string.IsNullOrEmpty(PluginsCore.CorrectGroupId) && targetGroupId == PluginsCore.CorrectGroupId) continue;
                 //距离过滤
                 if (!PlayerESP.IsInRange(maxDist, myPos, player.Transform.position)) continue;
                 //找头
@@ -149,7 +153,7 @@ namespace Oracle.ESP
         static bool Prefix(ref float str)
         {
             //取反一步搞定
-            return !AimbotCfg.NoRecoil.Value; 
+            return !AimbotCfg.NoRecoil.Value;
         }
     }
     //魔法子弹Patch
@@ -171,7 +175,7 @@ namespace Oracle.ESP
             if (player != PluginsCore.CorrectPlayer.ProfileId)
                 return;
             //找头
-            Vector3? targetPos = AimbotCfg.AimbotPartSetting.Value == "头部"? PlayerESP.GetBonePos(Aimbot.LockedTarget.PlayerBones.Head) : PlayerESP.GetBonePos(Aimbot.LockedTarget.PlayerBones.Spine3);
+            Vector3? targetPos = AimbotCfg.AimbotPartSetting.Value == "头部" ? PlayerESP.GetBonePos(Aimbot.LockedTarget.PlayerBones.Head) : PlayerESP.GetBonePos(Aimbot.LockedTarget.PlayerBones.Spine3);
             //空值, 返回
             if (targetPos == null)
                 return;

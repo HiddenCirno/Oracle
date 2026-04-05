@@ -20,6 +20,7 @@ namespace Oracle
     public class PluginsCore : BaseUnityPlugin
     {
         public static Player CorrectPlayer { get; set; }
+        public static string CorrectGroupId { get; set; }
         public static GameWorld CorrectGameWorld { get; set; }
 
         //绘制样式缓存
@@ -129,6 +130,7 @@ namespace Oracle
         {
             PluginsCore.CorrectGameWorld = __instance;
             PluginsCore.CorrectPlayer = __instance.MainPlayer;
+            PluginsCore.CorrectGroupId = __instance.MainPlayer.Profile?.Info?.GroupId ?? "";
             //挂载脚本
             __instance.MainPlayer.gameObject.AddComponent<PlayerStatusEditComponent>();
             //缓存容器
