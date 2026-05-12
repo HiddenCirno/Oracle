@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Text;
 using UnityEngine;
 using static GClass2175;
+using Oracle.ESP;
 
 namespace Oracle.Utils
 {
@@ -19,6 +20,8 @@ namespace Oracle.Utils
         internal static ConfigEntry<KeyCode> ChangeAimTargetKey { get; set; }
         internal static ConfigEntry<KeyCode> LootESPNameModeKey { get; set; }
         internal static ConfigEntry<KeyCode>SpawnItemKey { get; set; }
+        internal static ConfigEntry<KeyboardShortcut> CopyItemKey { get; set; }
+        internal static ConfigEntry<KeyCode> DropItemKey { get; set; }
         internal static ConfigEntry<KeyCode> UniGUIKey { get; set; }
         internal static ConfigEntry<bool> UniGUI { get; set; }
         public static void KeyStatusUpdate()
@@ -108,6 +111,11 @@ namespace Oracle.Utils
             {
                 ItemSpawner.SpawnItemIntoInventory(PluginsCore.CorrectPlayer, ItemSpawnerCfg.TargetItemId.Value);
             }
+            if (Input.GetKeyDown(DropItemKey.Value))
+            {
+                //ItemSpawner.SpawnItemIntoInventory(PluginsCore.CorrectPlayer, ItemSpawnerCfg.TargetItemId.Value);
+                ItemSpawner.CloneAndDropItem(PluginsCore.CorrectPlayer, ItemCatcher.savedItem);
+            }
         }
         public static void Initialize(ConfigFile config)
         {
@@ -169,6 +177,18 @@ namespace Oracle.Utils
                 "生成物品",
                 KeyCode.KeypadDivide,
                 "按下后生成物品"
+            );
+            DropItemKey = config.Bind<KeyCode>(
+                "快捷键设置",
+                "复制物品",
+                KeyCode.KeypadDivide,
+                "按下后生成并掉落复制的物品"
+            );
+            CopyItemKey = config.Bind(
+                "快捷键设置",
+                "保存物品",
+                new KeyboardShortcut(KeyCode.C, KeyCode.LeftShift),
+                new ConfigDescription("将鼠标指向物品并按下此快捷键将物品组保存到内存")
             );
             ChangeAimTargetKey = config.Bind<KeyCode>(
                 "快捷键设置",

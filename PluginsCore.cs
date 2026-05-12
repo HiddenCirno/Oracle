@@ -72,6 +72,8 @@ namespace Oracle
         {
             //快捷键监听
             HotKeyManager.KeyStatusUpdate();
+
+            ItemCatcher.KeyUpdate();
         }
         //文本绘制
         //然后是遮挡检测射线检测和配置拆分
