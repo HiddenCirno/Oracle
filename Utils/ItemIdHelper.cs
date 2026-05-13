@@ -143,6 +143,7 @@ namespace Oracle.Utils
                     weapon.MalfState.State = Weapon.EMalfunctionState.None;
                     //weapon.MalfState.Overheating = 0f;
                 }
+                // 维修包
                 if(item.TryGetItemComponent<RepairKitComponent>(out var repairKit))
                 {
                     repairKit.Resource = repairKit.RepairKitsTemplateClass.MaxRepairResource;

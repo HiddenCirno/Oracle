@@ -14,6 +14,7 @@ using UnityEngine;
 
 namespace Oracle.ESP
 {
+    //用于捕获物品实例
     public class ItemCatcher
     {
         public static Item selectedItem = null;
@@ -28,7 +29,7 @@ namespace Oracle.ESP
             if (isCopyPressed && !_copyKeyLastFrame)
             {
                 string itemID = selectedItem.TemplateId;
-                string itemName = selectedItem.Name.Localized(); // 尝试获取本地化名称，如果获取不到可能返回原键值
+                string itemName = selectedItem.Name.Localized();
                 savedItem = selectedItem;
 
                 // 游戏内右下角通知
@@ -43,6 +44,7 @@ namespace Oracle.ESP
         }
     }
     //Patch
+    //全都是用于捕获物品实例的Patch
     // ==========================================
     // 悬停获取 (Pointer Enter)
     // ==========================================
