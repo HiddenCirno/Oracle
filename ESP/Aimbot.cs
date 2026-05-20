@@ -150,8 +150,14 @@ namespace Oracle.ESP
     [HarmonyPatch(typeof(ShotEffector), nameof(ShotEffector.Process))]
     public class NoRecoilPatch
     {
-        static bool Prefix(ref float str)
+        static bool Prefix(ShotEffector __instance, ref float str)
         {
+            if (AimbotCfg.LowRecoil.Value)
+            {
+                var recoilmuti = str * AimbotCfg.LowRecoilMuti.Value;
+                __instance.CurrentRecoilEffect.AddRecoilForce(recoilmuti);
+                return false;
+            }
             //取反一步搞定
             return !AimbotCfg.NoRecoil.Value;
         }
@@ -200,8 +206,10 @@ namespace Oracle.ESP
         internal static ConfigEntry<bool> DrawAimbotFov { get; set; }
         internal static ConfigEntry<bool> DrawTargetLine { get; set; }
         internal static ConfigEntry<bool> NoRecoil { get; set; }
+        internal static ConfigEntry<bool> LowRecoil { get; set; }
         internal static ConfigEntry<float> AimbotFovRadius { get; set; }
         internal static ConfigEntry<float> MagicBulletSpeed { get; set; }
+        internal static ConfigEntry<float> LowRecoilMuti { get; set; }
         internal static ConfigEntry<int> AimbotMaxDistance { get; set; }
         internal static ConfigEntry<string> AimbotPartSetting { get; set; }
 
@@ -215,6 +223,13 @@ namespace Oracle.ESP
             );
             NoRecoil = config.Bind(
                 "自瞄设置", "消除武器后座", true, "禁用武器后坐力系统"
+            );
+            LowRecoil = config.Bind(
+                "自瞄设置", "超低武器后座", true, "将后坐力降至极低，优先级比无后座高，直播用"
+            );
+            LowRecoilMuti = config.Bind(
+                "自瞄设置", "武器后坐倍率", 0.2f,
+                new ConfigDescription("调整自定义后坐力倍率", new AcceptableValueRange<float>(0f, 1f))
             );
             DrawAimbotFov = config.Bind(
                 "自瞄设置", "显示自瞄 FOV", true, "在屏幕中心绘制自瞄生效范围圆环"

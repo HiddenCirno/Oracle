@@ -32,6 +32,10 @@ namespace Oracle
 
         public RenderTexture espRT;
         private byte[] pixelBuffer;
+        // [新增] 帧率限制器参数
+        // 1f / 30f 代表把 ESP 限制在 30 帧。你可以根据需要改成 40 或 60。
+        private float espRefreshRate = 1f / 50f;
+        private float lastEspDrawTime = 0f;
         public void Awake()
         {
             var harmony = new Harmony(PluginsInfo.GUID);
@@ -83,6 +87,8 @@ namespace Oracle
             HotKeyManager.KeyStatusUpdate();
 
             ItemCatcher.KeyUpdate();
+            bool shouldShow = Application.isFocused && HotKeyManager.UniGUI.Value;
+            Oracle.ESP.NativeOverlay.SetVisible(shouldShow);
         }
         //文本绘制
         //然后是遮挡检测射线检测和配置拆分
@@ -105,6 +111,12 @@ namespace Oracle
             //空指针防御
             Camera cam = Camera.main;
             if (cam == null) return;
+            if (Time.time - lastEspDrawTime < espRefreshRate)
+            {
+                return;
+            }
+            // 更新最后绘制时间
+            lastEspDrawTime = Time.time;
             RenderTexture prevRT = RenderTexture.active;
             RenderTexture.active = espRT;             // 将所有 GUI 绘制转移到我们的纹理上
             GL.Clear(false, true, Color.clear);       // 清空上一帧的画面，保持绝对透明

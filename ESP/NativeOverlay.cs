@@ -26,7 +26,12 @@ namespace Oracle.ESP
 
         private static IntPtr hwnd = IntPtr.Zero;
         private static int screenW, screenH;
+        // 在类顶部常量区加上这两个常量
+        private const int SW_HIDE = 0;
+        private const int SW_SHOWNA = 8; // 极其重要：显示窗口但不抢占输入焦点
 
+        // 记录当前显示状态，防止每帧重复调用 API 导致卡顿
+        private static bool isVisible = true;
         public static void Initialize(int w, int h)
         {
             screenW = w; 
@@ -78,6 +83,24 @@ namespace Oracle.ESP
 
             DeleteDC(memDC);
             ReleaseDC(IntPtr.Zero, screenDC);
+        }
+        // [新增方法] 控制窗口显隐
+        public static void SetVisible(bool show)
+        {
+            if (hwnd == IntPtr.Zero) return;
+
+            if (show && !isVisible)
+            {
+                ShowWindow(hwnd, SW_SHOWNA);
+                isVisible = true;
+            }
+            else if (!show && isVisible)
+            {
+                ShowWindow(hwnd, SW_HIDE);
+                // [优化] 隐藏时清空画面，防止下次切回来时残留旧画面闪烁
+                UpdateFrame(new byte[screenW * screenH * 4]);
+                isVisible = false;
+            }
         }
     }
 }
