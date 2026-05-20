@@ -30,6 +30,8 @@ namespace Oracle
         //价格字典定义
         public static Dictionary<string, int> HandbookDict;
 
+        public RenderTexture espRT;
+        private byte[] pixelBuffer;
         public void Awake()
         {
             var harmony = new Harmony(PluginsInfo.GUID);
@@ -65,6 +67,13 @@ namespace Oracle
             espTextStyle.fontStyle = FontStyle.Bold;
             espTextStyle.alignment = TextAnchor.MiddleCenter;
             espTextStyle.richText = true;
+            //拦截
+            espRT = new RenderTexture(Screen.width, Screen.height, 0, RenderTextureFormat.ARGB32);
+            espRT.Create();
+            // 预分配像素缓冲，彻底消灭 GC (垃圾回收) 带来的掉帧！
+            pixelBuffer = new byte[Screen.width * Screen.height * 4];
+            // 启动原生纯净覆盖层
+            Oracle.ESP.NativeOverlay.Initialize(Screen.width, Screen.height);
             //战利品扫描协程
             StartCoroutine(LootESP.LootScannerCoroutine());
         }
@@ -89,9 +98,6 @@ namespace Oracle
         {
             //全局绘制开关
             if (!HotKeyManager.UniGUI.Value) return;
-            //ESP范围
-            Oracle.ESP.LootESP.DrawLootFOVCircle(); 
-            Oracle.ESP.Aimbot.DrawAimbotFOVCircle();
             //空指针防御
             if (CorrectGameWorld == null || CorrectPlayer == null || CorrectGameWorld.AllAlivePlayersList == null) return;
             //只在重绘调用
@@ -99,7 +105,13 @@ namespace Oracle
             //空指针防御
             Camera cam = Camera.main;
             if (cam == null) return;
+            RenderTexture prevRT = RenderTexture.active;
+            RenderTexture.active = espRT;             // 将所有 GUI 绘制转移到我们的纹理上
+            GL.Clear(false, true, Color.clear);       // 清空上一帧的画面，保持绝对透明
             //绘制
+            //ESP范围
+            Oracle.ESP.LootESP.DrawLootFOVCircle();
+            Oracle.ESP.Aimbot.DrawAimbotFOVCircle();
             GL.PushMatrix(); 
             //AI说缺了这句, 真的假的?我用着没问题啊?
             //对你奶奶个腿, 计算方式不一样, AI又骗我
@@ -121,7 +133,24 @@ namespace Oracle
             LootESP.DrawLootText(cam, espTextStyle); 
             Oracle.ESP.Aimbot.UpdateTarget(cam);
             Oracle.ESP.Aimbot.DrawTargetLine(cam);
+            // 绘制完毕，把焦点还给塔科夫主屏幕
+            RenderTexture.active = prevRT;
 
+            // ==========================================
+            // 【无损提取】：发起异步显存读取（绝对不掉帧）
+            // ==========================================
+            UnityEngine.Rendering.AsyncGPUReadback.Request(espRT, 0, TextureFormat.BGRA32, OnReadbackComplete);
+
+        }
+        private void OnReadbackComplete(UnityEngine.Rendering.AsyncGPUReadbackRequest req)
+        {
+            if (req.hasError || pixelBuffer == null) return;
+
+            // 将 GPU 数据拷贝到预分配的缓冲池中 (零额外内存分配)
+            req.GetData<byte>().CopyTo(pixelBuffer);
+
+            // 将画面交给外部 Windows 原生悬浮窗
+            Oracle.ESP.NativeOverlay.UpdateFrame(pixelBuffer);
         }
     }
     [HarmonyPatch(typeof(GameWorld), "OnGameStarted")]

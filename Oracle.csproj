@@ -50,6 +50,15 @@
 	    <HintPath>I:\TKF\EscapeFromTarkov_Data\Managed\Sirenix.Serialization.dll</HintPath>
 	    <Private>False</Private>
 	  </Reference>
+	  
+	  <Reference Include="System.Drawing.Design">
+	    <HintPath>I:\TKF\EscapeFromTarkov_Data\Managed\System.Drawing.Design.dll</HintPath>
+	  </Reference>
+	  
+	  <Reference Include="System.Windows.Forms">
+	    <HintPath>I:\TKF\EscapeFromTarkov_Data\Managed\System.Windows.Forms.dll</HintPath>
+	    <Private>False</Private>
+	  </Reference>
   </ItemGroup>
 
 </Project>
