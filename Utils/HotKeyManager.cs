@@ -1,17 +1,13 @@
 ﻿using BepInEx.Configuration;
 using EFT.Communications;
 using Oracle.ESP;
-using System;
-using System.Collections.Generic;
-using System.Text;
 using UnityEngine;
-using static GClass2175;
-using Oracle.ESP;
 
 namespace Oracle.Utils
 {
     internal class HotKeyManager
     {
+        //配置定义
         internal static ConfigEntry<KeyCode> PlayerESPKey { get; set; }
         internal static ConfigEntry<KeyCode> LootESPKey { get; set; }
         internal static ConfigEntry<KeyCode> LooseLootESPKey { get; set; }
@@ -24,6 +20,8 @@ namespace Oracle.Utils
         internal static ConfigEntry<KeyCode> DropItemKey { get; set; }
         internal static ConfigEntry<KeyCode> UniGUIKey { get; set; }
         internal static ConfigEntry<bool> UniGUI { get; set; }
+        internal static ConfigEntry<bool> FPSLimit { get; set; }
+        //按键监听, 挂载到Update里, 其实是不是应该挂载到FixedUpdate?
         public static void KeyStatusUpdate()
         {
             if (Input.GetKeyDown(PlayerESPKey.Value))
@@ -117,6 +115,7 @@ namespace Oracle.Utils
                 ItemSpawner.CloneAndDropItem(PluginsCore.CorrectPlayer, ItemCatcher.savedItem);
             }
         }
+        //配置初始化
         public static void Initialize(ConfigFile config)
         {
             PlayerESPKey = config.Bind<KeyCode>(
@@ -159,7 +158,6 @@ namespace Oracle.Utils
                 KeyCode.F7,
                 "切换物资透视长短名字"
             );
-
             UniGUIKey = config.Bind<KeyCode>(
                 "快捷键设置",
                 "切换全局绘制",
@@ -171,6 +169,12 @@ namespace Oracle.Utils
                 "启用绘制",
                 true,
                 "启用绘制"
+            );
+            FPSLimit = config.Bind<bool>(
+                "绘制设置",
+                "开启帧数限制",
+                true,
+                "启用后透视将以50帧为上限绘制而不是每帧绘制，关闭可能造成一定的帧数下降"
             );
             SpawnItemKey = config.Bind<KeyCode>(
                 "快捷键设置",

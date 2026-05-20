@@ -98,9 +98,9 @@ namespace Oracle.ESP
                 //Console.WriteLine($"清洗ID");
                 // 1. 深度克隆并彻底洗白所有子物品的ID (防坏档核心)
                 Item clonedItem = originalItem.CloneItem();
-                ItemIdHelper.ReassignAllIds(clonedItem);
+                ItemInstanceHelper.ReassignAllIds(clonedItem);
                 // 强制带勾
-                ItemIdHelper.CleanAndResetItem(clonedItem, ItemSpawnerCfg.ForcedFiR.Value);
+                ItemInstanceHelper.CleanAndResetItem(clonedItem, ItemSpawnerCfg.ForcedFiR.Value);
                 //clonedItem.SpawnedInSession = true;
 
                 // 2. 💡核心修复：递归加载主物品及所有配件的3D模型

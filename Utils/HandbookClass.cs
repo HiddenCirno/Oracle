@@ -6,10 +6,12 @@ namespace Oracle.Utils
 {
     public class HandbookClass
     {
+        //通过原版路由请求手册
         public static string GetHandbookData(string request)
         {
             return RequestHandler.PostJson("/client/handbook/templates", JsonConvert.SerializeObject(new GetHandbookRequest(request)));
         }
+        //以下为类型接口和通讯结果定义
         public class HandbookResponse
         {
             [JsonProperty("err")]
@@ -36,7 +38,6 @@ namespace Oracle.Utils
             [JsonProperty("Id")]
             public string Id { get; set; }
 
-            // ParentId 有时为 null，在 C# 中 string 本身可以接受 null
             [JsonProperty("ParentId")]
             public string ParentId { get; set; }
 

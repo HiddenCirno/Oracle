@@ -1,13 +1,9 @@
 ﻿using BepInEx;
-using BepInEx.Configuration;
 using EFT;
-using EFT.Ballistics;
 using HarmonyLib;
 using Newtonsoft.Json;
 using Oracle.ESP;
 using Oracle.Utils;
-using SPT.Common.Http;
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -15,7 +11,6 @@ using static Oracle.ESP.PlayerStatusEdit;
 
 namespace Oracle
 {
-
     [BepInPlugin(PluginsInfo.GUID, PluginsInfo.NAME, PluginsInfo.VERSION)]
     public class PluginsCore : BaseUnityPlugin
     {
@@ -25,15 +20,13 @@ namespace Oracle
 
         //绘制样式缓存
         public GUIStyle espTextStyle;
-
         public Material espMaterial;
         //价格字典定义
         public static Dictionary<string, int> HandbookDict;
-
+        //透明图材质和图像流缓存
         public RenderTexture espRT;
         private byte[] pixelBuffer;
-        // [新增] 帧率限制器参数
-        // 1f / 30f 代表把 ESP 限制在 30 帧。你可以根据需要改成 40 或 60。
+        //帧率限制
         private float espRefreshRate = 1f / 50f;
         private float lastEspDrawTime = 0f;
         public void Awake()
@@ -48,9 +41,9 @@ namespace Oracle
             PlayerStatusEditCfg.Initialize(Config);
             HotKeyManager.Initialize(Config);
             //价格字典拉取. 初始化
-            var rawHandbookData = Oracle.Utils.HandbookClass.GetHandbookData("白昼和黑夜等同吗？义人和罪人等同吗？倘若人生来软弱，弱者们又该从哪位神明处寻求安宁？现在，我赐予各位直视太阳的权利，此时此地，尔等只需静听，此处再无神明，创造乐园的，乃是人之君王！");
+            var rawHandbookData = Utils.HandbookClass.GetHandbookData("白昼和黑夜等同吗？义人和罪人等同吗？倘若人生来软弱，弱者们又该从哪位神明处寻求安宁？现在，我赐予各位直视太阳的权利，此时此地，尔等只需静听，此处再无神明，创造乐园的，乃是人之君王！");
             //var handbook = ;
-            HandbookDict = JsonConvert.DeserializeObject<Oracle.Utils.HandbookClass.HandbookResponse>(rawHandbookData).Data.Items
+            HandbookDict = JsonConvert.DeserializeObject<Utils.HandbookClass.HandbookResponse>(rawHandbookData).Data.Items
                 .GroupBy(x => x.Id) //防止原版数据有极其罕见的重复ID导致字典报错
                 .ToDictionary(g => g.Key, g => g.First().Price);
             //Console.WriteLine($"我看看怎么个事: {handbook.Data.Categories.FirstOrDefault().Id}");
@@ -74,10 +67,10 @@ namespace Oracle
             //拦截
             espRT = new RenderTexture(Screen.width, Screen.height, 0, RenderTextureFormat.ARGB32);
             espRT.Create();
-            // 预分配像素缓冲，彻底消灭 GC (垃圾回收) 带来的掉帧！
+            //预分配缓存, 高效GC
             pixelBuffer = new byte[Screen.width * Screen.height * 4];
-            // 启动原生纯净覆盖层
-            Oracle.ESP.NativeOverlay.Initialize(Screen.width, Screen.height);
+            //启动覆盖层
+            NativeOverlay.Initialize(Screen.width, Screen.height);
             //战利品扫描协程
             StartCoroutine(LootESP.LootScannerCoroutine());
         }
@@ -85,10 +78,10 @@ namespace Oracle
         {
             //快捷键监听
             HotKeyManager.KeyStatusUpdate();
-
             ItemCatcher.KeyUpdate();
+            //窗口失焦自动隐藏
             bool shouldShow = Application.isFocused && HotKeyManager.UniGUI.Value;
-            Oracle.ESP.NativeOverlay.SetVisible(shouldShow);
+            NativeOverlay.SetVisible(shouldShow);
         }
         //文本绘制
         //然后是遮挡检测射线检测和配置拆分
@@ -111,19 +104,21 @@ namespace Oracle
             //空指针防御
             Camera cam = Camera.main;
             if (cam == null) return;
-            if (Time.time - lastEspDrawTime < espRefreshRate)
+            //FPS限制, 仅在配置开启时启用, 能有一定的性能提升
+            if (Time.time - lastEspDrawTime < espRefreshRate && HotKeyManager.FPSLimit.Value)
             {
                 return;
             }
-            // 更新最后绘制时间
             lastEspDrawTime = Time.time;
+            //将绘制目标设置为自定义纹理而不是主摄像机
             RenderTexture prevRT = RenderTexture.active;
-            RenderTexture.active = espRT;             // 将所有 GUI 绘制转移到我们的纹理上
-            GL.Clear(false, true, Color.clear);       // 清空上一帧的画面，保持绝对透明
+            RenderTexture.active = espRT;
+            GL.Clear(false, true, Color.clear);
             //绘制
             //ESP范围
-            Oracle.ESP.LootESP.DrawLootFOVCircle();
-            Oracle.ESP.Aimbot.DrawAimbotFOVCircle();
+            LootESP.DrawLootFOVCircle();
+            Aimbot.DrawAimbotFOVCircle();
+            //开始绘制
             GL.PushMatrix(); 
             //AI说缺了这句, 真的假的?我用着没问题啊?
             //对你奶奶个腿, 计算方式不一样, AI又骗我
@@ -143,28 +138,24 @@ namespace Oracle
             PlayerESP.DrawPlayerText(cam, espTextStyle);
             PlayerESP.DrawAllPlayerHealthBars(cam);
             LootESP.DrawLootText(cam, espTextStyle); 
-            Oracle.ESP.Aimbot.UpdateTarget(cam);
-            Oracle.ESP.Aimbot.DrawTargetLine(cam);
-            // 绘制完毕，把焦点还给塔科夫主屏幕
+            Aimbot.UpdateTarget(cam);
+            Aimbot.DrawTargetLine(cam);
+            //窗口焦点归位
             RenderTexture.active = prevRT;
-
-            // ==========================================
-            // 【无损提取】：发起异步显存读取（绝对不掉帧）
-            // ==========================================
+            //将图像流异步传输给窗口
             UnityEngine.Rendering.AsyncGPUReadback.Request(espRT, 0, TextureFormat.BGRA32, OnReadbackComplete);
 
         }
         private void OnReadbackComplete(UnityEngine.Rendering.AsyncGPUReadbackRequest req)
         {
             if (req.hasError || pixelBuffer == null) return;
-
-            // 将 GPU 数据拷贝到预分配的缓冲池中 (零额外内存分配)
+            //GPU数据传输
             req.GetData<byte>().CopyTo(pixelBuffer);
-
-            // 将画面交给外部 Windows 原生悬浮窗
-            Oracle.ESP.NativeOverlay.UpdateFrame(pixelBuffer);
+            //将图像流传输给窗口
+            NativeOverlay.UpdateFrame(pixelBuffer);
         }
     }
+    //游戏启动Patch, 用于捕获关键实例
     [HarmonyPatch(typeof(GameWorld), "OnGameStarted")]
     public class GameStartPatch
     {
@@ -177,7 +168,7 @@ namespace Oracle
             //挂载脚本
             __instance.MainPlayer.gameObject.AddComponent<PlayerStatusEditComponent>();
             //缓存容器
-            Oracle.ESP.LootESP.CachedContainers = UnityEngine.Object.FindObjectsOfType<EFT.Interactive.LootableContainer>();
+            LootESP.CachedContainers = Object.FindObjectsOfType<EFT.Interactive.LootableContainer>();
         }
     }
 }
