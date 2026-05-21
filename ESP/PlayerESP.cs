@@ -1,13 +1,12 @@
 ﻿using BepInEx.Configuration;
 using EFT;
-using EFT.HealthSystem;
-using System;
-using System.Collections.Generic;
-using System.Text;
 using UnityEngine;
 
 namespace Oracle.ESP
 {
+    /// <summary>
+    /// 玩家透视部分
+    /// </summary>
     public class PlayerESP
     {
         //颜色定义
@@ -20,7 +19,10 @@ namespace Oracle.ESP
         public static readonly int HighPolyWithTerrainMask =
             (1 << LayerMask.NameToLayer("Terrain")) |
             (1 << LayerMask.NameToLayer("HighPolyCollider"));
-        //核心绘制方法
+        /// <summary>
+        /// 绘制玩家骨骼
+        /// </summary>
+        /// <param name="cam">摄像机</param>
         public static void DrawPlayerBone(Camera cam)
         {
             //功能总开关
@@ -150,6 +152,11 @@ namespace Oracle.ESP
                 DrawBoneLine(cam, rCalf, rFoot);
             }
         }
+        /// <summary>
+        /// 绘制玩家信息
+        /// </summary>
+        /// <param name="cam">摄像机</param>
+        /// <param name="textStyle">文本样式</param>
         public static void DrawPlayerText(Camera cam, GUIStyle textStyle)
         {
             //功能总开关
@@ -191,7 +198,7 @@ namespace Oracle.ESP
                         //name = GStruct21.ConvertToLatinic(info.Nickname);
                         if (IsAllEnglish(info.Nickname))
                         {
-                            name = info.Nickname; // 全英文直接用，节省 ConvertToLatinic
+                            name = info.Nickname;
                         }
                         else
                         {
@@ -294,6 +301,10 @@ namespace Oracle.ESP
                 }
             }
         }
+        /// <summary>
+        /// 绘制玩家血条
+        /// </summary>
+        /// <param name="cam">摄像机</param>
         public static void DrawAllPlayerHealthBars(Camera cam)
         {
             //功能开关
@@ -311,6 +322,11 @@ namespace Oracle.ESP
                 DrawPlayerHealthBar(cam, player);
             }
         }
+        /// <summary>
+        /// 绘制血条
+        /// </summary>
+        /// <param name="cam">摄像机</param>
+        /// <param name="player">玩家实例</param>
         public static void DrawPlayerHealthBar(Camera cam, Player player)
         {
             //空指针防御
@@ -347,21 +363,32 @@ namespace Oracle.ESP
             //还原颜色
             GUI.color = oldGuiColor;
         }
-        //提取Transform的坐标
+        /// <summary>
+        /// 提取Transform的坐标
+        /// </summary>
+        /// <param name="t">transform</param>
+        /// <returns></returns>
         public static Vector3? GetBonePos(Transform t)
         {
             if (t == null) return null;
             return t.position;
         }
-        //安全提取BifacialTransform坐标
-        //使用了.Original
+        /// <summary>
+        /// 使用.Original安全提取BifacialTransform坐标
+        /// </summary>
+        /// <param name="bt">部分骨骼特有的BifacialTransform</param>
+        /// <returns></returns>
         public static Vector3? GetBonePos(BifacialTransform bt)
         {
             if (bt == null || bt.Original == null) return null;
             return bt.Original.position;
         }
-
-        //核心方法, 绘制骨骼连线
+        /// <summary>
+        /// 绘制骨骼连线
+        /// </summary>
+        /// <param name="cam">摄像机</param>
+        /// <param name="p1">坐标1, 起始点</param>
+        /// <param name="p2">坐标2, 结束点</param>
         public static void DrawBoneLine(Camera cam, Vector3? p1, Vector3? p2)
         {
             //如果有任何一个节点为空值, 则放弃绘制
@@ -378,12 +405,24 @@ namespace Oracle.ESP
                 GL.Vertex3(s2.x, Screen.height - s2.y, 0);
             }
         }
-        //距离判断, O(1)单步搞定
+        /// <summary>
+        /// 判断距离, O(1)单步搞定
+        /// </summary>
+        /// <param name="maxDistance">距离限制</param>
+        /// <param name="p1">坐标1</param>
+        /// <param name="p2">坐标2</param>
+        /// <returns></returns>
         public static bool IsInRange(int maxDistance, Vector3 p1, Vector3 p2)
         {
             return (p1 - p2).sqrMagnitude <= maxDistance * maxDistance;
         }
-        //判断AI是否在玩家可见范围
+        /// <summary>
+        /// 判断AI是否在玩家可见范围
+        /// </summary>
+        /// <param name="camPosition">相机坐标</param>
+        /// <param name="targetPlayer">目标玩家实例</param>
+        /// <param name="obstacleLayerMask">射线判断层级</param>
+        /// <returns></returns>
         public static bool IsPlayerVisible(Vector3 camPosition, Player targetPlayer, int obstacleLayerMask)
         {
             //空指针防御
@@ -411,7 +450,13 @@ namespace Oracle.ESP
             //三个点均不可见, 返回false
             return false;
         }
-        //判断AI是否可以看到玩家, 原理和上面的方法大致相同, 但更加严谨
+        /// <summary>
+        /// 判断AI是否可以看到玩家, 原理和上面的方法大致相同, 但更加严谨
+        /// </summary>
+        /// <param name="bot">AI玩家实例</param>
+        /// <param name="localPlayer">玩家</param>
+        /// <param name="obstacleLayerMask">射线层级</param>
+        /// <returns></returns>
         public static bool IsBotVisible(Player bot, Player localPlayer, int obstacleLayerMask)
         {
             if (bot == null || localPlayer == null || bot.PlayerBones == null) return false;
@@ -451,7 +496,12 @@ namespace Oracle.ESP
             }
             return false;
         }
-        //安全获取玩家总血量和生命上限
+        /// <summary>
+        /// 安全获取玩家总血量和生命上限
+        /// </summary>
+        /// <param name="player">玩家实例</param>
+        /// <param name="currentHp">当前生命值</param>
+        /// <param name="maxHp">生命值上限</param>
         public static void GetPlayerTotalHealth(Player player, out float currentHp, out float maxHp)
         {
             currentHp = 0f;
@@ -475,7 +525,13 @@ namespace Oracle.ESP
                 maxHp += partHealth.Maximum;
             }
         }
-        //动态计算骨骼颜色
+        /// <summary>
+        /// 动态计算骨骼颜色
+        /// </summary>
+        /// <param name="player">玩家实例</param>
+        /// <param name="part">肢体部位</param>
+        /// <param name="baseColor">颜色</param>
+        /// <returns></returns>
         public static Color GetDynamicLimbColor(Player player, EBodyPart part, Color baseColor)
         {
             //空指针防御和功能开关检查合并
@@ -515,6 +571,11 @@ namespace Oracle.ESP
             float lerpFactor = Mathf.Lerp(minLerp, 1.0f, healthPercent);
             return Color.Lerp(targetColor, baseColor, lerpFactor);
         }
+        /// <summary>
+        /// 判断字符串是否全是英文字符
+        /// </summary>
+        /// <param name="str">输入字符</param>
+        /// <returns></returns>
         public static bool IsAllEnglish(string str)
         {
             for (int i = 0; i < str.Length; i++)
@@ -527,9 +588,11 @@ namespace Oracle.ESP
             return true;
         }
     }
+    /// <summary>
+    /// 配置项定义
+    /// </summary>
     public class PlayerESPCfg
     {
-        //Config定义
         internal static ConfigEntry<bool> EnablePlayerESP { get; set; }
         internal static ConfigEntry<bool> EnablePlayerInfoESP { get; set; }
         internal static ConfigEntry<bool> EnablePlayerBoneESP { get; set; }

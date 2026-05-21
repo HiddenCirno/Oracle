@@ -2,17 +2,15 @@
 using EFT;
 using EFT.HealthSystem;
 using HarmonyLib;
-using System;
-using System.Collections.Generic;
-using System.Text;
 using UnityEngine;
 
 namespace Oracle.ESP
 {
     public class PlayerStatusEdit
     {
-        //锁定脚本
-        //在OnGameStartPatch里挂载到MainPlayer上
+        /// <summary>
+        /// 耐力锁定脚本
+        /// </summary>
         public class PlayerStatusEditComponent : MonoBehaviour
         {
             private Player localPlayer;
@@ -75,7 +73,8 @@ namespace Oracle.ESP
             return true;
             //}
         }
-    }//Patch
+    }
+    //Patch
     [HarmonyPatch(typeof(ActiveHealthController), "ApplyDamage")]
     public class AntiFallenDamagePatch2
     {
@@ -93,12 +92,19 @@ namespace Oracle.ESP
             //}
         }
     }
-    //配置定义
+    /// <summary>
+    /// 配置项定义
+    /// </summary>
     public class PlayerStatusEditCfg
     {
 
         internal static ConfigEntry<bool> EnableInfiniteStamina { get; set; }
         internal static ConfigEntry<bool> DisableFallenDamage { get; set; }
+
+        /// <summary>
+        /// 配置项初始化
+        /// </summary>
+        /// <param name="config">传入配置实例</param>
         public static void Initialize(ConfigFile config)
         {
             EnableInfiniteStamina = config.Bind(
