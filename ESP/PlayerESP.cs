@@ -536,6 +536,10 @@ namespace Oracle.ESP
         internal static ConfigEntry<bool> EnablePlayerHealthBarESP { get; set; }
         internal static ConfigEntry<bool> EnablePlayerBoneESPHealthMode { get; set; }
         internal static ConfigEntry<int> PlayerESPMaxDistance { get; set; }
+        /// <summary>
+        /// 配置项初始化
+        /// </summary>
+        /// <param name="config">传入配置实例</param>
         public static void Initialize(ConfigFile config)
         {
             EnablePlayerESP = config.Bind<bool>(

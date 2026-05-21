@@ -2,19 +2,26 @@
 using EFT;
 using EFT.Ballistics;
 using HarmonyLib;
-using System;
 using UnityEngine;
-using static GClass2175;
 
 namespace Oracle.ESP
 {
+    /// <summary>
+    /// 自瞄部分
+    /// </summary>
     public class Aimbot
     {
-        // 独立的绘制材质，防止和其他模块的渲染冲突
+        /// <summary>
+        /// 独立的渲染材质, 防止冲突
+        /// </summary>
         private static Material aimbotMaterial;
-        //当前锁定目标
+        /// <summary>
+        /// 内部变量, 当前瞄准的目标
+        /// </summary>
         public static Player LockedTarget { get; private set; }
-        //自瞄范围绘制
+        /// <summary>
+        /// 绘制自瞄范围
+        /// </summary>
         public static void DrawAimbotFOVCircle()
         {
             if (!AimbotCfg.EnableAimbot.Value || !AimbotCfg.DrawAimbotFov.Value) return;
@@ -22,7 +29,10 @@ namespace Oracle.ESP
             float fovRadius = AimbotCfg.AimbotFovRadius.Value;
             DrawCircle(screenCenter, fovRadius, new Color(1f, 0f, 0f, 0.3f), 64);
         }
-        //实时更新自瞄目标
+        /// <summary>
+        /// 更新瞄准目标
+        /// </summary>
+        /// <param name="cam">当前摄像机</param>
         public static void UpdateTarget(Camera cam)
         {
             //关闭自瞄停止运行
@@ -75,7 +85,10 @@ namespace Oracle.ESP
             //更新目标
             LockedTarget = bestTarget;
         }
-        //锁定线绘制
+        /// <summary>
+        /// 绘制目标锁定线
+        /// </summary>
+        /// <param name="cam">当前摄像机</param>
         public static void DrawTargetLine(Camera cam)
         {
             //依旧功能开关+防御
@@ -92,7 +105,9 @@ namespace Oracle.ESP
             //画线
             DrawLine(screenCenter, endPos, new Color(1f, 0f, 0f, 0.8f));
         }
-        //材质初始化
+        /// <summary>
+        /// 初始化材质球
+        /// </summary>
         private static void InitMaterial()
         {
             if (!aimbotMaterial)
@@ -105,7 +120,13 @@ namespace Oracle.ESP
                 aimbotMaterial.SetInt("_ZWrite", 0);
             }
         }
-        //画圆
+        /// <summary>
+        /// 画圆方法
+        /// </summary>
+        /// <param name="center">中心点</param>
+        /// <param name="radius">半径</param>
+        /// <param name="color">颜色</param>
+        /// <param name="segments">圆的精度(分段数)</param>
         public static void DrawCircle(Vector2 center, float radius, Color color, int segments)
         {
             if (Event.current.type != EventType.Repaint) return;
@@ -130,7 +151,12 @@ namespace Oracle.ESP
             GL.End();
             GL.PopMatrix();
         }
-        //画线
+        /// <summary>
+        /// 画线
+        /// </summary>
+        /// <param name="start">起始点</param>
+        /// <param name="end">结束点</param>
+        /// <param name="color">颜色</param>
         public static void DrawLine(Vector2 start, Vector3 end, Color color)
         {
             if (Event.current.type != EventType.Repaint) return;
@@ -198,7 +224,9 @@ namespace Oracle.ESP
             }
         }
     }
-    //配置定义
+    /// <summary>
+    /// 配置项定义
+    /// </summary>
     public class AimbotCfg
     {
         internal static ConfigEntry<bool> EnableAimbot { get; set; }
@@ -212,7 +240,10 @@ namespace Oracle.ESP
         internal static ConfigEntry<float> LowRecoilMuti { get; set; }
         internal static ConfigEntry<int> AimbotMaxDistance { get; set; }
         internal static ConfigEntry<string> AimbotPartSetting { get; set; }
-
+        /// <summary>
+        /// 配置项初始化
+        /// </summary>
+        /// <param name="config">传入配置实例</param>
         public static void Initialize(ConfigFile config)
         {
             EnableAimbot = config.Bind(

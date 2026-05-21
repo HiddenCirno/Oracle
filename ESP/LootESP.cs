@@ -5,25 +5,40 @@ using UnityEngine;
 
 namespace Oracle.ESP
 {
-    //战利品数据缓存
+    /// <summary>
+    /// 战利品数据定义
+    /// </summary>
     public struct LootData
     {
         public Vector3 Position;
         public string Name;
         public int Distance;
-        public int Price;        // ⭐ 新增：存储价格
-        public Color ItemColor;  // ⭐ 新增：存储这个物品该用什么颜色画
-        public int YOffset; // ⭐ 新增：记录这个文本需要向下偏移多少像素
+        public int Price;
+        public Color ItemColor;
+        public int YOffset;
     }
+    /// <summary>
+    /// 物资透视部分
+    /// </summary>
     public class LootESP
     {
-        //约束范围
+        /// <summary>
+        /// 约束透视范围
+        /// </summary>
         private static Material lineMaterial;
-        //全局缓存list, 唯一
+        /// <summary>
+        /// 唯一的全局战利品表
+        /// </summary>
         public static List<LootData> CachedLootList = new List<LootData>();
-        //全局容器缓存, 唯一
-        public static EFT.Interactive.LootableContainer[] CachedContainers;
-        //物品价值分级
+        /// <summary>
+        /// 唯一的全局容器表
+        /// </summary>
+        public static LootableContainer[] CachedContainers;
+        /// <summary>
+        /// 定义战利品等级
+        /// </summary>
+        /// <param name="price">价格</param>
+        /// <returns></returns>
         public static Color GetColorByPrice(int price)
         {
             //价格区间
@@ -35,7 +50,11 @@ namespace Oracle.ESP
             if (price >= 10000) return new Color(0f, 0.666f, 0f);
             return Color.white;
         }
-        //绘制方法
+        /// <summary>
+        /// 绘制文本
+        /// </summary>
+        /// <param name="cam">摄像机</param>
+        /// <param name="textStyle">样式</param>
         public static void DrawLootText(Camera cam, GUIStyle textStyle)
         {
             if (CachedLootList == null || CachedLootList.Count == 0 || !LootESPCfg.EnableLootESP.Value) return;
@@ -66,12 +85,15 @@ namespace Oracle.ESP
                         }
                     }
                     string espText = $"{loot.Name}";
-                    // 绘制
+                    //绘制
                     GUI.Label(new Rect(screenX - 100, screenY - 20, 200, 40), espText, textStyle);
                 }
             }
         }
-        //扫描
+        /// <summary>
+        /// 扫描协程
+        /// </summary>
+        /// <returns></returns>
         public static System.Collections.IEnumerator LootScannerCoroutine()
         {
             while (true)
@@ -81,9 +103,9 @@ namespace Oracle.ESP
                 //空值检查和缓存清理
                 if (PluginsCore.CorrectGameWorld == null || PluginsCore.CorrectPlayer == null)
                 {
-                    if (Oracle.ESP.LootESP.CachedContainers != null)
+                    if (CachedContainers != null)
                     {
-                        Oracle.ESP.LootESP.CachedContainers = null;
+                        CachedContainers = null;
                     }
                     continue;
                 }
@@ -93,7 +115,7 @@ namespace Oracle.ESP
                     continue;
                 }
                 //存储扫描结果
-                List<Oracle.ESP.LootData> tempLootList = new List<Oracle.ESP.LootData>();
+                List<LootData> tempLootList = new List<LootData>();
                 //读取玩家坐标
                 Vector3 playerPos = PluginsCore.CorrectPlayer.Transform.position;
                 //配置最大透视距离
@@ -136,15 +158,27 @@ namespace Oracle.ESP
                     }
                 }
                 //刷新缓存列表
-                Oracle.ESP.LootESP.CachedLootList = tempLootList;
+                CachedLootList = tempLootList;
             }
         }
+        /// <summary>
+        /// 维护战利品表
+        /// </summary>
+        /// <param name="targetList">目标列表</param>
+        /// <param name="offsetDict">偏移距离</param>
+        /// <param name="itemKey">物品key</param>
+        /// <param name="itemName">物品名</param>
+        /// <param name="pos">坐标</param>
+        /// <param name="dist">距离</param>
+        /// <param name="prefix">预修复</param>
         private static void TryAddLootData(List<LootData> targetList, Dictionary<Vector3, int> offsetDict, string itemKey, string itemName, Vector3 pos, int dist, string prefix = "")
         {
             //字典O(1)查价
             if (!PluginsCore.HandbookDict.TryGetValue(itemKey, out int itemPrice)) return;
             //价值过滤
             int minPriceThreshold = LootESPCfg.LootESPMinPrice.Value;
+            //过滤掉物品栏
+            //尸体实际上是一个以物品栏和不可拾取形式存在的容器
             if (itemPrice < minPriceThreshold || itemKey == "55d7217a4bdc2d86028b456d") return;
             //价值格式化
             string priceStr = itemPrice >= 10000 ? (itemPrice / 10000f).ToString("0.#") + "万" : itemPrice.ToString();
@@ -176,6 +210,13 @@ namespace Oracle.ESP
                 YOffset = currentYOffset // ⭐ 存入算好的偏移量！
             });
         }
+        /// <summary>
+        /// 画圆方法
+        /// </summary>
+        /// <param name="center">中心点</param>
+        /// <param name="radius">半径</param>
+        /// <param name="color">颜色</param>
+        /// <param name="segments">圆的精度(分段数)</param>
         public static void DrawCircle(Vector2 center, float radius, Color color, int segments = 64)
         {
             //画圆
@@ -215,7 +256,9 @@ namespace Oracle.ESP
             GL.End();
             GL.PopMatrix();
         }
-        //画圆方法
+        /// <summary>
+        /// 绘制约束范围
+        /// </summary>
         public static void DrawLootFOVCircle()
         {
             //是否可见
@@ -227,6 +270,9 @@ namespace Oracle.ESP
             DrawCircle(screenCenter, fovRadius, new Color(0.8f, 1f, 1f, 0.4f), 64);
         }
     }
+    /// <summary>
+    /// 配置项定义
+    /// </summary>
     public class LootESPCfg
     {
         internal static ConfigEntry<bool> EnableLootESP { get; set; }
@@ -239,6 +285,10 @@ namespace Oracle.ESP
         internal static ConfigEntry<int> LootESPFovRange { get; set; }
         internal static ConfigEntry<int> LootESPFovMinPrice { get; set; }
         internal static ConfigEntry<bool> ShowItemFullName { get; set; }
+        /// <summary>
+        /// 配置项初始化
+        /// </summary>
+        /// <param name="config">传入配置实例</param>
         public static void Initialize(ConfigFile config)
         {
             EnableLootESP = config.Bind<bool>(

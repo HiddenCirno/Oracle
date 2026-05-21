@@ -5,9 +5,12 @@ using System.Text;
 
 namespace Oracle.Utils
 {
+    /// <summary>
+    /// MongoId的拓展方法类
+    /// </summary>
     public static class MongoIdExtend
     {
-        //全局的sha256实例
+        //全局的sha256实例, 线程安全
         [ThreadStatic]
         private static SHA256 _sha256;
         //HEX预查表
@@ -15,6 +18,9 @@ namespace Oracle.Utils
         /// <summary>
         /// MongoId的扩展方法, 基于原ID生成新的MongoId
         /// </summary>
+        /// <param name="original">原始ID</param>
+        /// <param name="salt">传入的加盐信息</param>
+        /// <returns></returns>
         public static MongoID Regenerate(this MongoID original, string salt)
         {
             if (original == null) return original;

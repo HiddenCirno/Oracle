@@ -13,57 +13,59 @@ using Oracle.Utils;
 
 namespace Oracle.ESP
 {
+    /// <summary>
+    /// 虚空造物部分
+    /// </summary>
     public class ItemSpawner
     {
         /// <summary>
-        /// 核心方法：尝试生成物品到玩家背包，如果背包满了则自动掉落到地上
-        /// 注意：因为包含模型加载，此方法已改为异步 (async Task)
+        /// 尝试异步添加物品到玩家物品栏
         /// </summary>
+        /// <param name="player">玩家实例</param>
+        /// <param name="templateId">指定的物品ID(模板id, 即tpl, 非唯一ID, 这两个东西都使用MongoId规范是真的害人....)</param>
+        /// <returns></returns>
         public static async Task SpawnItemIntoInventoryAsync(Player player, string templateId)
         {
+            //提取单例和当前实例
             var itemFactory = Singleton<ItemFactoryClass>.Instance;
             var gameWorld = PluginsCore.CorrectGameWorld;
-
+            //防御性检查
             if (itemFactory == null || gameWorld == null) return;
             if (!itemFactory.ItemTemplates.ContainsKey(templateId)) return;
-
-            // 生成唯一Id
+            //随机生成一个新的唯一ID
             string newId = MongoID.Generate();
-            // 创建物品
+            //构造物品
             Item newItem = itemFactory.CreateItem(newId, templateId, null);
             if (newItem == null) return;
-
-            // 强制物品为带勾状态
+            //带勾
             if (ItemSpawnerCfg.ForcedFiR.Value) newItem.SpawnedInSession = true;
-
-            // 满堆叠处理
+            //设置物品堆叠
             newItem.StackObjectsCount = ItemSpawnerCfg.CustomStackSize.Value;
             if (newItem.Template.StackMaxSize > 1 && ItemSpawnerCfg.MaxStack.Value)
             {
                 newItem.StackObjectsCount = newItem.Template.StackMaxSize;
             }
-
-            // 💡 核心修复：即使是生成到背包的物品，也必须预加载模型
-            // 否则如果玩家之后将其丢弃或者在检视(Inspect)时，会因为找不到模型而消失或报错
+            //异步读取物品资产, 防止出现问题
             await LoadItemBundlesAsync(newItem);
-
-            // 寻找空位置
+            //自定义寻址
             ItemAddress targetLocation = FindEmptyLocation(player, newItem);
-
+            //有效地址, 尝试发包
             if (targetLocation != null)
             {
-                // 网络包参数
+                //配置网络包
                 var addOperationResult = InteractionsHandlerClass.Add(
                     newItem,
                     targetLocation,
                     player.InventoryController,
                     false
                 );
-
+                //发包成功
                 if (addOperationResult.Succeeded)
                 {
                     try
                     {
+                        //执行
+                        //这里会弹出无源错误, 在战局内这个错误不影响实际使用, Fika环境下可能出现同步问题但问题不大, 因此直接捕获即可
                         player.InventoryController.TryRunNetworkTransaction(addOperationResult);
                         // Console.WriteLine($"成功将物品放入背包: {newItem.Name.Localized()}");
                     }
@@ -71,136 +73,121 @@ namespace Oracle.ESP
                 }
                 else
                 {
-                    // 备用逻辑：操作失败，转为掉落
+                    //未知原因导致的发包失败, 转为掉落物品
                     DropItemToGround(player, newItem, gameWorld);
                 }
             }
             else
             {
-                // 备用逻辑：背包满了，直接掉落在地上
+                //背包满了, 掉落物品
                 DropItemToGround(player, newItem, gameWorld);
             }
         }
-
         /// <summary>
-        /// 完美虚空造物：深度克隆、洗白ID、加载所有配件模型并在玩家面前静止掉落
+        /// 虚空造物并掉落物品(异步执行)
         /// </summary>
+        /// <param name="player">玩家实例</param>
+        /// <param name="originalItem">捕获并存储的物品实例</param>
+        /// <param name="cam">摄像机</param>
+        /// <returns></returns>
         public static async Task CloneAndDropItemAsync(Player player, Item originalItem, Camera cam)
         {
+            //防御检查
             if (player == null || originalItem == null) return;
-
             var gameWorld = PluginsCore.CorrectGameWorld;
             if (gameWorld == null) return;
-
-            //Console.WriteLine($"尝试生成物品");
             try
             {
-                //Console.WriteLine($"清洗ID");
-                // 1. 深度克隆并彻底洗白所有子物品的ID (防坏档核心)
-                Item clonedItem = originalItem.CloneItem();
-                ItemInstanceHelper.ReassignAllIds(clonedItem);
-                // 强制带勾
-                ItemInstanceHelper.CleanAndResetItem(clonedItem, ItemSpawnerCfg.ForcedFiR.Value);
-                //clonedItem.SpawnedInSession = true;
-
-                // 2. 💡核心修复：递归加载主物品及所有配件的3D模型
+                //复制物品-清洗ID-清洗状态, 通过两个拓展方法一步完成
+                Item clonedItem = originalItem.CloneItem().ReassignAllIds().CleanAndResetItem(ItemSpawnerCfg.ForcedFiR.Value);;
+                //递归加载所有物品资产
                 await LoadItemBundlesAsync(clonedItem);
-
-                // 3. 在世界上掉落
+                //生成掉落物
                 DropItem(player, clonedItem, gameWorld, cam);
             }
             catch (Exception ex)
             {
+                //捕获奇怪的错误
                 Console.WriteLine($"物品生成失败: {ex.Message}\n{ex.StackTrace}");
-                //Console.WriteLine($"召唤失败: {ex.Message}");
             }
         }
-
         /// <summary>
-        /// 辅助方法：处理物理掉落逻辑
+        /// 在世界上掉落物品
         /// </summary>
+        /// <param name="player">玩家实例</param>
+        /// <param name="item">物品实例</param>
+        /// <param name="gameWorld">世界实例</param>
         private static void DropItemToGround(Player player, Item item, GameWorld gameWorld)
         {
-            //Console.WriteLine($"开始生成物品");
-            // 计算坐标：玩家脚底抬高 1 米
+            //在玩家脚底高一米, 向"前"0.5米的位置生成
             Vector3 spawnPosition = player.Transform.position + new Vector3(0f, 1f, 0f);
-
-            // 往前偏移 0.5 米防穿模
             spawnPosition += player.Transform.forward * 0.5f;
-
-            // 给一点点高度随机数，防止连续多次掉落卡在完全相同的坐标
+            //高度随机数
             spawnPosition.y += UnityEngine.Random.Range(-0.05f, 0.1f);
-
-            //Console.WriteLine($"生成物品......");
-            // 调用底层方法，实现静止生成 (Owner 设为 null 防止拾取 Bug)
+            //掉落一个物品
             LootItem spawnedLoot = gameWorld.ThrowItem(
-                item,                   // 物品数据
-                null,                   // Owner设为null，作为世界刷新物
-                spawnPosition,          // 坐标
-                Quaternion.identity,    // 不旋转
-                Vector3.zero,           // 物理初速度 0
-                Vector3.zero,           // 角速度 0
-                true,                   // syncable
-                true                    // performPickUpValidation
+                item,                   //物品实例
+                null,                   //Owner为null表示刷新出而不是任何玩家实例丢弃
+                spawnPosition,          //生成坐标
+                Quaternion.identity,    //无旋转角
+                Vector3.zero,           //无初速度
+                Vector3.zero,           //无角速度
+                true,                   //syncable
+                true                    //performPickUpValidation
+                //最后这俩是啥啊....
             );
-
+            //预留Debug区
             if (spawnedLoot != null)
             {
-                //Console.WriteLine($"物品已掉落在前方: {item.Name.Localized()}");
             }
             else
             {
-                //Console.WriteLine($"物品生成失败......");
             }
         }
-
+        /// <summary>
+        /// 在玩家前方掉落物品
+        /// </summary>
+        /// <param name="player">玩家实例</param>
+        /// <param name="item">物品实例</param>
+        /// <param name="gameWorld">世界实例</param>
+        /// <param name="cam">摄像机</param>
         private static void DropItem(Player player, Item item, GameWorld gameWorld, Camera cam)
         {
-            // 防御空摄像机
+            //防御
             if (cam == null) return;
-
-            // 1. 坐标：绝对视线！
-            // cam.transform.position 就是真实的眼睛坐标（不需要再手动加1米高度了）
-            // cam.transform.forward 就是屏幕正中心射出去的射线（包含了XYZ的完整空间朝向）
+            //主摄像机朝向的方向
             Vector3 spawnPosition = cam.transform.position + (cam.transform.forward * 0.8f);
-
-            // 给一点点高度随机数，防止连续多次掉落卡在完全相同的坐标
-            //spawnPosition.y += UnityEngine.Random.Range(-0.05f, 0.1f);
-
-            // 2. 角度：XZ 拍平，Y 轴与摄像机视线一致
-            // 直接抓取摄像机的 Y 轴偏航角，忽略你看天还是看地，只保留水平旋转
+            //只保留水平角度
             Quaternion spawnRotation = Quaternion.Euler(0f, cam.transform.eulerAngles.y, 0f);
-
-            // 3. 调用底层生成
+            //生成物品
             LootItem spawnedLoot = gameWorld.ThrowItem(
-                item,                   // 物品数据
-                null,                   // Owner设为null，作为世界刷新物
-                spawnPosition,          // 绝对视线前方坐标
-                spawnRotation,          // XZ水平、Y轴一致的旋转
-                Vector3.zero,           // 物理初速度 0
-                Vector3.zero,           // 角速度 0
-                true,                   // syncable
-                true                    // performPickUpValidation
+                item,                   //物品实例
+                null,                   //Owner为null表示刷新出而不是任何玩家实例丢弃
+                spawnPosition,          //生成坐标
+                spawnRotation,          //生成旋转角让物品永远朝向这个瞬间的玩家
+                Vector3.zero,           //无初速度
+                Vector3.zero,           //无角速度
+                true,                   //syncable
+                true                    //performPickUpValidation
             );
-
+            //预留Debug
             if (spawnedLoot != null)
             {
-                // Console.WriteLine($"物品已生成在视线前方: {item.Name.Localized()}");
             }
         }
-
         /// <summary>
-        /// 辅助方法：递归收集物品树中的所有 3D 模型 Prefab 并异步加载
+        /// 异步加载涉及到的物品资产
         /// </summary>
+        /// <param name="rootItem">物品树实例</param>
+        /// <returns></returns>
         private static async Task LoadItemBundlesAsync(Item rootItem)
         {
+            //全局实例
             var poolManager = Singleton<PoolManagerClass>.Instance;
             if (poolManager == null) return;
-
-            // 使用 HashSet 自动对相同的配件或子弹去重
+            //去重
             var keys = new HashSet<ResourceKey>();
-
-            // GetAllItems 包含自身及所有内含物/配件
+            //遍历物品树
             foreach (var item in rootItem.GetAllItems())
             {
                 if (item.Template?.Prefab != null) keys.Add(item.Template.Prefab);
@@ -209,7 +196,7 @@ namespace Oracle.ESP
 
             if (keys.Count > 0)
             {
-                // 发起异步加载
+                //异步加载
                 await poolManager.LoadBundlesAndCreatePools(
                     0,
                     PoolManagerClass.AssemblyType.Local,
@@ -220,21 +207,20 @@ namespace Oracle.ESP
                 );
             }
         }
-
+        /// <summary>
+        /// 桥接方法, 用于直接使用
+        /// </summary>
+        /// <param name="player">玩家实例</param>
+        /// <param name="templateId">物品ID</param>
         public static async void SpawnItemIntoInventory(Player player, string templateId)
         {
             try
             {
-                // 直接调用并等待。
-                // 因为没有 Task.Run，它会默认在 Unity 的主线程上开始执行，
-                // 直到遇到内部的 await (加载模型时) 才会让出主线程，加载完后继续在主线程执行。
-                await Oracle.ESP.ItemSpawner.SpawnItemIntoInventoryAsync(player, templateId);
+                await SpawnItemIntoInventoryAsync(player, templateId);
             }
             catch (Exception ex)
             {
-                // 如果异步过程中有任何报错，必须在这里手动拦截并打印，否则你永远看不到错误！
-                //Logger.LogError($"[虚空造物] 异步生成掉落物时发生严重错误: {ex}");
-
+                //捕获
                 NotificationManagerClass.DisplayMessageNotification(
                     "生成物品失败！",
                     EFT.Communications.ENotificationDurationType.Default,
@@ -242,22 +228,22 @@ namespace Oracle.ESP
                 );
             }
         }
+        /// <summary>
+        /// 桥接方法, 用于直接使用
+        /// </summary>
+        /// <param name="player">玩家实例</param>
+        /// <param name="item">物品实例</param>
         public static async void CloneAndDropItem(Player player, Item item)
         {
             Camera cam = Camera.main;
             if (cam == null) return;
             try
             {
-                // 直接调用并等待。
-                // 因为没有 Task.Run，它会默认在 Unity 的主线程上开始执行，
-                // 直到遇到内部的 await (加载模型时) 才会让出主线程，加载完后继续在主线程执行。
-                await Oracle.ESP.ItemSpawner.CloneAndDropItemAsync(player, item, cam);
+                await CloneAndDropItemAsync(player, item, cam);
             }
             catch (Exception ex)
             {
-                // 如果异步过程中有任何报错，必须在这里手动拦截并打印，否则你永远看不到错误！
-                //Logger.LogError($"[虚空造物] 异步生成掉落物时发生严重错误: {ex}");
-
+                //捕获
                 NotificationManagerClass.DisplayMessageNotification(
                     "生成物品失败！",
                     EFT.Communications.ENotificationDurationType.Default,
@@ -265,16 +251,17 @@ namespace Oracle.ESP
                 );
             }
         }
-
-        // 空位置查找算法 (保持不变)
+        //物品栏寻址算法
         private static ItemAddress FindEmptyLocation(Player player, Item newItem)
         {
+            //划定物品栏有效区域(胸挂, 口袋, 背包)
             var equipment = player.Inventory.Equipment;
             EquipmentSlot[] slotsToCheck = {
                 EquipmentSlot.Pockets,
                 EquipmentSlot.TacticalVest,
                 EquipmentSlot.Backpack
             };
+            //遍历寻址
             foreach (var slotType in slotsToCheck)
             {
                 var slot = equipment.GetSlot(slotType);
@@ -282,6 +269,7 @@ namespace Oracle.ESP
                 {
                     foreach (var grid in containerItem.Grids)
                     {
+                        //原版判断方法
                         var addressInGrid = grid.FindLocationForItem(newItem);
                         if (addressInGrid != null)
                         {
@@ -293,7 +281,9 @@ namespace Oracle.ESP
             return null;
         }
     }
-
+    /// <summary>
+    /// 配置项定义
+    /// </summary>
     public static class ItemSpawnerCfg
     {
         internal static ConfigEntry<string> TargetItemId { get; set; }
@@ -301,6 +291,10 @@ namespace Oracle.ESP
         internal static ConfigEntry<bool> ForcedFiR { get; set; }
         internal static ConfigEntry<int> CustomStackSize { get; set; }
 
+        /// <summary>
+        /// 配置项初始化
+        /// </summary>
+        /// <param name="config">传入配置实例</param>
         public static void Initialize(ConfigFile config)
         {
             TargetItemId = config.Bind(

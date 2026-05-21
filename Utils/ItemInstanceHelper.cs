@@ -6,6 +6,9 @@ using System.Text;
 
 namespace Oracle.Utils
 {
+    /// <summary>
+    /// 用于物品复制的辅助工具类
+    /// </summary>
     public static class ItemInstanceHelper
     {
         //快速哈希预缓存
@@ -13,9 +16,9 @@ namespace Oracle.Utils
         private static SHA256 _sha256;
         private static readonly char[] HexLookup = "0123456789abcdef".ToCharArray();
         /// <summary>
-        /// 对物品树进行清洗, 将其变为独立的实例
+        /// 拓展方法, 对物品树进行清洗, 将其变为独立的实例
         /// </summary>
-        public static void ReassignAllIds(Item clonedItem)
+        public static Item ReassignAllIds(this Item clonedItem)
         {
             //生成salt
             var operationSalt = $"{Guid.NewGuid():N}-{DateTime.Now.Ticks}";
@@ -29,6 +32,7 @@ namespace Oracle.Utils
                 //通过回调设置Id
                 ForceSetId(item, newSafeId);
             }
+            return clonedItem;
         }
         /// <summary>
         /// 使用sha256生成符合MongoId规范的HEX字符串
@@ -73,9 +77,9 @@ namespace Oracle.Utils
             }
         }
         /// <summary>
-        /// 清洗物品状态, 耐久度, 带勾....
+        /// 拓展方法, 清洗物品状态, 耐久度, 带勾....
         /// </summary>
-        public static void CleanAndResetItem(Item clonedItem, bool forceFiR)
+        public static Item CleanAndResetItem(this Item clonedItem, bool forceFiR)
         {
             //遍历物品树, 对整个树进行操作
             foreach (var item in clonedItem.GetAllItems())
@@ -130,6 +134,7 @@ namespace Oracle.Utils
                     repairKit.Resource = repairKit.RepairKitsTemplateClass.MaxRepairResource;
                 }
             }
+            return clonedItem;
         }
     }
 }

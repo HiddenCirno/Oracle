@@ -5,6 +5,9 @@ using UnityEngine;
 
 namespace Oracle.Utils
 {
+    /// <summary>
+    /// 快捷键管理器和全局配置定义
+    /// </summary>
     internal class HotKeyManager
     {
         //配置定义
@@ -21,7 +24,9 @@ namespace Oracle.Utils
         internal static ConfigEntry<KeyCode> UniGUIKey { get; set; }
         internal static ConfigEntry<bool> UniGUI { get; set; }
         internal static ConfigEntry<bool> FPSLimit { get; set; }
-        //按键监听, 挂载到Update里, 其实是不是应该挂载到FixedUpdate?
+        /// <summary>
+        /// 按键监听, 挂载到Update里
+        /// </summary>
         public static void KeyStatusUpdate()
         {
             if (Input.GetKeyDown(PlayerESPKey.Value))
@@ -115,7 +120,10 @@ namespace Oracle.Utils
                 ItemSpawner.CloneAndDropItem(PluginsCore.CorrectPlayer, ItemCatcher.savedItem);
             }
         }
-        //配置初始化
+        /// <summary>
+        /// 配置项初始化
+        /// </summary>
+        /// <param name="config">传入配置实例</param>
         public static void Initialize(ConfigFile config)
         {
             PlayerESPKey = config.Bind<KeyCode>(

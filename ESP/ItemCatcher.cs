@@ -14,13 +14,21 @@ using UnityEngine;
 
 namespace Oracle.ESP
 {
-    //用于捕获物品实例
+    /// <summary>
+    /// 用于捕获物品实例的工具类
+    /// </summary>
     public class ItemCatcher
     {
+        //变量缓存区
+        //当前指针指向的物品实例
         public static Item selectedItem = null;
+        //复制的物品实例指针
+        //通过这种方式将物品实例保存到内存里以进行复制
         public static Item savedItem = null;
         private static bool _copyKeyLastFrame = false;
-
+        /// <summary>
+        /// 快捷键监听
+        /// </summary>
         public static void KeyUpdate()
         {
             if (selectedItem == null)
@@ -30,9 +38,9 @@ namespace Oracle.ESP
             {
                 string itemID = selectedItem.TemplateId;
                 string itemName = selectedItem.Name.Localized();
-                savedItem = selectedItem;
-
-                // 游戏内右下角通知
+                //复制-清洗Id-清洗状态, 使用两个拓展方法一步搞定
+                savedItem = selectedItem.CloneItem().ReassignAllIds();//.CleanAndResetItem(ItemSpawnerCfg.ForcedFiR.Value);//这里不能清洗状态, 它涉及到带勾机制, 由玩家自己决定
+                //游戏内通知
                 NotificationManagerClass.DisplayMessageNotification(
                     $"物品{itemName}已存储至内存区域: {itemID}",
                     EFT.Communications.ENotificationDurationType.Default,
@@ -45,9 +53,6 @@ namespace Oracle.ESP
     }
     //Patch
     //全都是用于捕获物品实例的Patch
-    // ==========================================
-    // 悬停获取 (Pointer Enter)
-    // ==========================================
     [HarmonyPatch(typeof(ItemView), "OnPointerEnter")]
     internal static class ItemView_PointEnterPatch
     {
@@ -56,7 +61,6 @@ namespace Oracle.ESP
             if (__instance.Item != null) ItemCatcher.selectedItem = __instance.Item;
         }
     }
-
     [HarmonyPatch(typeof(EntityIcon), "method_1")]
     internal static class EntityIcon_PointEnterPatch
     {
@@ -66,13 +70,11 @@ namespace Oracle.ESP
             if (item != null) ItemCatcher.selectedItem = item;
         }
     }
-
     [HarmonyPatch(typeof(TradingRequisitePanel), "method_1")]
     internal static class TradingRequisitePanel_PointEnterPatch
     {
         private static void Prefix(TradingRequisitePanel __instance)
         {
-            // 增加空检查，防止该面板当前没有上下文报错
             var context = Traverse.Create(__instance).Field("itemContextAbstractClass").GetValue();
             if (context != null)
             {
@@ -81,7 +83,6 @@ namespace Oracle.ESP
             }
         }
     }
-
     [HarmonyPatch(typeof(GridItemView), "OnPointerEnter")]
     internal static class GridItemView_PointEnterPatch
     {
@@ -99,9 +100,7 @@ namespace Oracle.ESP
             if (__instance.Item != null) ItemCatcher.selectedItem = __instance.Item;
         }
     }
-    // ==========================================
-    // 移出清除 (Pointer Exit)
-    // ==========================================
+    //退出点
     [HarmonyPatch(typeof(ItemView), "OnPointerExit")]
     internal static class ItemView_PointOuterPatch
     {
@@ -125,7 +124,9 @@ namespace Oracle.ESP
     {
         private static void Prefix() => ItemCatcher.selectedItem = null;
     }
-    //配置定义
+    /// <summary>
+    /// 配置项定义, 留空了, 复制来的
+    /// </summary>
     public class ItemCatcherCfg
     {
 
