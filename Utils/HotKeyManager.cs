@@ -18,11 +18,12 @@ namespace Oracle.Utils
         internal static ConfigEntry<KeyCode> AimbotKey { get; set; }
         internal static ConfigEntry<KeyCode> ChangeAimTargetKey { get; set; }
         internal static ConfigEntry<KeyCode> LootESPNameModeKey { get; set; }
-        internal static ConfigEntry<KeyCode>SpawnItemKey { get; set; }
+        internal static ConfigEntry<KeyCode> SpawnItemKey { get; set; }
         internal static ConfigEntry<KeyboardShortcut> CopyItemKey { get; set; }
         internal static ConfigEntry<KeyCode> DropItemKey { get; set; }
         internal static ConfigEntry<KeyCode> UniGUIKey { get; set; }
         internal static ConfigEntry<bool> UniGUI { get; set; }
+        internal static ConfigEntry<bool> MuteNotice { get; set; }
         internal static ConfigEntry<bool> FPSLimit { get; set; }
         /// <summary>
         /// 按键监听, 挂载到Update里
@@ -33,78 +34,99 @@ namespace Oracle.Utils
             {
                 PlayerESPCfg.EnablePlayerESP.Value = !PlayerESPCfg.EnablePlayerESP.Value;
                 var value = PlayerESPCfg.EnablePlayerESP.Value;
-                NotificationManagerClass.DisplayMessageNotification(
-                    $"玩家透视已{(value ? "启用" : "禁用")}!",
-                    ENotificationDurationType.Default,
-                    value ? ENotificationIconType.Default : ENotificationIconType.Alert,
-                    null
-                );
+                if (!MuteNotice.Value)
+                {
+                    NotificationManagerClass.DisplayMessageNotification(
+                        $"玩家透视已{(value ? "启用" : "禁用")}!",
+                        ENotificationDurationType.Default,
+                        value ? ENotificationIconType.Default : ENotificationIconType.Alert,
+                        null
+                    );
+                }
             }
             if (Input.GetKeyDown(LootESPKey.Value))
             {
                 LootESPCfg.EnableLootESP.Value = !LootESPCfg.EnableLootESP.Value;
                 var value = LootESPCfg.EnableLootESP.Value;
-                NotificationManagerClass.DisplayMessageNotification(
+                if (!MuteNotice.Value)
+                {
+                    NotificationManagerClass.DisplayMessageNotification(
                     $"物资透视已{(value ? "启用" : "禁用")}!",
                     ENotificationDurationType.Default,
                     value ? ENotificationIconType.Default : ENotificationIconType.Alert,
                     null
                 );
+                }
             }
             if (Input.GetKeyDown(LooseLootESPKey.Value))
             {
                 LootESPCfg.EnableLooseLootESP.Value = !LootESPCfg.EnableLooseLootESP.Value;
                 var value = LootESPCfg.EnableLooseLootESP.Value;
-                NotificationManagerClass.DisplayMessageNotification(
+                if (!MuteNotice.Value)
+                {
+                    NotificationManagerClass.DisplayMessageNotification(
                     $"松散物资透视已{(value ? "启用" : "禁用")}!",
                     ENotificationDurationType.Default,
                     value ? ENotificationIconType.Default : ENotificationIconType.Alert,
                     null
                 );
+                }
             }
             if (Input.GetKeyDown(ContainerLootESPKey.Value))
             {
                 LootESPCfg.EnableContainerLootESP.Value = !LootESPCfg.EnableContainerLootESP.Value;
                 var value = LootESPCfg.EnableContainerLootESP.Value;
-                NotificationManagerClass.DisplayMessageNotification(
+                if (!MuteNotice.Value)
+                {
+                    NotificationManagerClass.DisplayMessageNotification(
                     $"容器物资透视已{(value ? "启用" : "禁用")}!",
                     ENotificationDurationType.Default,
                     value ? ENotificationIconType.Default : ENotificationIconType.Alert,
                     null
                 );
+                }
             }
             if (Input.GetKeyDown(AimbotKey.Value))
             {
                 AimbotCfg.EnableAimbot.Value = !AimbotCfg.EnableAimbot.Value;
                 var value = AimbotCfg.EnableAimbot.Value;
-                NotificationManagerClass.DisplayMessageNotification(
+                if (!MuteNotice.Value)
+                {
+                    NotificationManagerClass.DisplayMessageNotification(
                     $"自瞄已{(value ? "启用" : "禁用")}!",
                     ENotificationDurationType.Default,
                     value ? ENotificationIconType.Default : ENotificationIconType.Alert,
                     null
                 );
+                }
             }
             if (Input.GetKeyDown(UniGUIKey.Value))
             {
                 UniGUI.Value = !UniGUI.Value;
                 var value = UniGUI.Value;
-                NotificationManagerClass.DisplayMessageNotification(
+                if (!MuteNotice.Value)
+                {
+                    NotificationManagerClass.DisplayMessageNotification(
                     $"全局绘制已{(value ? "启用" : "禁用")}!",
                     ENotificationDurationType.Default,
                     value ? ENotificationIconType.Default : ENotificationIconType.Alert,
                     null
                 );
+                }
             }
             if (Input.GetKeyDown(ChangeAimTargetKey.Value))
             {
                 AimbotCfg.AimbotPartSetting.Value = AimbotCfg.AimbotPartSetting.Value == "头部" ? "胸口" : "头部";
                 var value = AimbotCfg.AimbotPartSetting.Value;
-                NotificationManagerClass.DisplayMessageNotification(
+                if (!MuteNotice.Value)
+                {
+                    NotificationManagerClass.DisplayMessageNotification(
                     $"锁定部位切换到{value}",
                     ENotificationDurationType.Default,
                     ENotificationIconType.Default,
                     null
                 );
+                }
             }
             if (Input.GetKeyDown(LootESPNameModeKey.Value))
             {
@@ -183,6 +205,12 @@ namespace Oracle.Utils
                 "开启帧数限制",
                 true,
                 "启用后透视将以50帧为上限绘制而不是每帧绘制，关闭可能造成一定的帧数下降"
+            );
+            MuteNotice = config.Bind<bool>(
+                "快捷键设置",
+                "静默切换提示",
+                true,
+                "启用后切换功能开关将不会有任何提示"
             );
             SpawnItemKey = config.Bind<KeyCode>(
                 "快捷键设置",

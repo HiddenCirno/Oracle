@@ -8,6 +8,6 @@ namespace Oracle
     {
         public const string GUID = "eft.hiddenhiraigi.oracle";
         public const string NAME = "Oracle";
-        public const string VERSION = "1.0.0";
+        public const string VERSION = "2.0.0";
     }
 }
