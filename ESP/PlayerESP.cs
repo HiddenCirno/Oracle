@@ -19,6 +19,87 @@ namespace Oracle.ESP
         public static readonly int HighPolyWithTerrainMask =
             (1 << LayerMask.NameToLayer("Terrain")) |
             (1 << LayerMask.NameToLayer("HighPolyCollider"));
+        public readonly struct EntityDisplayInfo
+        {
+            public readonly string Name;
+            public readonly string SideText; // 已包含颜色标签的完整描述
+            public readonly string LevelText; // 空字符串或带颜色的等级
+            public readonly int Distance;
+
+            public EntityDisplayInfo(string name, string sideText, string levelText, int distance)
+            {
+                Name = name;
+                SideText = sideText;
+                LevelText = levelText;
+                Distance = distance;
+            }
+
+            // 格式化输出方便直接给GUI调用
+            public string ToEspString() => $"{LevelText} {SideText} <color=#FFFF00>{Distance}米</color>".Trim();
+        }
+
+        public static EntityDisplayInfo GetEntityInfo(Player player, bool isTeammate, bool includeName = true)
+        {
+            var info = player.Profile?.Info;
+            string name = "Unknown";
+            string sideText = "Unknown";
+            string level = "";
+
+            // 距离计算
+            int distance = Mathf.RoundToInt(Vector3.Distance(PluginsCore.CorrectPlayer.Transform.position, player.Transform.position));
+
+            if (info != null)
+            {
+                name = IsAllEnglish(info.Nickname) ? info.Nickname : GStruct21.ConvertToLatinic(info.Nickname);
+
+                if (info.Side.ToString() == "Savage")
+                {
+                    sideText = DetermineSavageSideText(info, name, isTeammate, includeName);
+                }
+                else
+                {
+                    level = $"<color=#7FFF00>{info.Level}级</color>";
+                    string color = info.Side.ToString() == "Usec" ? "#007CFF" : "#FF8C00";
+                    string displayContent = includeName ? $"{info.Side} {name}" : info.Side.ToString();
+                    string baseText = $"<color={color}>{displayContent}</color>";
+                    sideText = isTeammate ? $"<color=#66CCFF>友军 </color>{baseText}" : baseText;
+                }
+            }
+
+            return new EntityDisplayInfo(name, sideText, level, distance);
+        }
+        private static string DetermineSavageSideText(InfoClass info, string name, bool isTeammate, bool includeName = true)
+        {
+            var role = info.Settings?.Role.ToString().ToLower() ?? "assault";
+
+            // 使用变量存储核心标识，不再重复拼接颜色标签
+            string roleLabel = "Scav";
+            string colorHex = "#FFFF8B";
+
+            // 核心优先级逻辑
+            if (role.Contains("boss") || IsSpecialBoss(role)) { roleLabel = "Boss"; colorHex = "#CE0000"; }
+            else if (role == "bossboarsniper" || role == "marksman") { roleLabel = "狙击Scav"; colorHex = "#00FA9A"; }
+            else if (role == "pmcbot" || role == "exusec") { roleLabel = "美军"; colorHex = "#7300A6"; }
+            else if (role.Contains("follower") || role == "tagillahelperagro") { roleLabel = "护卫"; colorHex = "#FF2DE9"; }
+            else if (role.Contains("sectant")) { roleLabel = "邪教徒"; colorHex = "#ADFF2F"; }
+            else if (role == "gifter") { roleLabel = "圣诞老人"; colorHex = "#00FFFF"; }
+            else if (role.Contains("btr")) { roleLabel = "BTR"; colorHex = "#228B22"; }
+            else if (role.Contains("black")) { roleLabel = "黑狐"; colorHex = "#DC143C"; }
+
+            // 组合名称部分
+            string displayString = includeName ? $"{roleLabel} {name}" : roleLabel;
+            string finalRes = $"<color={colorHex}>{displayString}</color>";
+
+            // 组合友军部分
+            return isTeammate ? $"<color=#66CCFF>友军 </color>{finalRes}" : finalRes;
+        }
+
+        private static bool IsSpecialBoss(string role)
+        {
+            return role == "followerbirdeye" || role == "followerbigpipe" ||
+                   role == "infectedtagilla" || role.StartsWith("sectant");
+        }
+
         /// <summary>
         /// 绘制玩家骨骼
         /// </summary>
@@ -184,120 +265,13 @@ namespace Oracle.ESP
                 //深度检查
                 if (textScreenPos.z > 0.01f)
                 {
-                    //计算直线距离
-                    int distance = Mathf.RoundToInt(Vector3.Distance(PluginsCore.CorrectPlayer.Transform.position, player.Transform.position));
-                    //提取玩家信息
-                    string name = "Unknown";
-                    string side = "Bot";
-                    string sideText = "Unknown";
-                    string level = "";
-                    if (player.Profile != null && player.Profile.Info != null)
-                    {
-                        var info = player.Profile.Info;
-                        //name = player.Profile.Info.Nickname; //需要一个Locale转换, 等会找找在哪, 应该在狗牌生成部分
-                        //name = GStruct21.ConvertToLatinic(info.Nickname);
-                        if (IsAllEnglish(info.Nickname))
-                        {
-                            name = info.Nickname;
-                        }
-                        else
-                        {
-                            name = GStruct21.ConvertToLatinic(info.Nickname);
-                        }
-                        string bossSide = $"<color=#CE0000>Boss {name}</color>";
-                        string friendlySide = "<color=#66CCFF>友军 </color>";
-                        side = info.Side.ToString();
-                        //动态改变字体颜色以区分阵营
-                        if (side == "Savage")
-                        //Scav/Boss/AI
-                        {
-                            //botRole在哪来着....
-                            //在这呢
-                            //role安全处理
-                            var role = info.Settings?.Role.ToString().ToLower() ?? "assault";
-                            //暴力阵营识别, 从上到下按优先级倒序, 确保正确覆盖
-                            sideText = $"<color=#FFFF8B>Scav {name}</color>";
-                            if (role.Contains("boss"))
-                            {
-                                sideText = bossSide;
-                            }
-                            //卡班护卫狙击手和狙击AI
-                            if (role == "bossboarsniper" || role == "marksman")
-                            {
-                                sideText = $"<color=#00FA9A>狙击Scav {name}</color>";
-                            }
-                            //灯塔/储备站/实验室美军
-                            if (role == "pmcbot" || role == "exusec")
-                            {
-                                sideText = $"<color=#7300A6>美军 {name}</color>";
-                            }
-                            //boss小弟
-                            if (role.Contains("follower") || role == "tagillahelperagro")
-                            {
-                                sideText = $"<color=#FF2DE9>护卫 {name}</color>";
-                            }
-                            //邪教徒
-                            if (role.Contains("sectant"))
-                            {
-                                sideText = $"<color=#ADFF2F>邪教徒 {name}</color>";
-                            }
-                            //圣诞老人
-                            if (role == "gifter")
-                            {
-                                sideText = $"<color=#00FFFF>圣诞老人 {name}</color>";
-                            }
-                            //BTR司机
-                            if (role.Contains("btr"))
-                            {
-                                sideText = $"<color=#228B22>BTR {name}</color>";
-                            }
-                            //wtt的黑狐AI
-                            if (role.Contains("black"))
-                            {
-                                sideText = $"<color=#DC143C>黑狐 {name}</color>";
-                            }
-                            switch (role)
-                            {
-                                //特殊处理
-                                case "followerbirdeye":
-                                case "followerbigpipe":
-                                case "infectedtagilla":
-                                case "sectantoni":
-                                case "sectantpredvestnik":
-                                case "sectantprizark":
-                                    {
-                                        sideText = bossSide;
-                                    }
-                                    break;
-                            }
-                            //友军阵营过滤
-                            //不知道毒绿信号弹如何工作, 防止出现显示错误, 放在最后
-                            //友军标签为额外加值, 不影响阵营正常显示
-                            if (isTeammate)
-                            {
-                                sideText = $"{friendlySide}{sideText}";
-                            }
-                        }
-                        else
-                        //PMC
-                        //塔科夫严格意义上的阵营只有PMC和Scav两种, PMC之外的所有类型的AI都是Savage靠botRole做区分的
-                        {
-                            //textStyle.normal.textColor = Color.red;
-                            //PMC只有两个阵营
-                            level = $"<color=#7FFF00>{info.Level}级</color>";
-                            sideText = isTeammate ? side == "Usec" ? $"{friendlySide}<color=#007CFF>Usec {name}</color>" : $"{friendlySide}<color=#FF8C00>Bear {name}</color>" : side == "Usec" ? $"<color=#007CFF>Usec {name}</color>" : $"<color=#FF8C00>Bear {name}</color>";
-                        }
-                    }
+                    var info = GetEntityInfo(player, isTeammate);
                     textStyle.richText = true;
-                    //合并字符串
-                    //其实想改改, 比如把阵营什么的颜色显示分开, 不知道能不能直接用<color>标签
-                    //可以, 真棒
-                    string espText = $"{level} {sideText} <color=#FFFF00>{distance}米</color>";
-                    //转换坐标并绘制
+
                     float screenX = textScreenPos.x;
                     float screenY = Screen.height - textScreenPos.y;
-                    //用Rect绘制一个不可见方框, 保证文本居中
-                    GUI.Label(new Rect(screenX - 100, screenY - 20, 200, 40), espText, textStyle);
+
+                    GUI.Label(new Rect(screenX - 100, screenY - 20, 200, 40), info.ToEspString(), textStyle);
                 }
             }
         }

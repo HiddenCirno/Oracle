@@ -99,30 +99,21 @@ namespace Oracle.ESP
                 // 遍历当前存活的所有实体
                 foreach (Player player in PluginsCore.CorrectGameWorld.AllAlivePlayersList)
                 {
-                    // 过滤自己、空指针或已死亡的实体
+                    // 过滤逻辑保持不变...
                     if (player == null || player == PluginsCore.CorrectPlayer || !player.HealthController.IsAlive) continue;
-
-                    // 过滤队友
                     string targetGroupId = player.Profile?.Info?.GroupId ?? "";
                     bool isTeammate = !string.IsNullOrEmpty(PluginsCore.CorrectGroupId) && targetGroupId == PluginsCore.CorrectGroupId;
                     if (isTeammate) continue;
 
                     aliveCount++;
 
-                    // 提取信息
-                    ParsePlayerInfo(player, out string name, out string roleText, out string level, out Color factionColor);
+                    // --- 调用新的重构逻辑 ---
+                    var entityInfo = PlayerESP.GetEntityInfo(player, isTeammate, false);
 
-                    // 计算距离
-                    int distance = 0;
-                    if (PluginsCore.CorrectPlayer != null)
-                    {
-                        distance = Mathf.RoundToInt(Vector3.Distance(PluginsCore.CorrectPlayer.Transform.position, player.Transform.position));
-                    }
-
-                    // 开始绘制行
+                    // --- 绘制 ---
                     GUILayout.BeginHorizontal(flatBoxStyle);
 
-                    // 1. 绘制实体真实 3D 渲染头像
+                    // 头像绘制逻辑不变
                     Texture2D icon = GetPlayerIcon(player);
                     if (icon != null)
                     {
@@ -130,28 +121,24 @@ namespace Oracle.ESP
                     }
                     else
                     {
-                        // 还在后台渲染时，显示一个阵营色块作为加载占位符
-                        GUI.backgroundColor = factionColor;
+                        // 这里需要注意：如果使用 EspHelper，factionColor 建议也放入 EntityDisplayInfo 中
+                        // 或者保留一个简化版的辅助方法获取颜色
                         GUILayout.Box("生成中", flatButtonStyle, GUILayout.Width(64), GUILayout.Height(64));
-                        GUI.backgroundColor = Color.white;
                     }
 
-                    // 2. 实体信息
+                    // --- 实体信息绘制 ---
                     GUILayout.BeginVertical();
-                    GUILayout.Label($"<b>{name}</b>  {level}");
-                    GUILayout.Label($"<color=grey>{roleText} | 距离: {distance}m</color>");
+                    // 使用新的结构体字段
+                    GUILayout.Label($"<b>{entityInfo.Name}</b>  {entityInfo.LevelText}");
+                    GUILayout.Label($"<color=grey>{entityInfo.SideText} | 距离: <color=#FFFF00>{entityInfo.Distance} 米</color></color>");
                     GUILayout.EndVertical();
 
-                    // 3. 操作按钮
+                    // 操作按钮保持不变...
                     GUILayout.BeginVertical(GUILayout.Width(80));
-
-                    // 神罚按钮 (直接抹杀)
                     if (GUILayout.Button("杀死", redButtonStyle, GUILayout.Height(64)))
                     {
-                        // 使用标准的塔科夫底层伤害处决方法，瞬间触发 Ragdoll
                         player.KillMe(EBodyPartColliderType.HeadCommon, 999999999);
                     }
-
                     GUILayout.EndVertical();
                     GUILayout.EndHorizontal();
                 }
@@ -205,7 +192,6 @@ namespace Oracle.ESP
 
                 if (iconData != null)
                 {
-                    // 万一极速生成完毕，直接缓存
                     if (iconData.Sprite != null && iconData.Sprite.texture != null)
                     {
                         Texture2D tex = iconData.Sprite.texture;
@@ -214,7 +200,6 @@ namespace Oracle.ESP
                     }
                     else
                     {
-                        // 放入挂起队列，等待下几帧的检查
                         _pendingIcons[profileId] = iconData;
                     }
                 }
@@ -225,99 +210,6 @@ namespace Oracle.ESP
             }
 
             return null;
-        }
-
-        /// <summary>
-        /// 解析玩家信息，返回名称、角色文本、等级和用于生成色块头像的代表色
-        /// </summary>
-        private void ParsePlayerInfo(Player player, out string name, out string roleText, out string level, out Color factionColor)
-        {
-            name = "Unknown";
-            roleText = "Bot";
-            level = "";
-            factionColor = new Color(0.2f, 0.2f, 0.2f); // 默认灰色
-
-            if (player.Profile != null && player.Profile.Info != null)
-            {
-                var info = player.Profile.Info;
-
-                if (PlayerESP.IsAllEnglish(info.Nickname))
-                {
-                    name = info.Nickname;
-                }
-                else
-                {
-                    name = GStruct21.ConvertToLatinic(info.Nickname);
-                }
-
-                string side = info.Side.ToString();
-                level = $"<color=#7FFF00>[Lv.{info.Level}]</color>";
-
-                if (side == "Savage")
-                {
-                    var role = info.Settings?.Role.ToString().ToLower() ?? "assault";
-
-                    roleText = "Scav";
-                    factionColor = new Color(0.6f, 0.6f, 0.2f); // 黯黄色
-
-                    if (role.Contains("boss"))
-                    {
-                        roleText = "Boss";
-                        factionColor = new Color(0.6f, 0.1f, 0.1f); // 鲜红色
-                    }
-                    else if (role == "bossboarsniper" || role == "marksman")
-                    {
-                        roleText = "狙击 Scav";
-                        factionColor = new Color(0.1f, 0.6f, 0.4f); // 绿色
-                    }
-                    else if (role == "pmcbot" || role == "exusec")
-                    {
-                        roleText = "ROGUE (美军)";
-                        factionColor = new Color(0.4f, 0.1f, 0.6f); // 紫色
-                    }
-                    else if (role.Contains("follower") || role == "tagillahelperagro")
-                    {
-                        roleText = "Boss 护卫";
-                        factionColor = new Color(0.6f, 0.2f, 0.6f); // 粉色
-                    }
-                    else if (role.Contains("sectant"))
-                    {
-                        roleText = "邪教徒";
-                        factionColor = new Color(0.5f, 0.8f, 0.2f); // 黄绿色
-                    }
-                    else if (role.Contains("black"))
-                    {
-                        roleText = "黑狐";
-                        factionColor = new Color(0.8f, 0.1f, 0.2f); // 绯红
-                    }
-
-                    switch (role)
-                    {
-                        case "followerbirdeye":
-                        case "followerbigpipe":
-                        case "infectedtagilla":
-                        case "sectantoni":
-                        case "sectantpredvestnik":
-                        case "sectantprizark":
-                            roleText = "Boss";
-                            factionColor = new Color(0.6f, 0.1f, 0.1f);
-                            break;
-                    }
-                }
-                else
-                {
-                    if (side == "Usec")
-                    {
-                        roleText = "PMC (USEC)";
-                        factionColor = new Color(0.1f, 0.4f, 0.8f); // 蓝色
-                    }
-                    else
-                    {
-                        roleText = "PMC (BEAR)";
-                        factionColor = new Color(0.8f, 0.4f, 0.1f); // 橙色
-                    }
-                }
-            }
         }
 
         public void ToggleCursor(bool unlock)
