@@ -180,6 +180,8 @@ namespace Oracle.ESP
             //过滤掉物品栏
             //尸体实际上是一个以物品栏和不可拾取形式存在的容器
             if (itemPrice < minPriceThreshold || itemKey == "55d7217a4bdc2d86028b456d") return;
+            //过滤掉无效名称, 内衬什么的没名字的东西
+            if (string.IsNullOrEmpty(itemName)) return;
             //价值格式化
             string priceStr = itemPrice >= 10000 ? (itemPrice / 10000f).ToString("0.#") + "万" : itemPrice.ToString();
             //string priceStr = itemPrice >= 10000 ? (itemPrice / 10000) + "万" : itemPrice.ToString();
