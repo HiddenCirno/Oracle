@@ -18,6 +18,7 @@ namespace Oracle
         public static string CorrectGroupId { get; set; }
         public static GameWorld CorrectGameWorld { get; set; }
 
+        private ItemManagerGUI _itemManagerGUI = new ItemManagerGUI();
         //绘制样式缓存
         public GUIStyle espTextStyle;
         public Material espMaterial;
@@ -79,6 +80,7 @@ namespace Oracle
             //快捷键监听
             HotKeyManager.KeyStatusUpdate();
             ItemCatcher.KeyUpdate();
+            _itemManagerGUI.Update();
             //窗口失焦自动隐藏
             bool shouldShow = Application.isFocused && HotKeyManager.UniGUI.Value;
             NativeOverlay.SetVisible(shouldShow);
@@ -99,6 +101,7 @@ namespace Oracle
             if (!HotKeyManager.UniGUI.Value) return;
             //空指针防御
             if (CorrectGameWorld == null || CorrectPlayer == null || CorrectGameWorld.AllAlivePlayersList == null) return;
+            _itemManagerGUI.OnGUI();
             //只在重绘调用
             if (Event.current.type != EventType.Repaint) return;
             //空指针防御

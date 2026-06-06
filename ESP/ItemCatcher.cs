@@ -25,6 +25,7 @@ namespace Oracle.ESP
         //复制的物品实例指针
         //通过这种方式将物品实例保存到内存里以进行复制
         public static Item savedItem = null;
+        public static List<Item> SavedItems = new List<Item>();
         private static bool _copyKeyLastFrame = false;
         /// <summary>
         /// 快捷键监听
@@ -40,6 +41,7 @@ namespace Oracle.ESP
                 string itemName = selectedItem.Name.Localized();
                 //复制-清洗Id-清洗状态, 使用两个拓展方法一步搞定
                 savedItem = selectedItem.CloneItem().ReassignAllIds();//.CleanAndResetItem(ItemSpawnerCfg.ForcedFiR.Value);//这里不能清洗状态, 它涉及到带勾机制, 由玩家自己决定
+                SavedItems.Add(savedItem);
                 //游戏内通知
                 NotificationManagerClass.DisplayMessageNotification(
                     $"物品{itemName}已存储至内存区域: {itemID}",
