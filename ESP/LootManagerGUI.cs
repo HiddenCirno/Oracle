@@ -1,4 +1,5 @@
 ﻿using Comfort.Common;
+using Diz.LanguageExtensions;
 using EFT;
 using EFT.InputSystem;
 using EFT.Interactive;
@@ -38,21 +39,22 @@ namespace Oracle.ESP
         private GUIStyle closeButtonStyle;
         private bool isStyleInitialized = false;
 
-        [HarmonyPatch(typeof(InteractionButton), "Show")]
-        public class InteractionButtonPatch
+        
+        [HarmonyPatch(typeof(InteractionsHandlerClass), "smethod_14")]
+        public class InteractionsHandlerClassPatch
         {
-            public static bool Prefix(InteractionButton __instance, ActionsReturnClass interaction, ActionsTypesClass action)
+            // ⭐ 修复点1：去掉 __instance，因为这是静态方法！
+            // ⭐ 修复点2：必须传入 (Item item, out Error error) 来完美对齐原方法的签名
+            public static bool Prefix(Item item, out Error error, ref bool __result)
             {
-                if (action.Name == "Take")
-                {
-                    Console.WriteLine($"Take Action 委托: {action.Action.Method.Name} 所在类: {action.Action.Method.DeclaringType}");
-                }
-                //Console.WriteLine($"{action.Name}\n{action.TargetName}\n");
-                return true;
-                //}
+                // 强行欺骗系统：没有任何错误，这个容器是“合法、已解锁、可触及”的
+                error = null;
+                __result = false;
+
+                // 返回 false，拦截尼基塔原本的检测逻辑
+                return false;
             }
         }
-
 
 
         public void Update()
@@ -107,7 +109,7 @@ namespace Oracle.ESP
 
                 foreach (LootData loot in sortedLoot)
                 {
-                    if (loot.LootableItem == null) continue; //哎, 白写
+                    //if (loot.LootableItem == null) continue; //哎, 白写
                     GUILayout.BeginHorizontal(flatBoxStyle);
 
                     // 1. 物品图标
@@ -385,6 +387,7 @@ namespace Oracle.ESP
             }
         }
 
+        //道爷我成了!!!!!
         public static void PickupLootItemEx(Player player, LootData loot)
         {
             if (player == null) return;
@@ -393,44 +396,47 @@ namespace Oracle.ESP
             {
                 // LooseLoot，直接走你已经调好的逻辑
                 PickupLootItem(player, loot.LootableItem);
+                return;
             }
-            else if (loot.ItemRef != null)
+            else if (loot.Container != null)
             {
-                // 容器内物品
                 try
                 {
-                    Item item = loot.ItemRef;
-                    ItemAddress targetLocation = ItemSpawner.FindEmptyLocation(player, item);
+                    // 找到包含这个物品的容器根节点
+                    Item containerItem = loot.Container.ItemOwner.RootItem;
 
-                    if (targetLocation == null)
+                    Player mainPlayer = PluginsCore.CorrectPlayer;
+                    if (mainPlayer == null) return;
+                    // 获取 Owner (你已经写得很熟练了)
+                    GamePlayerOwner myOwner = mainPlayer.GetComponent<GamePlayerOwner>();
+                    if (myOwner == null)
                     {
-                        NotificationManagerClass.DisplayWarningNotification("背包空间不足！");
+                        NotificationManagerClass.DisplayWarningNotification("无法获取本地 UI 控制器 (GamePlayerOwner)");
                         return;
                     }
-                    var trader = loot.Container.ItemOwner;
+                    if (myOwner == null) return;
 
-                    // 1. 强制将容器的状态设置为“已完全加载并可交互”
-                    // 这是一个 EFT 内部用来标志 Grid 已经同步完成的 flag
-                    trader.Bool_0 = false; // 确保 Locked 状态为 false
-
-                    // 2. 核心补丁：手动触发一个 GEventArgs18 (RefreshItemEvent)
-                    // 这个事件会强制 InventoryController 重新扫描该 TraderController 的 Grid，
-                    // 无论之前它处于什么未初始化状态，都会被强制“刷新”为可用。
-                    trader.RaiseEvent(new GEventArgs18(trader.RootItem, trader, true, true));
-
-                    var moveResult = InteractionsHandlerClass.Move(item, targetLocation, player.InventoryController, false);
-                    if (moveResult.Succeeded)
+                    // 构造上下文
+                    GetActionsClass.Class1748 context = new GetActionsClass.Class1748
                     {
-                        player.InventoryController.TryRunNetworkTransaction(moveResult);
-                    }
-                    else
-                    {
-                        NotificationManagerClass.DisplayWarningNotification("拾取失败：可能是嵌套物品或已被拾取。");
-                    }
+                        owner = myOwner,
+                        rootItem = containerItem, // 注意：我们要打开的是容器，而不是里面的单个物品
+                        lootItemOwner = containerItem.Owner as TraderControllerClass,
+                        controller = player.InventoryController
+                    };
+                    //context.lootItemLastOwner = myOwner?.iPlayer;
+
+                    // 关键：欺骗视线
+                    player.SaveInteractionRayInfo();
+
+                    // 关键：远程触发“搜索/打开”动作，这会调用原生 UI 弹出
+                    context.method_3();
+
+                    NotificationManagerClass.DisplayMessageNotification($"已远程打开: {containerItem.Name.Localized()}");
                 }
                 catch (Exception ex)
                 {
-                    Debug.LogError($"[容器拾取失败]: {ex.Message}\n{ex.StackTrace}");
+                    Debug.LogError($"[远程打开容器异常]: {ex.Message}");
                 }
             }
         }

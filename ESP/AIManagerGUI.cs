@@ -1,9 +1,13 @@
-﻿using UnityEngine;
+﻿using Diz.LanguageExtensions;
 using EFT;
+using EFT.Communications;
 using EFT.InventoryLogic;
+using EFT.UI;
+using HarmonyLib;
+using JetBrains.Annotations;
 using Oracle.Utils;
 using System.Collections.Generic;
-using EFT.UI;
+using UnityEngine;
 
 namespace Oracle.ESP
 {
@@ -25,6 +29,7 @@ namespace Oracle.ESP
         private GUIStyle flatBoxStyle;
         private GUIStyle flatButtonStyle;
         private GUIStyle redButtonStyle;
+        private GUIStyle blueButtonStyle; // 新增蓝色按钮样式用于搜身
         private GUIStyle flatScrollbarStyle;
         private GUIStyle flatScrollbarThumbStyle;
         private GUIStyle closeButtonStyle;
@@ -59,7 +64,6 @@ namespace Oracle.ESP
         {
             // ---- 右上角区域 ----
             // 1. 全歼按钮 (放在关闭按钮左侧)
-            GUI.backgroundColor = new Color(0.6f, 0.05f, 0.05f, 1f); // 极其深沉的警告红
             if (GUI.Button(new Rect(_windowRect.width - 135, 4, 85, 20), "全歼 AI", redButtonStyle))
             {
                 if (PluginsCore.CorrectGameWorld != null && PluginsCore.CorrectGameWorld.AllAlivePlayersList != null)
@@ -76,7 +80,6 @@ namespace Oracle.ESP
                     }
                 }
             }
-            GUI.backgroundColor = Color.white;
 
             // ---- 右上角关闭按钮 ----
             if (GUI.Button(new Rect(_windowRect.width - 45, 4, 40, 20), "关闭", closeButtonStyle))
@@ -126,8 +129,6 @@ namespace Oracle.ESP
                     }
                     else
                     {
-                        // 这里需要注意：如果使用 EspHelper，factionColor 建议也放入 EntityDisplayInfo 中
-                        // 或者保留一个简化版的辅助方法获取颜色
                         GUILayout.Box("生成中", flatButtonStyle, GUILayout.Width(64), GUILayout.Height(64));
                     }
 
@@ -138,12 +139,23 @@ namespace Oracle.ESP
                     GUILayout.Label($"<color=grey>{entityInfo.SideText} | 距离: <color=#FFFF00>{entityInfo.Distance} 米</color></color>");
                     GUILayout.EndVertical();
 
-                    // 操作按钮保持不变...
+                    // --- 操作按钮区域 (上下平分 64 的高度) ---
                     GUILayout.BeginVertical(GUILayout.Width(80));
-                    if (GUILayout.Button("杀死", redButtonStyle, GUILayout.Height(64)))
+
+                    // ⭐ 新增：搜身按钮
+                    if (GUILayout.Button("搜身", blueButtonStyle, GUILayout.Height(30)))
+                    {
+                        RemoteSearchPlayer(player);
+                    }
+
+                    GUILayout.Space(4); // 间距
+
+                    // 杀死按钮
+                    if (GUILayout.Button("杀死", redButtonStyle, GUILayout.Height(30)))
                     {
                         player.KillMe(EBodyPartColliderType.HeadCommon, 999999999);
                     }
+
                     GUILayout.EndVertical();
                     GUILayout.EndHorizontal();
                 }
@@ -162,6 +174,93 @@ namespace Oracle.ESP
             GUI.DragWindow(new Rect(0, 0, _windowRect.width - 50, 25));
         }
 
+        [HarmonyPatch(typeof(GClass2234), "TryFindChangedContainer")]
+        public class TryFindChangedContainerPatch
+        {
+            // ⭐ 修复点1：去掉 __instance，因为这是静态方法！
+            // ⭐ 修复点2：必须传入 (Item item, out Error error) 来完美对齐原方法的签名
+            public static void Postfix(ItemAddress address, [CanBeNull] out GClass1802 changedContainer, ref bool __result)
+            {
+                changedContainer = null;
+                __result = false;
+            }
+        }
+
+        // ==========================================
+        // ⭐ 核心逻辑：隔空活体搜身
+        // ==========================================
+        private void RemoteSearchPlayer(Player targetPlayer)
+        {
+            if (targetPlayer == null || targetPlayer.Profile == null) return;
+            Player mainPlayer = PluginsCore.CorrectPlayer;
+            if (mainPlayer == null) return;
+
+            try
+            {
+                // ⭐ 关键修复：通过 Unity 组件系统获取 GamePlayerOwner (真正的 UI 控制器)
+                GamePlayerOwner myOwner = mainPlayer.GetComponent<GamePlayerOwner>();
+                if (myOwner == null)
+                {
+                    NotificationManagerClass.DisplayWarningNotification("无法获取本地 UI 控制器 (GamePlayerOwner)");
+                    return;
+                }
+
+                Item aiRootItem = targetPlayer.Profile.Inventory.Equipment;
+                var aiController = aiRootItem.Owner as TraderControllerClass;
+
+                if (aiRootItem == null || aiController == null)
+                {
+                    NotificationManagerClass.DisplayWarningNotification("无法获取目标物品栏");
+                    return;
+                }
+
+                // 构建原生上下文
+                GetActionsClass.Class1748 context = new GetActionsClass.Class1748
+                {
+                    owner = myOwner,
+                    rootItem = aiRootItem,
+                    lootItemOwner = aiController,
+                    controller = mainPlayer.InventoryController
+                };
+
+                // 尝试获取目标的 LastOwner (尽善尽美，防止底层报错)
+                var targetBridge = Comfort.Common.Singleton<GameWorld>.Instance.GetEverExistedBridgeByProfileID(targetPlayer.ProfileId);
+                context.lootItemLastOwner = targetBridge?.iPlayer;
+
+                // 关闭自己的面板，释放鼠标控制权给游戏
+                _isMenuOpen = false;
+                ToggleCursor(false);
+
+                // ⭐ 强行刷新视线，骗过底层的 InteractionRayInfo 检查
+                mainPlayer.SaveInteractionRayInfo();
+
+                // ⭐ 两种触发方式任选其一：
+
+                // 方式 A：你刚才写的 Actions 注入法 (模拟按下 F 菜单)
+                /*
+                ActionsReturnClass actions = new ActionsReturnClass {
+                    Actions = new List<ActionsTypesClass> {
+                        new ActionsTypesClass { Name = "Search", TargetName = targetPlayer.Profile.Nickname, Action = context.method_3 }
+                    }
+                };
+                myOwner.AvailableInteractionState.Value = actions;
+                actions.InitSelected();
+                myOwner.AvailableInteractionState.Value?.SelectedAction?.Action?.Invoke();
+                */
+
+                // 方式 B：最直接暴力的方法 (跳过 F 菜单，直接执行搜索网络请求与 UI 唤出)
+                //道爷我成了!
+                context.method_3();
+
+                NotificationManagerClass.DisplayMessageNotification($"已尝试开启物品栏: {targetPlayer.Profile.Nickname}");
+            }
+            catch (System.Exception ex)
+            {
+                Debug.LogError($"[搜身异常]: {ex.Message}\n{ex.StackTrace}");
+                NotificationManagerClass.DisplayWarningNotification("搜身失败，请看控制台日志");
+            }
+        }
+
         /// <summary>
         /// 异步提取角色的真实 3D 渲染头像
         /// </summary>
@@ -178,7 +277,6 @@ namespace Oracle.ESP
                 // 2. 检查是否正在后台渲染队列中
                 if (_pendingIcons.TryGetValue(profileId, out GClass929 pendingIcon))
                 {
-                    // 如果渲染完毕，提取 Sprite 的 Texture 并转入永久缓存
                     if (pendingIcon != null && pendingIcon.Sprite != null && pendingIcon.Sprite.texture != null)
                     {
                         Texture2D tex = pendingIcon.Sprite.texture;
@@ -186,7 +284,7 @@ namespace Oracle.ESP
                         _pendingIcons.Remove(profileId);
                         return tex;
                     }
-                    return null; // 仍在渲染中
+                    return null;
                 }
 
                 // 3. 首次请求：利用游戏底层工厂生成 3D 预览图
@@ -240,13 +338,12 @@ namespace Oracle.ESP
         }
 
         // ==========================================
-        // 样式初始化核心方法 (复用扁平化风格)
+        // 样式初始化核心方法
         // ==========================================
         private void InitFlatUI()
         {
             if (isStyleInitialized)
             {
-                // 简单暴力清理：如果检测到背景丢失，说明是场景切换了
                 if (flatWindowStyle != null && flatWindowStyle.normal.background == null)
                 {
                     isStyleInitialized = false;
@@ -284,6 +381,13 @@ namespace Oracle.ESP
             redButtonStyle.hover.background = MakeTex(1, 1, new Color(0.6f, 0.2f, 0.2f, 1f));
             redButtonStyle.active.background = MakeTex(1, 1, new Color(0.3f, 0.1f, 0.1f, 1f));
             redButtonStyle.alignment = TextAnchor.MiddleCenter;
+
+            // ⭐ 新增：搜身专属的蓝色按钮
+            blueButtonStyle = new GUIStyle(flatButtonStyle);
+            blueButtonStyle.normal.background = MakeTex(1, 1, new Color(0.15f, 0.35f, 0.55f, 1f));
+            blueButtonStyle.hover.background = MakeTex(1, 1, new Color(0.25f, 0.45f, 0.65f, 1f));
+            blueButtonStyle.active.background = MakeTex(1, 1, new Color(0.1f, 0.25f, 0.4f, 1f));
+            blueButtonStyle.alignment = TextAnchor.MiddleCenter;
 
             flatScrollbarStyle = new GUIStyle(GUI.skin.verticalScrollbar);
             flatScrollbarStyle.normal.background = MakeTex(1, 1, new Color(0.12f, 0.13f, 0.15f, 1f));
