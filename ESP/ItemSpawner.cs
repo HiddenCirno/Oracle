@@ -83,6 +83,65 @@ namespace Oracle.ESP
                 DropItemToGround(player, newItem, gameWorld);
             }
         }
+
+        /// <summary>
+        /// 尝试异步添加物品到玩家物品栏
+        /// </summary>
+        /// <param name="player">玩家实例</param>
+        /// <param name="templateId">指定的物品ID(模板id, 即tpl, 非唯一ID, 这两个东西都使用MongoId规范是真的害人....)</param>
+        /// <returns></returns>
+        public static async Task SpawnItemIntoInventoryAsync(Player player, Item item)
+        {
+            //提取单例和当前实例
+            var itemFactory = Singleton<ItemFactoryClass>.Instance;
+            var gameWorld = PluginsCore.CorrectGameWorld;
+            var templateId = item.TemplateId;
+            //防御性检查
+            if (itemFactory == null || gameWorld == null) return;
+            if (!itemFactory.ItemTemplates.ContainsKey(templateId)) return;
+            //构造物品
+            if (item == null) return;
+            //带勾
+            if (ItemSpawnerCfg.ForcedFiR.Value) item.SpawnedInSession = true;
+            //异步读取物品资产, 防止出现问题
+            await LoadItemBundlesAsync(item);
+            //自定义寻址
+            ItemAddress targetLocation = FindEmptyLocation(player, item);
+            //有效地址, 尝试发包
+            if (targetLocation != null)
+            {
+                //配置网络包
+                var addOperationResult = InteractionsHandlerClass.Add(
+                    item,
+                    targetLocation,
+                    player.InventoryController,
+                    false
+                );
+                //发包成功
+                if (addOperationResult.Succeeded)
+                {
+                    try
+                    {
+                        //执行
+                        //这里会弹出无源错误, 在战局内这个错误不影响实际使用, Fika环境下可能出现同步问题但问题不大, 因此直接捕获即可
+                        player.InventoryController.TryRunNetworkTransaction(addOperationResult);
+                        // Console.WriteLine($"成功将物品放入背包: {newItem.Name.Localized()}");
+                    }
+                    catch (Exception) { }
+                }
+                else
+                {
+                    //未知原因导致的发包失败, 转为掉落物品
+                    DropItemToGround(player, item, gameWorld);
+                }
+            }
+            else
+            {
+                //背包满了, 掉落物品
+                DropItemToGround(player, item, gameWorld);
+            }
+        }
+
         /// <summary>
         /// 虚空造物并掉落物品(异步执行)
         /// </summary>
@@ -228,6 +287,29 @@ namespace Oracle.ESP
                 );
             }
         }
+
+        /// <summary>
+        /// 桥接方法, 用于直接使用
+        /// </summary>
+        /// <param name="player">玩家实例</param>
+        /// <param name="templateId">物品ID</param>
+        public static async void SpawnItemIntoInventory(Player player, Item item)
+        {
+            try
+            {
+                await SpawnItemIntoInventoryAsync(player, item);
+            }
+            catch (Exception ex)
+            {
+                //捕获
+                NotificationManagerClass.DisplayMessageNotification(
+                    "生成物品失败！",
+                    EFT.Communications.ENotificationDurationType.Default,
+                    EFT.Communications.ENotificationIconType.Alert
+                );
+            }
+        }
+
         /// <summary>
         /// 桥接方法, 用于直接使用
         /// </summary>

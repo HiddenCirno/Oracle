@@ -64,7 +64,7 @@ namespace Oracle.ESP
         {
             // ---- 右上角区域 ----
             // 1. 全歼按钮 (放在关闭按钮左侧)
-            if (GUI.Button(new Rect(_windowRect.width - 135, 4, 85, 20), "全歼 AI", redButtonStyle))
+            if (GUI.Button(new Rect(_windowRect.width - 135, 4, 85, 20), "全部杀死", redButtonStyle))
             {
                 if (PluginsCore.CorrectGameWorld != null && PluginsCore.CorrectGameWorld.AllAlivePlayersList != null)
                 {
@@ -143,7 +143,7 @@ namespace Oracle.ESP
                     GUILayout.BeginVertical(GUILayout.Width(80));
 
                     // ⭐ 新增：搜身按钮
-                    if (GUILayout.Button("搜身", blueButtonStyle, GUILayout.Height(30)))
+                    if (GUILayout.Button("搜索", blueButtonStyle, GUILayout.Height(30)))
                     {
                         RemoteSearchPlayer(player);
                     }

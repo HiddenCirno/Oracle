@@ -78,8 +78,8 @@ namespace Oracle.ESP
                 for (int i = ItemCatcher.SavedItems.Count - 1; i >= 0; i--)
                 {
                     Item item = ItemCatcher.SavedItems[i];
-
                     bool isCurrent = (ItemCatcher.savedItem == item);
+
                     GUILayout.BeginHorizontal(isCurrent ? flatBoxStyleActive : flatBoxStyle);
 
                     // 1. 图标
@@ -94,42 +94,60 @@ namespace Oracle.ESP
 
                     GUILayout.BeginHorizontal();
                     GUILayout.Label("<color=grey>堆叠数:</color>", GUILayout.Width(45));
-
                     string currentStackStr = item.StackObjectsCount.ToString();
                     string newStackStr = GUILayout.TextField(currentStackStr, 7, flatTextFieldStyle, GUILayout.Width(60));
-
                     if (newStackStr != currentStackStr)
                     {
                         if (string.IsNullOrEmpty(newStackStr)) item.StackObjectsCount = 0;
                         else if (int.TryParse(newStackStr, out int parsedStack)) item.StackObjectsCount = parsedStack;
                     }
                     GUILayout.EndHorizontal();
-
                     GUILayout.EndVertical();
 
-                    // 3. 按钮
-                    GUILayout.BeginVertical(GUILayout.Width(80));
+                    // 3. 按钮区域：2x2 网格
+                    GUILayout.BeginVertical();   // 不固定宽度，自适应内容
 
-                    if (GUILayout.Button("生成 (背包)", flatButtonStyle, GUILayout.Height(22)))
+                    // 第一行：生成 + 设为当前
+                    GUILayout.BeginHorizontal();
+                    // 生成按钮
+                    if (GUILayout.Button("生成", flatButtonStyle, GUILayout.Height(22), GUILayout.MinWidth(70)))
                     {
                         if (item.StackObjectsCount <= 0) item.StackObjectsCount = 1;
                         Player mainPlayer = PluginsCore.CorrectPlayer;
-                        if (mainPlayer != null) ItemSpawner.CloneAndDropItem(mainPlayer, item);
+                        if (mainPlayer != null) ItemSpawner.SpawnItemIntoInventory(mainPlayer, item);
                     }
-
+                    // 设为当前 / 当前选中 按钮
                     GUI.enabled = !isCurrent;
-                    if (GUILayout.Button(isCurrent ? "当前选中" : "设为当前", flatButtonStyle, GUILayout.Height(22)))
+                    if (GUILayout.Button(isCurrent ? "当前" : "选择", flatButtonStyle, GUILayout.Height(22), GUILayout.MinWidth(70)))
                     {
                         ItemCatcher.savedItem = item;
                     }
                     GUI.enabled = true;
+                    GUILayout.EndHorizontal();
 
-                    // C. 清除按钮 (抛弃变色把戏，直接使用 redButtonStyle)
-                    if (GUILayout.Button("清除", redButtonStyle, GUILayout.Height(22)))
+                    // 第二行：掉落世界 + 清除
+                    GUILayout.BeginHorizontal();
+                    // 新增：掉落世界按钮
+                    if (GUILayout.Button("掉落", flatButtonStyle, GUILayout.Height(22), GUILayout.MinWidth(70)))
+                    {
+                        if (item.StackObjectsCount <= 0) item.StackObjectsCount = 1;
+                        Player mainPlayer = PluginsCore.CorrectPlayer;
+                        if (mainPlayer != null)
+                        {
+                            // 请在此处实现将物品掉落到世界的逻辑
+                            // 例如：ItemSpawner.DropItemToWorld(mainPlayer, item);
+                            // 或者：mainPlayer.DropItem(item, item.StackObjectsCount);
+                            //Debug.LogWarning("需要实现掉落世界的方法");
+                            ItemSpawner.CloneAndDropItem(mainPlayer, item);
+                        }
+                    }
+                    // 清除按钮（红色）
+                    if (GUILayout.Button("删除", redButtonStyle, GUILayout.Height(22), GUILayout.MinWidth(70)))
                     {
                         ItemCatcher.SavedItems.RemoveAt(i);
                         if (isCurrent) ItemCatcher.savedItem = null;
                     }
+                    GUILayout.EndHorizontal();
 
                     GUILayout.EndVertical();
                     GUILayout.EndHorizontal();

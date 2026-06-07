@@ -121,7 +121,7 @@ namespace Oracle.ESP
                     GUILayout.BeginVertical();
                     // 这里为了 UI 干净，直接调用物品的 Localized 名字，而不是 ESP 里的全尺寸富文本
                     GUILayout.Label($"<b><color=#{ColorUtility.ToHtmlStringRGB(loot.ItemColor)}>{loot.ItemRef.Name.Localized()}</color></b>");
-                    GUILayout.Label($"<color=grey>价值: {loot.Price} 卢布 | 距离: {loot.Distance}m</color>");
+                    GUILayout.Label($"<color=grey>价值: {loot.Price} 卢布 | 距离: {loot.Distance}米</color>");
                     GUILayout.EndVertical();
 
                     // 3. 操作按钮 (宽度稍微加宽一点适应文字)
@@ -130,7 +130,7 @@ namespace Oracle.ESP
                     // --- 新增：隔空取物按钮 ---
                     // 使用之前统一的红色或默认按钮样式皆可，这里用红色表示“破坏平衡”的超能力
                     GUI.backgroundColor = new Color(0.8f, 0.4f, 0.1f, 1f); // 亮橙色
-                    if (GUILayout.Button("隔空取物", flatButtonStyle, GUILayout.Height(30)))
+                    if (GUILayout.Button("隔空拾取", flatButtonStyle, GUILayout.Height(30)))
                     {
                         Player mainPlayer = PluginsCore.CorrectPlayer;
                         if (mainPlayer != null)
@@ -144,7 +144,7 @@ namespace Oracle.ESP
                     GUILayout.Space(4);
 
                     // --- 原有的：捕获元数据按钮 ---
-                    if (GUILayout.Button("捕获数据", blueButtonStyle, GUILayout.Height(30)))
+                    if (GUILayout.Button("复制实例", blueButtonStyle, GUILayout.Height(30)))
                     {
                         Item clonedItem = loot.ItemRef.CloneItem().ReassignAllIds();
                         ItemCatcher.SavedItems.Add(clonedItem);
