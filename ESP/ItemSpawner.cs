@@ -252,7 +252,7 @@ namespace Oracle.ESP
             }
         }
         //物品栏寻址算法
-        private static ItemAddress FindEmptyLocation(Player player, Item newItem)
+        public static ItemAddress FindEmptyLocation(Player player, Item newItem)
         {
             //划定物品栏有效区域(胸挂, 口袋, 背包)
             var equipment = player.Inventory.Equipment;

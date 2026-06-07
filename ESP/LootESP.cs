@@ -2,6 +2,7 @@
 using EFT.Interactive;
 using System.Collections.Generic;
 using UnityEngine;
+using EFT.InventoryLogic;
 
 namespace Oracle.ESP
 {
@@ -10,6 +11,8 @@ namespace Oracle.ESP
     /// </summary>
     public struct LootData
     {
+        public Item ItemRef; // ⭐ 新增：直接保存底层物品引用，用于图标渲染和元数据捕获
+        public LootItem? LootableItem; // ⭐ 新增：直接保存底层物品引用，用于图标渲染和元数据捕获
         public Vector3 Position;
         public string Name;
         public int Distance;
@@ -132,7 +135,7 @@ namespace Oracle.ESP
                     //其实可以, AI牛逼
                     if (!PlayerESP.IsInRange((int)maxLootDistance, playerPos, lootItem.transform.position) || !LootESPCfg.EnableLooseLootESP.Value) continue;
                     float dist = Vector3.Distance(playerPos, lootItem.transform.position);
-                    TryAddLootData(tempLootList, positionOffsets, lootItem.Item.TemplateId, LootESPCfg.ShowItemFullName.Value ? lootItem.Item.Name.Localized() : lootItem.Item.ShortName.Localized(), lootItem.transform.position, (int)dist);
+                    TryAddLootData(tempLootList, positionOffsets, lootItem.Item, lootItem, LootESPCfg.ShowItemFullName.Value ? lootItem.Item.Name.Localized() : lootItem.Item.ShortName.Localized(), lootItem.transform.position, (int)dist);
                     //TryAddLootData(tempLootList, lootItem.Item.TemplateId, lootItem.Item.ShortName.Localized(), lootItem.transform.position, (int)dist);
                 }
                 //容器透视
@@ -153,7 +156,7 @@ namespace Oracle.ESP
                         foreach (var item in container.ItemOwner.RootItem.GetAllItems())
                         {
                             if (item == container.ItemOwner.RootItem || !LootESPCfg.EnableContainerLootESP.Value) continue;
-                            TryAddLootData(tempLootList, positionOffsets, item.TemplateId, LootESPCfg.ShowItemFullName.Value ? item.Name.Localized() : item.ShortName.Localized(), container.transform.position, dist, $"[{containerName}]");
+                            TryAddLootData(tempLootList, positionOffsets, item, null, LootESPCfg.ShowItemFullName.Value ? item.Name.Localized() : item.ShortName.Localized(), container.transform.position, dist, $"[{containerName}]");
                         }
                     }
                 }
@@ -171,8 +174,10 @@ namespace Oracle.ESP
         /// <param name="pos">坐标</param>
         /// <param name="dist">距离</param>
         /// <param name="prefix">预修复</param>
-        private static void TryAddLootData(List<LootData> targetList, Dictionary<Vector3, int> offsetDict, string itemKey, string itemName, Vector3 pos, int dist, string prefix = "")
+        private static void TryAddLootData(List<LootData> targetList, Dictionary<Vector3, int> offsetDict, Item item, LootItem? lootItem, string itemName, Vector3 pos, int dist, string prefix = "")
         {
+            if (item == null) return;
+            string itemKey = item.TemplateId;
             //字典O(1)查价
             if (!PluginsCore.HandbookDict.TryGetValue(itemKey, out int itemPrice)) return;
             //价值过滤
@@ -204,6 +209,8 @@ namespace Oracle.ESP
             //生成数据
             targetList.Add(new LootData
             {
+                ItemRef = item,
+                LootableItem = lootItem,
                 Position = pos,
                 Name = formattedName,
                 Distance = dist,
