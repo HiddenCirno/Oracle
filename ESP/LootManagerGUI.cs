@@ -15,6 +15,7 @@ using System.Reflection;
 using System.Runtime.Serialization;
 using UnityEngine;
 using static GetActionsClass;
+using static MoveOperationClass;
 using static RootMotion.FinalIK.InteractionTrigger.Range;
 
 namespace Oracle.ESP
@@ -106,8 +107,7 @@ namespace Oracle.ESP
 
                 foreach (LootData loot in sortedLoot)
                 {
-                    if (loot.LootableItem == null) continue;
-
+                    if (loot.LootableItem == null) continue; //哎, 白写
                     GUILayout.BeginHorizontal(flatBoxStyle);
 
                     // 1. 物品图标
@@ -133,7 +133,7 @@ namespace Oracle.ESP
                         Player mainPlayer = PluginsCore.CorrectPlayer;
                         if (mainPlayer != null)
                         {
-                            PickupLootItem(mainPlayer, loot.LootableItem);
+                            PickupLootItemEx(mainPlayer, loot);
                         }
                     }
                     GUI.backgroundColor = Color.white;
@@ -330,55 +330,108 @@ namespace Oracle.ESP
             }
         }
 
-        /// <summary>
-        /// 隔空取物：将地图上的物理掉落物直接瞬移到玩家背包
-        /// </summary>
-        /// <param name="player">玩家实例</param>
-        /// <param name="item">要拾取的物品实例 (必须是地图上真实存在的)</param>
-        public static void TeleportItemToInventory(Player player, Item item)
+        public static void PickupLootItem(Player player, Item Item)
         {
-            if (player == null || item == null) return;
+            if (player == null || Item == null) return;
 
             try
             {
-                // 1. 复用你之前写的寻址算法，在玩家身上找个空位
+                // 1. 获取物品实体
+                Item item = Item;
+
+                // 2. 检查玩家背包空间 (复用你现有的逻辑)
                 ItemAddress targetLocation = ItemSpawner.FindEmptyLocation(player, item);
 
-                if (targetLocation != null)
+                if (targetLocation == null)
                 {
-                    // 2. 构造“移动”网络包，从世界(LootItemAddress)移动到背包
-                    var moveResult = InteractionsHandlerClass.Move(
-                        item,
-                        targetLocation,
-                        player.InventoryController,
-                        false
+                    NotificationManagerClass.DisplayWarningNotification("背包空间不足！");
+                    return;
+                }
+                var controller = player.InventoryController;
+
+                var pickUpResult =
+                    InteractionsHandlerClass.QuickFindAppropriatePlace(
+                    item,
+                    player.InventoryController,
+                    player.Inventory.Equipment.ToEnumerable(),
+                    InteractionsHandlerClass.EMoveItemOrder.PickUp,
+                    true
+                );
+
+                if (pickUpResult.Succeeded && controller.CanExecute(pickUpResult.Value))
+                {
+
+                    // ⭐ 关键：直接复用原版执行路径
+                    controller.RunNetworkTransaction(
+                        pickUpResult.Value,
+                        result =>
+                        {
+                            if (result.Succeed)
+                            {
+                                player.UpdateInteractionCast();
+                            }
+
+                            var pickupState = player.CurrentState as PickupStateClass;
+                            pickupState?.Pickup(false, null);
+                        }
                     );
 
-                    if (moveResult.Succeeded)
-                    {
-                        // 3. 执行网络同步 (这会自动销毁世界上的 3D 模型)
-                        player.InventoryController.TryRunNetworkTransaction(moveResult);
-
-                        NotificationManagerClass.DisplayMessageNotification(
-                            $"成功隔空取物: {item.Name.Localized()}",
-                            EFT.Communications.ENotificationDurationType.Default,
-                            EFT.Communications.ENotificationIconType.Default,
-                            null
-                        );
-                    }
-                    else
-                    {
-                        NotificationManagerClass.DisplayWarningNotification("拾取失败：可能是容器内的嵌套物品，或已被他人拾取。");
-                    }
-                }
-                else
-                {
-                    NotificationManagerClass.DisplayWarningNotification("背包空间不足，无法隔空取物！");
+                    player.CurrentManagedState.Pickup(true, null);
                 }
             }
             catch (Exception ex)
             {
-                // 防止极个别被锁定的特殊物品导致报错
+                Debug.LogError($"[拾取失败]: {ex.Message}\n{ex.StackTrace}");
+            }
+        }
+
+        public static void PickupLootItemEx(Player player, LootData loot)
+        {
+            if (player == null) return;
+
+            if (loot.LootableItem!=null)
+            {
+                // LooseLoot，直接走你已经调好的逻辑
+                PickupLootItem(player, loot.LootableItem);
+            }
+            else if (loot.ItemRef != null)
+            {
+                // 容器内物品
+                try
+                {
+                    Item item = loot.ItemRef;
+                    ItemAddress targetLocation = ItemSpawner.FindEmptyLocation(player, item);
+
+                    if (targetLocation == null)
+                    {
+                        NotificationManagerClass.DisplayWarningNotification("背包空间不足！");
+                        return;
+                    }
+                    var trader = loot.Container.ItemOwner;
+
+                    // 1. 强制将容器的状态设置为“已完全加载并可交互”
+                    // 这是一个 EFT 内部用来标志 Grid 已经同步完成的 flag
+                    trader.Bool_0 = false; // 确保 Locked 状态为 false
+
+                    // 2. 核心补丁：手动触发一个 GEventArgs18 (RefreshItemEvent)
+                    // 这个事件会强制 InventoryController 重新扫描该 TraderController 的 Grid，
+                    // 无论之前它处于什么未初始化状态，都会被强制“刷新”为可用。
+                    trader.RaiseEvent(new GEventArgs18(trader.RootItem, trader, true, true));
+
+                    var moveResult = InteractionsHandlerClass.Move(item, targetLocation, player.InventoryController, false);
+                    if (moveResult.Succeeded)
+                    {
+                        player.InventoryController.TryRunNetworkTransaction(moveResult);
+                    }
+                    else
+                    {
+                        NotificationManagerClass.DisplayWarningNotification("拾取失败：可能是嵌套物品或已被拾取。");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Debug.LogError($"[容器拾取失败]: {ex.Message}\n{ex.StackTrace}");
+                }
             }
         }
     }
