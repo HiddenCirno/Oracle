@@ -43,7 +43,10 @@ namespace Oracle.ESP
         public void OnGUI()
         {
             if (!_isMenuOpen) return;
-
+            if (isStyleInitialized && (flatWindowStyle == null || flatWindowStyle.normal.background == null))
+            {
+                isStyleInitialized = false;
+            }
             InitFlatUI();
             GUI.backgroundColor = Color.white;
 
@@ -184,7 +187,18 @@ namespace Oracle.ESP
 
         private void InitFlatUI()
         {
-            if (isStyleInitialized) return;
+            if (isStyleInitialized)
+            {
+                // 简单暴力清理：如果检测到背景丢失，说明是场景切换了
+                if (flatWindowStyle != null && flatWindowStyle.normal.background == null)
+                {
+                    isStyleInitialized = false;
+                }
+                else
+                {
+                    return;
+                }
+            }
 
             flatWindowStyle = new GUIStyle(GUI.skin.window);
             flatWindowStyle.normal.background = MakeTex(1, 1, new Color(0.15f, 0.16f, 0.18f, 1f));

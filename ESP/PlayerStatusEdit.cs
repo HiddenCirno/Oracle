@@ -1,7 +1,9 @@
 ﻿using BepInEx.Configuration;
 using EFT;
 using EFT.HealthSystem;
+using EFT.InventoryLogic;
 using HarmonyLib;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace Oracle.ESP
@@ -92,6 +94,20 @@ namespace Oracle.ESP
             //}
         }
     }
+    [HarmonyPatch(typeof(InventoryEquipment), "smethod_1")]
+    public class InfinityWeightPatch
+    {
+        public static bool Prefix(InventoryEquipment __instance, IEnumerable<Slot> slots, ref float __result)
+        {
+            if (PlayerStatusEditCfg.EnableInfiniteWeight.Value)
+            {
+                __result = 0f;
+                return false;
+            }
+            return true;
+            //}
+        }
+    }
     /// <summary>
     /// 配置项定义
     /// </summary>
@@ -99,6 +115,7 @@ namespace Oracle.ESP
     {
 
         internal static ConfigEntry<bool> EnableInfiniteStamina { get; set; }
+        internal static ConfigEntry<bool> EnableInfiniteWeight { get; set; }
         internal static ConfigEntry<bool> DisableFallenDamage { get; set; }
 
         /// <summary>
@@ -112,6 +129,12 @@ namespace Oracle.ESP
                 "无限体力",
                 true,
                 "锁定跑步、举枪体力和屏息氧气为全满状态"
+            );
+            EnableInfiniteWeight = config.Bind(
+                "玩家属性",
+                "无限负重",
+                true,
+                "启用时所有物品将不计入重量"
             );
             DisableFallenDamage = config.Bind(
                 "玩家属性",
