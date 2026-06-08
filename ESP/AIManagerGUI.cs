@@ -228,8 +228,8 @@ namespace Oracle.ESP
                 context.lootItemLastOwner = targetBridge?.iPlayer;
 
                 // 关闭自己的面板，释放鼠标控制权给游戏
-                _isMenuOpen = false;
-                ToggleCursor(false);
+                //_isMenuOpen = false;
+                //ToggleCursor(false);
 
                 // ⭐ 强行刷新视线，骗过底层的 InteractionRayInfo 检查
                 mainPlayer.SaveInteractionRayInfo();
