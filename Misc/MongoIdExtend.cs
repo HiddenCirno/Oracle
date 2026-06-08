@@ -3,7 +3,7 @@ using System;
 using System.Security.Cryptography;
 using System.Text;
 
-namespace Oracle.Utils
+namespace Oracle.Misc
 {
     /// <summary>
     /// MongoId的拓展方法类

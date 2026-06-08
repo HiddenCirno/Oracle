@@ -9,9 +9,8 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using UnityEngine;
-using Oracle.Utils;
 
-namespace Oracle.ESP
+namespace Oracle.Utils
 {
     /// <summary>
     /// 虚空造物部分
@@ -215,7 +214,7 @@ namespace Oracle.ESP
             //防御
             if (cam == null) return;
             //主摄像机朝向的方向
-            Vector3 spawnPosition = cam.transform.position + (cam.transform.forward * 0.8f);
+            Vector3 spawnPosition = cam.transform.position + cam.transform.forward * 0.8f;
             //只保留水平角度
             Quaternion spawnRotation = Quaternion.Euler(0f, cam.transform.eulerAngles.y, 0f);
             //生成物品
@@ -355,7 +354,7 @@ namespace Oracle.ESP
                         var addressInGrid = grid.FindLocationForItem(newItem);
                         if (addressInGrid != null)
                         {
-                            return (ItemAddress)addressInGrid;
+                            return addressInGrid;
                         }
                     }
                 }

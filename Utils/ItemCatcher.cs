@@ -6,13 +6,12 @@ using EFT.InventoryLogic;
 using EFT.UI;
 using EFT.UI.DragAndDrop;
 using HarmonyLib;
-using Oracle.Utils;
 using System;
 using System.Collections.Generic;
 using System.Text;
 using UnityEngine;
 
-namespace Oracle.ESP
+namespace Oracle.Utils
 {
     /// <summary>
     /// 用于捕获物品实例的工具类

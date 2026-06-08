@@ -6,7 +6,7 @@ using HarmonyLib;
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace Oracle.ESP
+namespace Oracle.Utils
 {
     public class PlayerStatusEdit
     {
@@ -19,7 +19,7 @@ namespace Oracle.ESP
             private void Awake()
             {
                 //查找玩家组件
-                localPlayer = this.gameObject.GetComponent<Player>();
+                localPlayer = gameObject.GetComponent<Player>();
             }
             private void Update()
             {

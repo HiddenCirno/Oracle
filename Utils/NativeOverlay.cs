@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Runtime.InteropServices;
 
-namespace Oracle.ESP
+namespace Oracle.Utils
 {
     /// <summary>
     /// 过直播部分

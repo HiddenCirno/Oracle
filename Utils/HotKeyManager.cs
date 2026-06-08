@@ -20,6 +20,9 @@ namespace Oracle.Utils
         internal static ConfigEntry<KeyCode> LootESPNameModeKey { get; set; }
         internal static ConfigEntry<KeyCode> SpawnItemKey { get; set; }
         internal static ConfigEntry<KeyboardShortcut> CopyItemKey { get; set; }
+        internal static ConfigEntry<KeyCode> ItemManagerKey { get; set; }
+        internal static ConfigEntry<KeyCode> BotManagerKey { get; set; }
+        internal static ConfigEntry<KeyCode> LootManagerKey { get; set; }
         internal static ConfigEntry<KeyCode> DropItemKey { get; set; }
         internal static ConfigEntry<KeyCode> UniGUIKey { get; set; }
         internal static ConfigEntry<bool> UniGUI { get; set; }
@@ -235,6 +238,24 @@ namespace Oracle.Utils
                 "切换瞄准部位",
                 KeyCode.KeypadMultiply,
                 "按下切换瞄准的部位(头或胸)"
+            );
+            ItemManagerKey = config.Bind(
+                "快捷键设置",
+                "打开物品管理器",
+                KeyCode.F10,
+                "打开物品实例管理器"
+            );
+            BotManagerKey = config.Bind(
+                "快捷键设置",
+                "打开AI管理器",
+                KeyCode.F9,
+                "打开战局AI管理器"
+            );
+            LootManagerKey = config.Bind(
+                "快捷键设置",
+                "打开战利品管理器",
+                KeyCode.F8,
+                "打开战局战利品管理器"
             );
         }
     }

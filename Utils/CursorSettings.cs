@@ -1,7 +1,7 @@
-﻿using System.Linq;
+﻿using EFT.UI;
+using SPT.Reflection.Utils;
+using System.Linq;
 using System.Reflection;
-using EFT.UI;
-using SPT.Reflection.Utils; // 确保你的 SPT 版本引用了这个命名空间
 
 namespace Oracle.Utils
 {
@@ -14,7 +14,6 @@ namespace Oracle.Utils
 
         static CursorSettings()
         {
-            // 遍历塔科夫底层所有类型，精准狙击包含 "SetCursor" 方法的类
             var cursorType = PatchConstants.EftTypes.Single(x => x.GetMethod("SetCursor") != null);
             setCursorMethod = cursorType.GetMethod("SetCursor");
         }

@@ -2,9 +2,10 @@
 using EFT;
 using EFT.Ballistics;
 using HarmonyLib;
+using Oracle.ESP;
 using UnityEngine;
 
-namespace Oracle.ESP
+namespace Oracle.Utils
 {
     /// <summary>
     /// 自瞄部分
@@ -94,7 +95,7 @@ namespace Oracle.ESP
             //依旧功能开关+防御
             if (!AimbotCfg.EnableAimbot.Value || !AimbotCfg.DrawTargetLine.Value || LockedTarget == null || LockedTarget.PlayerBones == null) return;
             //找头
-            Vector3? headPos = AimbotCfg.AimbotPartSetting.Value == "头部" ? PlayerESP.GetBonePos(Aimbot.LockedTarget.PlayerBones.Head) : PlayerESP.GetBonePos(Aimbot.LockedTarget.PlayerBones.Spine3);
+            Vector3? headPos = AimbotCfg.AimbotPartSetting.Value == "头部" ? PlayerESP.GetBonePos(LockedTarget.PlayerBones.Head) : PlayerESP.GetBonePos(LockedTarget.PlayerBones.Spine3);
             if (!headPos.HasValue) return;
             //3d转2d
             Vector3 screenPos = cam.WorldToScreenPoint(headPos.Value);
@@ -214,7 +215,7 @@ namespace Oracle.ESP
             //修改向量和加速度
             if (AimbotCfg.SuperMagicBullet.Value)
             {
-                origin = (Vector3)targetPos + (Vector3.up * 0.2f);
+                origin = (Vector3)targetPos + Vector3.up * 0.2f;
                 direction = Vector3.down;
             }
             else

@@ -6,7 +6,7 @@ using System.Collections.Generic;
 using EFT;
 using EFT.UI;
 
-namespace Oracle.ESP
+namespace Oracle.RaidManager
 {
     public class ItemManagerGUI
     {
@@ -33,7 +33,7 @@ namespace Oracle.ESP
 
         public void Update()
         {
-            if (Input.GetKeyDown(KeyCode.F10))
+            if (Input.GetKeyDown(HotKeyManager.ItemManagerKey.Value))
             {
                 _isMenuOpen = !_isMenuOpen;
                 ToggleCursor(_isMenuOpen);
@@ -78,7 +78,7 @@ namespace Oracle.ESP
                 for (int i = ItemCatcher.SavedItems.Count - 1; i >= 0; i--)
                 {
                     Item item = ItemCatcher.SavedItems[i];
-                    bool isCurrent = (ItemCatcher.savedItem == item);
+                    bool isCurrent = ItemCatcher.savedItem == item;
 
                     GUILayout.BeginHorizontal(isCurrent ? flatBoxStyleActive : flatBoxStyle);
 

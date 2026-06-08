@@ -8,6 +8,7 @@ using EFT.UI;
 using EFT.UI.DragAndDrop;
 using GPUInstancer;
 using HarmonyLib;
+using Oracle.ESP;
 using Oracle.Utils;
 using System;
 using System.Collections.Generic;
@@ -19,7 +20,7 @@ using static GetActionsClass;
 using static MoveOperationClass;
 using static RootMotion.FinalIK.InteractionTrigger.Range;
 
-namespace Oracle.ESP
+namespace Oracle.RaidManager
 {
     public class LootManagerGUI
     {
@@ -60,7 +61,7 @@ namespace Oracle.ESP
         public void Update()
         {
             // 使用 F8 呼出战利品面板
-            if (Input.GetKeyDown(KeyCode.F8))
+            if (Input.GetKeyDown(HotKeyManager.LootManagerKey.Value))
             {
                 _isMenuOpen = !_isMenuOpen;
                 // 借用你写在 ItemManagerGUI 里的 ToggleCursor 逻辑（或者你可以把它提到 HotKeyManager 里公用）
@@ -253,13 +254,13 @@ namespace Oracle.ESP
             {
                 Cursor.lockState = CursorLockMode.None;
                 CursorSettings.SetCursor(ECursorType.Idle);
-                Comfort.Common.Singleton<GUISounds>.Instance.PlayUISound(EUISoundType.MenuContextMenu);
+                Singleton<GUISounds>.Instance.PlayUISound(EUISoundType.MenuContextMenu);
             }
             else
             {
                 Cursor.lockState = CursorLockMode.Locked;
                 CursorSettings.SetCursor(ECursorType.Invisible);
-                Comfort.Common.Singleton<GUISounds>.Instance.PlayUISound(EUISoundType.MenuDropdown);
+                Singleton<GUISounds>.Instance.PlayUISound(EUISoundType.MenuDropdown);
             }
 
             if (_inputManager != null) _inputManager.SetActive(!unlock);
@@ -417,7 +418,7 @@ namespace Oracle.ESP
                     if (myOwner == null) return;
 
                     // 构造上下文
-                    GetActionsClass.Class1748 context = new GetActionsClass.Class1748
+                    Class1748 context = new Class1748
                     {
                         owner = myOwner,
                         rootItem = containerItem, // 注意：我们要打开的是容器，而不是里面的单个物品

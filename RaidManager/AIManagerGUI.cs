@@ -5,11 +5,12 @@ using EFT.InventoryLogic;
 using EFT.UI;
 using HarmonyLib;
 using JetBrains.Annotations;
+using Oracle.ESP;
 using Oracle.Utils;
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace Oracle.ESP
+namespace Oracle.RaidManager
 {
     public class AIManagerGUI
     {
@@ -38,7 +39,7 @@ namespace Oracle.ESP
         public void Update()
         {
             // 使用 F9 作为 AI 控制台的呼出按键
-            if (Input.GetKeyDown(KeyCode.F9))
+            if (Input.GetKeyDown(HotKeyManager.AimbotKey.Value))
             {
                 _isMenuOpen = !_isMenuOpen;
                 ToggleCursor(_isMenuOpen);
@@ -288,7 +289,7 @@ namespace Oracle.ESP
                 }
 
                 // 3. 首次请求：利用游戏底层工厂生成 3D 预览图
-                var equipment = player.Profile.Inventory.Equipment.CloneVisibleItem<InventoryEquipment>();
+                var equipment = player.Profile.Inventory.Equipment.CloneVisibleItem();
                 var customization = player.Profile.Customization;
                 var request = new GClass932(equipment, customization);
                 var iconData = Comfort.Common.Singleton<GClass927>.Instance.GetIcon(request);
