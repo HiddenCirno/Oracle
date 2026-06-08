@@ -39,7 +39,7 @@ namespace Oracle.RaidManager
         public void Update()
         {
             // 使用 F9 作为 AI 控制台的呼出按键
-            if (Input.GetKeyDown(HotKeyManager.AimbotKey.Value))
+            if (Input.GetKeyDown(HotKeyManager.BotManagerKey.Value))
             {
                 _isMenuOpen = !_isMenuOpen;
                 ToggleCursor(_isMenuOpen);
