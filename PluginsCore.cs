@@ -76,6 +76,8 @@ namespace Oracle
             NativeOverlay.Initialize(Screen.width, Screen.height);
             //战利品扫描协程
             StartCoroutine(LootESP.LootScannerCoroutine());
+            //绊雷扫描协程
+            StartCoroutine(PlayerESP.TripwireScannerCoroutine());
         }
         public void Update()
         {
@@ -146,6 +148,7 @@ namespace Oracle
             //其他绘制
             PlayerESP.DrawPlayerText(cam, espTextStyle);
             PlayerESP.DrawAllPlayerHealthBars(cam);
+            PlayerESP.DrawTripwireESP(cam, espTextStyle, espMaterial);
             LootESP.DrawLootText(cam, espTextStyle); 
             Aimbot.UpdateTarget(cam);
             Aimbot.DrawTargetLine(cam);

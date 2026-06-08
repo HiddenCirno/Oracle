@@ -1,5 +1,10 @@
 ﻿using BepInEx.Configuration;
+using CommonAssets.Scripts.Game.LabyrinthEvent;
 using EFT;
+using EFT.SynchronizableObjects;
+using System;
+using System.Collections.Generic;
+using System.Reflection;
 using UnityEngine;
 
 namespace Oracle.ESP
@@ -9,6 +14,23 @@ namespace Oracle.ESP
     /// </summary>
     public class PlayerESP
     {
+        /// <summary>
+        /// 用于缓存绊雷数据的结构体，避免在 OnGUI 中使用反射
+        /// </summary>
+        public struct TripwireData
+        {
+            public Vector3 StartPos;
+            public Vector3 EndPos;
+            public Vector3 CenterPos;
+        }
+        /// <summary>
+        /// 全局缓存的绊雷数据列表
+        /// </summary>
+        public static List<TripwireData> CachedTripwires = new List<TripwireData>();
+
+        // 缓存反射的 FieldInfo，避免每次循环都去查找
+        private static FieldInfo _tripwireStartField;
+        private static FieldInfo _tripwireEndField;
         //颜色定义
         public static readonly Color ColorSafe = Color.green; //隔墙不可见
         public static readonly Color ColorWarning = Color.yellow; //你可以看到它, 而它没有看你
@@ -98,6 +120,127 @@ namespace Oracle.ESP
         {
             return role == "followerbirdeye" || role == "followerbigpipe" ||
                    role == "infectedtagilla" || role.StartsWith("sectant");
+        }
+
+        /// <summary>
+        /// 绊雷扫描协程
+        /// </summary>
+        public static System.Collections.IEnumerator TripwireScannerCoroutine()
+        {
+            // 初始化反射字段
+            _tripwireStartField = typeof(TripwireProceduralMesh).GetField("vector3_0", BindingFlags.NonPublic | BindingFlags.Instance);
+            _tripwireEndField = typeof(TripwireProceduralMesh).GetField("vector3_1", BindingFlags.NonPublic | BindingFlags.Instance);
+
+            while (true)
+            {
+                yield return new WaitForSeconds(2f); // 每2秒扫描一次
+
+                if (PluginsCore.CorrectGameWorld == null || PluginsCore.CorrectPlayer == null)
+                {
+                    CachedTripwires.Clear();
+                    continue;
+                }
+
+                if (!PlayerESPCfg.EnableTripwireESP.Value) continue;
+
+                List<TripwireData> tempTraps = new List<TripwireData>();
+
+                // 直接扫描地图上所有的 TripwireProceduralMesh 组件
+                TripwireProceduralMesh[] tripwires = UnityEngine.Object.FindObjectsOfType<TripwireProceduralMesh>();
+
+                foreach (TripwireProceduralMesh tripwire in tripwires)
+                {
+                    if (tripwire == null || !tripwire.gameObject.activeSelf) continue;
+
+                    if (_tripwireStartField != null && _tripwireEndField != null)
+                    {
+                        try
+                        {
+                            // 通过反射提取起点和终点的世界坐标
+                            Vector3 start = (Vector3)_tripwireStartField.GetValue(tripwire);
+                            Vector3 end = (Vector3)_tripwireEndField.GetValue(tripwire);
+
+                            // 计算中点，用于显示文字标签
+                            Vector3 center = (start + end) / 2f;
+
+                            tempTraps.Add(new TripwireData
+                            {
+                                StartPos = start,
+                                EndPos = end,
+                                CenterPos = center
+                            });
+                        }
+                        catch (Exception ex)
+                        {
+                            Debug.LogError($"[Tripwire ESP] 读取坐标失败: {ex.Message}");
+                        }
+                    }
+                }
+
+                CachedTripwires = tempTraps;
+            }
+        }
+
+        /// <summary>
+        /// 绘制绊雷 2D 实体线和距离信息
+        /// </summary>
+        public static void DrawTripwireESP(Camera cam, GUIStyle textStyle, Material lineMaterial)
+        {
+            if (!PlayerESPCfg.EnableTripwireESP.Value || CachedTripwires == null || CachedTripwires.Count == 0) return;
+
+            Vector3 playerPos = PluginsCore.CorrectPlayer.Transform.position;
+            int maxDistance = 25;
+
+            // ================= 步骤 1：使用 GL 绘制绊线 =================
+            if (Event.current.type == EventType.Repaint)
+            {
+                lineMaterial.SetPass(0);
+                GL.PushMatrix();
+                GL.LoadPixelMatrix();
+                GL.Begin(GL.LINES);
+                GL.Color(ColorDangerous); // 使用红色画线
+
+                foreach (TripwireData trap in CachedTripwires)
+                {
+                    // 距离过滤 (用中点计算距离)
+                    if (!IsInRange(maxDistance, playerPos, trap.CenterPos)) continue;
+
+                    // 转屏幕坐标
+                    Vector3 screenPointA = cam.WorldToScreenPoint(trap.StartPos);
+                    Vector3 screenPointB = cam.WorldToScreenPoint(trap.EndPos);
+
+                    // 深度检查：确保线段的两端都在屏幕前方
+                    if (screenPointA.z > 0.01f && screenPointB.z > 0.01f)
+                    {
+                        // 绘制直线
+                        GL.Vertex3(screenPointA.x, screenPointA.y, 0);
+                        GL.Vertex3(screenPointB.x, screenPointB.y, 0);
+                    }
+                }
+                GL.End();
+                GL.PopMatrix();
+            }
+
+            // ================= 步骤 2：使用 GUI 绘制文字标签 =================
+            textStyle.richText = true;
+            foreach (TripwireData trap in CachedTripwires)
+            {
+                if (!IsInRange(maxDistance, playerPos, trap.CenterPos)) continue;
+
+                Vector3 screenCenter = cam.WorldToScreenPoint(trap.CenterPos);
+
+                if (screenCenter.z > 0.01f)
+                {
+                    int dist = Mathf.RoundToInt(Vector3.Distance(playerPos, trap.CenterPos));
+                    string text = $"<color=#FF0000>绊雷</color> <color=#FFFF00>{dist}米</color>";
+
+                    float screenX = screenCenter.x;
+                    float screenY = Screen.height - screenCenter.y;
+
+                    // 在中点上方偏移画字，完美居中
+                    GUI.Label(new Rect(screenX - 50, screenY - 20, 100, 40), text, textStyle);
+                }
+            }
         }
 
         /// <summary>
@@ -573,6 +716,8 @@ namespace Oracle.ESP
         internal static ConfigEntry<bool> EnablePlayerHealthBarESP { get; set; }
         internal static ConfigEntry<bool> EnablePlayerBoneESPHealthMode { get; set; }
         internal static ConfigEntry<int> PlayerESPMaxDistance { get; set; }
+
+        internal static ConfigEntry<bool> EnableTripwireESP { get; set; } // 新增绊雷开关
         /// <summary>
         /// 配置项初始化
         /// </summary>
@@ -617,6 +762,12 @@ namespace Oracle.ESP
                     "透视可见的范围",
                     new AcceptableValueRange<int>(50, 1000)
                 )
+            );
+            EnableTripwireESP = config.Bind<bool>(
+                "陷阱透视", // 可以合并为一个大类，或者保持"玩家透视"
+                "启用绊雷透视",
+                true,
+                "在屏幕上绘制出绊雷的触发实体线及距离"
             );
         }
     }
