@@ -114,7 +114,7 @@ namespace Oracle.RaidManager
                     {
                         if (item.StackObjectsCount <= 0) item.StackObjectsCount = 1;
                         Player mainPlayer = PluginsCore.CorrectPlayer;
-                        if (mainPlayer != null) ItemSpawner.SpawnItemIntoInventory(mainPlayer, item);
+                        if (mainPlayer != null) ItemSpawner.CloneAndSpawnItemIntoInventory(mainPlayer, item);
                     }
                     // 设为当前 / 当前选中 按钮
                     GUI.enabled = !isCurrent;

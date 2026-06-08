@@ -87,31 +87,29 @@ namespace Oracle.Utils
         /// 尝试异步添加物品到玩家物品栏
         /// </summary>
         /// <param name="player">玩家实例</param>
-        /// <param name="templateId">指定的物品ID(模板id, 即tpl, 非唯一ID, 这两个东西都使用MongoId规范是真的害人....)</param>
+        /// <param name="item">指定的物品</param>
         /// <returns></returns>
-        public static async Task SpawnItemIntoInventoryAsync(Player player, Item item)
+        public static async Task CloneAndSpawnItemIntoInventoryAsync(Player player, Item item)
         {
             //提取单例和当前实例
-            var itemFactory = Singleton<ItemFactoryClass>.Instance;
             var gameWorld = PluginsCore.CorrectGameWorld;
             var templateId = item.TemplateId;
             //防御性检查
-            if (itemFactory == null || gameWorld == null) return;
-            if (!itemFactory.ItemTemplates.ContainsKey(templateId)) return;
+            if (gameWorld == null) return;
             //构造物品
             if (item == null) return;
             //带勾
-            if (ItemSpawnerCfg.ForcedFiR.Value) item.SpawnedInSession = true;
             //异步读取物品资产, 防止出现问题
             await LoadItemBundlesAsync(item);
+            Item clonedItem = item.CloneItem().ReassignAllIds().CleanAndResetItem(ItemSpawnerCfg.ForcedFiR.Value); ;
             //自定义寻址
-            ItemAddress targetLocation = FindEmptyLocation(player, item);
+            ItemAddress targetLocation = FindEmptyLocation(player, clonedItem);
             //有效地址, 尝试发包
             if (targetLocation != null)
             {
                 //配置网络包
                 var addOperationResult = InteractionsHandlerClass.Add(
-                    item,
+                    clonedItem,
                     targetLocation,
                     player.InventoryController,
                     false
@@ -131,13 +129,13 @@ namespace Oracle.Utils
                 else
                 {
                     //未知原因导致的发包失败, 转为掉落物品
-                    DropItemToGround(player, item, gameWorld);
+                    DropItemToGround(player, clonedItem, gameWorld);
                 }
             }
             else
             {
                 //背包满了, 掉落物品
-                DropItemToGround(player, item, gameWorld);
+                DropItemToGround(player, clonedItem, gameWorld);
             }
         }
 
@@ -292,11 +290,11 @@ namespace Oracle.Utils
         /// </summary>
         /// <param name="player">玩家实例</param>
         /// <param name="templateId">物品ID</param>
-        public static async void SpawnItemIntoInventory(Player player, Item item)
+        public static async void CloneAndSpawnItemIntoInventory(Player player, Item item)
         {
             try
             {
-                await SpawnItemIntoInventoryAsync(player, item);
+                await CloneAndSpawnItemIntoInventoryAsync(player, item);
             }
             catch (Exception ex)
             {
