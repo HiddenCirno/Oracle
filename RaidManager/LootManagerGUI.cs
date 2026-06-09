@@ -106,7 +106,10 @@ namespace Oracle.RaidManager
             else
             {
                 // ⭐ 按照价格从高到低排序，防止好东西被淹没在垃圾堆里
-                var sortedLoot = LootESP.CachedLootList.OrderByDescending(l => l.Price).ToList();
+                var sortedLoot = LootESP.CachedLootList
+                    .OrderByDescending(l => l.ItemLevel)
+                    .ThenByDescending(l => l.Price)
+                    .ToList();
 
                 foreach (LootData loot in sortedLoot)
                 {

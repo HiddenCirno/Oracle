@@ -1,8 +1,12 @@
 ﻿using BepInEx.Configuration;
+using EFT;
+using EFT.Hideout;
 using EFT.Interactive;
-using System.Collections.Generic;
-using UnityEngine;
 using EFT.InventoryLogic;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Linq;
+using UnityEngine;
 
 namespace Oracle.ESP
 {
@@ -15,12 +19,14 @@ namespace Oracle.ESP
         public LootItem? LootableItem; // ⭐ 新增：直接保存底层物品引用，用于图标渲染和元数据捕获
         public LootableContainer? Container; // ⭐ 新增：直接保存底层物品引用，用于图标渲染和元数据捕获
         public Vector3 Position;
+        public int ItemLevel;//新增物品等级
         public string Name;
         public int Distance;
         public int Price;
         public Color ItemColor;
         public int YOffset;
     }
+
     /// <summary>
     /// 物资透视部分
     /// </summary>
@@ -30,14 +36,38 @@ namespace Oracle.ESP
         /// 约束透视范围
         /// </summary>
         private static Material lineMaterial;
+
         /// <summary>
         /// 唯一的全局战利品表
         /// </summary>
         public static List<LootData> CachedLootList = new List<LootData>();
+
         /// <summary>
         /// 唯一的全局容器表
         /// </summary>
         public static LootableContainer[] CachedContainers;
+
+        public static class PriceColor
+        {
+            public static readonly Color TierX = Color.gray;
+            public static readonly Color Tier0 = Color.white;
+            public static readonly Color Tier1 = new Color(0f, 0.666f, 0f);
+            public static readonly Color Tier2 = new Color(0f, 0.627f, 1f);
+            public static readonly Color Tier3 = new Color(0.666f, 0f, 0.666f);
+            public static readonly Color Tier4 = new Color(1f, 0.666f, 0f);
+            public static readonly Color Tier5 = new Color(0.666f, 0f, 0f);
+            public static readonly Color Tier6 = new Color(1f, 0.333f, 1f);
+        }
+        public static class PriceTier
+        {
+            public const int Tier1 = 10000;
+            public const int Tier2 = 20000;
+            public const int Tier3 = 50000;
+            public const int Tier4 = 100000;
+            public const int Tier5 = 200000;
+            public const int Tier6 = 500000;
+        }
+
         /// <summary>
         /// 定义战利品等级
         /// </summary>
@@ -45,15 +75,105 @@ namespace Oracle.ESP
         /// <returns></returns>
         public static Color GetColorByPrice(int price)
         {
-            //价格区间
-            if (price >= 500000) return new Color(1f, 0.333f, 1f);
-            if (price >= 200000) return new Color(0.666f, 0f, 0f);
-            if (price >= 100000) return new Color(1f, 0.666f, 0f);
-            if (price >= 50000) return new Color(0.666f, 0f, 0.666f);
-            if (price >= 20000) return new Color(0f, 0.627f, 1f);
-            if (price >= 10000) return new Color(0f, 0.666f, 0f);
-            return Color.white;
+            if (price >= PriceTier.Tier6) return PriceColor.Tier6;
+            if (price >= PriceTier.Tier5) return PriceColor.Tier5;
+            if (price >= PriceTier.Tier4) return PriceColor.Tier4;
+            if (price >= PriceTier.Tier3) return PriceColor.Tier3;
+            if (price >= PriceTier.Tier2) return PriceColor.Tier2;
+            if (price >= PriceTier.Tier1) return PriceColor.Tier1;
+
+            return PriceColor.Tier0;
         }
+        public static Color GetColorByLevel(int level)
+        {
+            switch (level)
+            {
+                case 8: return PriceColor.TierX;
+                case 7: return PriceColor.Tier6;
+                case 6: return PriceColor.Tier5;
+                case 5: return PriceColor.Tier4;
+                case 4: return PriceColor.Tier3;
+                case 3: return PriceColor.Tier2;
+                case 2: return PriceColor.Tier1;
+                case 1: return PriceColor.Tier0;
+                default: return PriceColor.Tier0;
+            }
+        }
+
+        public static Dictionary<MongoID, int?> ItemLevelCache = new Dictionary<MongoID, int?>();
+
+        public static int GetAmmoLevel(Item item)
+        {
+            if (item.Template is AmmoTemplate ammoTemplate)
+            {
+                if (ammoTemplate.PenetrationPower >= 60) return 6;
+                if (ammoTemplate.PenetrationPower >= 50) return 5;
+                if (ammoTemplate.PenetrationPower >= 40) return 4;
+                if (ammoTemplate.PenetrationPower >= 30) return 3;
+                if (ammoTemplate.PenetrationPower >= 20) return 2;
+                if (ammoTemplate.PenetrationPower >= 10) return 1;
+            }
+            return 1;
+        }
+
+        public static int GetItemLevel(Item item)
+        {
+            var template = item.Template;
+            if(template == null ) return 0;
+            if (template is AmmoTemplate ammoTemplate)
+            {
+                return GetAmmoLevel(item);
+            }
+            if(template is AmmoBoxTemplate ammoBoxTemplate)
+            {
+                var ammoItem = item.GetAllItems().FirstOrDefault(x => x.Template is AmmoTemplate);
+                if (ammoItem == null) return 1; // 预防万一有空盒子
+                return GetAmmoLevel(ammoItem);
+            }
+            if(template is BackpackTemplateClass backpackTemplate)
+            {
+                var size = 0;
+                backpackTemplate.Grids.ExecuteForEach(x => size += (x.GridHeight * x.GridWidth));
+                if (size >= 35) return 6;
+                if (size >= 30) return 5;
+                if (size >= 25) return 4;
+                if (size >= 16) return 3;
+                if (size >= 12) return 2;
+                if (size >= 0) return 1;
+            }
+            if(template is VestTemplateClass vestTemplate)
+            {
+                var size = 0;
+                vestTemplate.Grids.ExecuteForEach(x => size += (x.GridHeight * x.GridWidth));
+                if (size >= 20) return 5;
+                if (size >= 16) return 4;
+                if (size >= 12) return 3;
+                if (size >= 8) return 2;
+                if (size >= 0) return 1;
+            }
+            if (template.QuestItem == true) return 8;
+            //坏了, 客户端的ITemTemplate是不完整的
+            //if(template.Catr) return 0;
+            var price = GetItemPrice(item.TemplateId) ?? 0;
+            return GetLevelByPrice(price);
+        }
+
+        public static int? GetItemPrice(MongoID itemid)
+        {
+            PluginsCore.HandbookDict.TryGetValue(itemid, out int itemPrice);
+            return itemPrice;
+        }
+        public static int GetLevelByPrice(int price)
+        {
+            if (price >= PriceTier.Tier6) return 7; // 50万
+            if (price >= PriceTier.Tier5) return 6; // 20万
+            if (price >= PriceTier.Tier4) return 5; // 10万
+            if (price >= PriceTier.Tier3) return 4; // 5万
+            if (price >= PriceTier.Tier2) return 3; // 2万
+            if (price >= PriceTier.Tier1) return 2; // 1万
+            return 1; // 垃圾
+        }
+
         /// <summary>
         /// 绘制文本
         /// </summary>
@@ -94,6 +214,7 @@ namespace Oracle.ESP
                 }
             }
         }
+
         /// <summary>
         /// 扫描协程
         /// </summary>
@@ -129,6 +250,7 @@ namespace Oracle.ESP
                 foreach (var lootItem in PluginsCore.CorrectGameWorld.LootItems.GetValuesEnumerator())
                 {
                     if (lootItem == null || lootItem.Item == null || lootItem.gameObject == null) continue;
+                    if (!lootItem.gameObject.activeSelf) continue;
                     //熟悉的距离过滤
                     //从PlayerESP调一下单步方法节省开销
                     //他妈的节省不了一点, 我忘记dist有用了草
@@ -179,20 +301,34 @@ namespace Oracle.ESP
         {
             if (item == null) return;
             string itemKey = item.TemplateId;
-            //字典O(1)查价
-            if (!PluginsCore.HandbookDict.TryGetValue(itemKey, out int itemPrice)) return;
-            //价值过滤
-            int minPriceThreshold = LootESPCfg.LootESPMinPrice.Value;
             //过滤掉物品栏
             //尸体实际上是一个以物品栏和不可拾取形式存在的容器
-            if (itemPrice < minPriceThreshold || itemKey == "55d7217a4bdc2d86028b456d") return;
+            if (itemKey == "55d7217a4bdc2d86028b456d") return;
             //过滤掉无效名称, 内衬什么的没名字的东西
             if (string.IsNullOrEmpty(itemName)) return;
+            //字典O(1)查价
+            var price = GetItemPrice(itemKey);
+            int itemPrice = price ?? 0;
+            //价值过滤
+            int minPriceThreshold = LootESPCfg.LootESPMinPrice.Value; 
+            int filterLevel = GetLevelByPrice(minPriceThreshold);
+            //求等级
+            ItemLevelCache.TryGetValue(itemKey, out var level);
+            if (level == null)
+            {
+                level = GetItemLevel(item);
+                ItemLevelCache[itemKey] = level;
+            }
+            int itemLevel = (int)level;
+            if (itemPrice < minPriceThreshold && itemLevel < filterLevel)
+            {
+                return;
+            }
             //价值格式化
             string priceStr = itemPrice >= 10000 ? (itemPrice / 10000f).ToString("0.#") + "万" : itemPrice.ToString();
             //string priceStr = itemPrice >= 10000 ? (itemPrice / 10000) + "万" : itemPrice.ToString();
             //颜色转码
-            Color iColor = GetColorByPrice(itemPrice);
+            Color iColor = GetColorByLevel(itemLevel);
             string hexColor = ColorUtility.ToHtmlStringRGB(iColor);
             //富文本合并
             string fullName = string.IsNullOrEmpty(prefix) ? itemName : $"{prefix} {itemName}";
@@ -213,14 +349,16 @@ namespace Oracle.ESP
                 ItemRef = item,
                 LootableItem = lootItem,
                 Container = lootContainer,
+                ItemLevel = itemLevel,
                 Position = pos,
                 Name = formattedName,
                 Distance = dist,
                 Price = itemPrice,
-                ItemColor = GetColorByPrice(itemPrice),
+                ItemColor = iColor,
                 YOffset = currentYOffset // ⭐ 存入算好的偏移量！
             });
         }
+
         /// <summary>
         /// 画圆方法
         /// </summary>
@@ -371,7 +509,7 @@ namespace Oracle.ESP
                 150000,
                 new ConfigDescription(
                     "显示在约束范围外的物品最低价格",
-                    new AcceptableValueRange<int>(1000, 1000000)
+                    new AcceptableValueRange<int>(1000, 10000000)
                 )
             );
         }
