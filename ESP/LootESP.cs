@@ -210,7 +210,14 @@ namespace Oracle.ESP
                     }
                     string espText = $"{loot.Name}";
                     //绘制
-                    GUI.Label(new Rect(screenX - 100, screenY - 20, 200, 40), espText, textStyle);
+                    if(loot.Container != null && LootESPCfg.EnableContainerLootESP.Value)
+                    {
+                        GUI.Label(new Rect(screenX - 100, screenY - 20, 200, 40), espText, textStyle);
+                    }
+                    if (loot.Container == null && LootESPCfg.EnableLooseLootESP.Value)
+                    {
+                        GUI.Label(new Rect(screenX - 100, screenY - 20, 200, 40), espText, textStyle);
+                    }
                 }
             }
         }
@@ -256,7 +263,7 @@ namespace Oracle.ESP
                     //他妈的节省不了一点, 我忘记dist有用了草
                     //if (PlayerESP.IsInRange((int)maxLootDistance, playerPos, lootItem.transform.position)) continue;
                     //其实可以, AI牛逼
-                    if (!PlayerESP.IsInRange((int)maxLootDistance, playerPos, lootItem.transform.position) || !LootESPCfg.EnableLooseLootESP.Value) continue;
+                    if (!PlayerESP.IsInRange((int)maxLootDistance, playerPos, lootItem.transform.position)) continue;
                     float dist = Vector3.Distance(playerPos, lootItem.transform.position);
                     TryAddLootData(tempLootList, positionOffsets, lootItem.Item, lootItem, null, LootESPCfg.ShowItemFullName.Value ? lootItem.Item.Name.Localized() : lootItem.Item.ShortName.Localized(), lootItem.transform.position, (int)dist);
                     //TryAddLootData(tempLootList, lootItem.Item.TemplateId, lootItem.Item.ShortName.Localized(), lootItem.transform.position, (int)dist);
@@ -273,12 +280,11 @@ namespace Oracle.ESP
                         if (!PlayerESP.IsInRange((int)maxLootDistance, playerPos, container.transform.position)) continue;
                         int dist = Mathf.RoundToInt(Vector3.Distance(playerPos, container.transform.position));
                         //容器名字读取
-                        string containerName = container.ItemOwner.RootItem.ShortName.Localized();
-                        if (string.IsNullOrEmpty(containerName)) containerName = "容器";
+                        string containerName = GetContainerName(container);
                         //加入缓存
                         foreach (var item in container.ItemOwner.RootItem.GetAllItems())
                         {
-                            if (item == container.ItemOwner.RootItem || !LootESPCfg.EnableContainerLootESP.Value) continue;
+                            if (item == container.ItemOwner.RootItem) continue;
                             TryAddLootData(tempLootList, positionOffsets, item, null, container, LootESPCfg.ShowItemFullName.Value ? item.Name.Localized() : item.ShortName.Localized(), container.transform.position, dist, $"[{containerName}]");
                         }
                     }
@@ -287,6 +293,14 @@ namespace Oracle.ESP
                 CachedLootList = tempLootList;
             }
         }
+
+        public static string GetContainerName(LootableContainer container)
+        {
+            if (container == null) return "地面";
+            string containerName = container.ItemOwner.RootItem.ShortName.Localized();
+            return string.IsNullOrEmpty(containerName) ? "容器": containerName;
+        }
+
         /// <summary>
         /// 维护战利品表
         /// </summary>
@@ -332,17 +346,19 @@ namespace Oracle.ESP
             string hexColor = ColorUtility.ToHtmlStringRGB(iColor);
             //富文本合并
             string fullName = string.IsNullOrEmpty(prefix) ? itemName : $"{prefix} {itemName}";
-            string richName = $"<color=#{hexColor}>{fullName}</color>";
-            string richDist = $"<color=#FFFF00>{dist}米</color>";
-            string richPrice = $"<color=#{hexColor}>{priceStr}</color>";
-            string formattedName = $"{richName} {richPrice} {richDist}";
-            if (!offsetDict.ContainsKey(pos))
+            string formattedName = $"<color=#{hexColor}>{fullName}</color> <color=#{hexColor}>{priceStr}</color> <color=#FFFF00>{dist}米</color>";
+            int currentYOffset = 0;
+
+            // ⭐ 核心优化：只有容器/尸体（StaticLoot）才参与 YOffset 计算
+            if (lootContainer != null)
             {
-                offsetDict[pos] = 0;
+                if (!offsetDict.ContainsKey(pos))
+                {
+                    offsetDict[pos] = 0;
+                }
+                currentYOffset = offsetDict[pos];
+                offsetDict[pos] += 20;
             }
-            //坐标偏移计算
-            int currentYOffset = offsetDict[pos];
-            offsetDict[pos] += 20;
             //生成数据
             targetList.Add(new LootData
             {
