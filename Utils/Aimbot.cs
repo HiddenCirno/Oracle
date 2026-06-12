@@ -279,7 +279,7 @@ namespace Oracle.Utils
             );
             AimbotMaxDistance = config.Bind(
                 "自瞄设置", "自瞄最大距离", 200,
-                new ConfigDescription("自瞄生效的最大 3D 物理距离(米)", new AcceptableValueRange<int>(10, 1000))
+                new ConfigDescription("自瞄生效的最大 3D 物理距离(米)", new AcceptableValueRange<int>(10, 2000))
             );
             AimbotPartSetting = config.Bind(
                 "自瞄设置",

@@ -760,7 +760,7 @@ namespace Oracle.ESP
                 200,
                 new ConfigDescription(
                     "透视可见的范围",
-                    new AcceptableValueRange<int>(50, 1000)
+                    new AcceptableValueRange<int>(50, 2000)
                 )
             );
             EnableTripwireESP = config.Bind<bool>(
