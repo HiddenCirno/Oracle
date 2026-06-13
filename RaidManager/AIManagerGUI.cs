@@ -78,6 +78,8 @@ namespace Oracle.RaidManager
             GUI.skin.verticalScrollbar = UIStyleManager.ScrollbarStyle;
             GUI.skin.verticalScrollbarThumb = UIStyleManager.ScrollbarThumbStyle;
 
+            GUILayout.Space(10);
+
             _scrollPos = GUILayout.BeginScrollView(_scrollPos);
 
             // 防御：确保游戏世界和玩家列表已加载

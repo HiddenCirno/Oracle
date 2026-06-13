@@ -15,7 +15,6 @@ namespace Oracle.RaidManager
         public Rect _windowRect = new Rect(20, 20, 460, 600); // 初始窗口位置和大小
         public Vector2 _scrollPos;
         public Vector2 itemScrollPos = Vector2.zero;
-        private GameObject _inputManager;
         public static bool SpawnedInSession = true;
 
         // 图标缓存池
@@ -52,8 +51,8 @@ namespace Oracle.RaidManager
             //真该死
             //总之他妈的把按钮和文本分开
             //早该这么干了 ◪※
-            var toggleText = SpawnedInSession ? "<b><color=#80FF80>※</color></b> 带勾" : "<b><color=#FF8080>〼</color></b> 带勾";
-            if (GUI.Button(new Rect(_windowRect.width - 110, 4, 60, 20), toggleText, UIStyleManager.NormalButtonStyle))
+            var toggleText = SpawnedInSession ? "带勾" : "带勾";
+            if (GUI.Button(new Rect(_windowRect.width - 110, 4, 60, 20), toggleText, SpawnedInSession ? UIStyleManager.BlueButtonStyle : UIStyleManager.RedButtonStyle))
             {
                 SpawnedInSession = !SpawnedInSession;
             }
@@ -69,7 +68,10 @@ namespace Oracle.RaidManager
             GUI.skin.verticalScrollbar = UIStyleManager.ScrollbarStyle;
             GUI.skin.verticalScrollbarThumb = UIStyleManager.ScrollbarThumbStyle;
 
+            GUILayout.Space(10);
+
             _scrollPos = GUILayout.BeginScrollView(_scrollPos);
+
 
             if (ItemCatcher.SavedItems.Count == 0)
             {
@@ -82,7 +84,7 @@ namespace Oracle.RaidManager
                     Item item = ItemCatcher.SavedItems[i];
                     bool isCurrent = ItemCatcher.savedItem == item;
 
-                    GUILayout.BeginHorizontal(isCurrent ? UIStyleManager. : UIStyleManager.BoxStyle);
+                    GUILayout.BeginHorizontal(isCurrent ? UIStyleManager.SelectedBoxStyle : UIStyleManager.BoxStyle);
 
                     // 1. 图标
                     Texture2D icon = GetCachedIcon(item);
@@ -97,7 +99,7 @@ namespace Oracle.RaidManager
                     GUILayout.BeginHorizontal();
                     GUILayout.Label("<color=grey>堆叠数:</color>", GUILayout.Width(45));
                     string currentStackStr = item.StackObjectsCount.ToString();
-                    string newStackStr = GUILayout.TextField(currentStackStr, 7, flatTextFieldStyle, GUILayout.Width(60));
+                    string newStackStr = GUILayout.TextField(currentStackStr, 7, UIStyleManager.TextFieldStyle, GUILayout.Width(60));
                     if (newStackStr != currentStackStr)
                     {
                         if (string.IsNullOrEmpty(newStackStr)) item.StackObjectsCount = 0;
@@ -112,7 +114,7 @@ namespace Oracle.RaidManager
                     // 第一行：生成 + 设为当前
                     GUILayout.BeginHorizontal();
                     // 生成按钮
-                    if (GUILayout.Button("生成", flatButtonStyle, GUILayout.Height(22), GUILayout.MinWidth(70)))
+                    if (GUILayout.Button("生成", UIStyleManager.BlueButtonStyle, GUILayout.Height(22), GUILayout.MinWidth(70)))
                     {
                         if (item.StackObjectsCount <= 0) item.StackObjectsCount = 1;
                         Player mainPlayer = PluginsCore.CorrectPlayer;
@@ -120,7 +122,7 @@ namespace Oracle.RaidManager
                     }
                     // 设为当前 / 当前选中 按钮
                     GUI.enabled = !isCurrent;
-                    if (GUILayout.Button(isCurrent ? "当前" : "选择", flatButtonStyle, GUILayout.Height(22), GUILayout.MinWidth(70)))
+                    if (GUILayout.Button(isCurrent ? "当前" : "选择", UIStyleManager.BlueButtonStyle, GUILayout.Height(22), GUILayout.MinWidth(70)))
                     {
                         ItemCatcher.savedItem = item;
                     }
@@ -130,7 +132,7 @@ namespace Oracle.RaidManager
                     // 第二行：掉落世界 + 清除
                     GUILayout.BeginHorizontal();
                     // 新增：掉落世界按钮
-                    if (GUILayout.Button("掉落", flatButtonStyle, GUILayout.Height(22), GUILayout.MinWidth(70)))
+                    if (GUILayout.Button("掉落", UIStyleManager.BlueButtonStyle, GUILayout.Height(22), GUILayout.MinWidth(70)))
                     {
                         if (item.StackObjectsCount <= 0) item.StackObjectsCount = 1;
                         Player mainPlayer = PluginsCore.CorrectPlayer;
@@ -144,7 +146,7 @@ namespace Oracle.RaidManager
                         }
                     }
                     // 清除按钮（红色）
-                    if (GUILayout.Button("删除", redButtonStyle, GUILayout.Height(22), GUILayout.MinWidth(70)))
+                    if (GUILayout.Button("删除", UIStyleManager.RedButtonStyle, GUILayout.Height(22), GUILayout.MinWidth(70)))
                     {
                         ItemCatcher.SavedItems.RemoveAt(i);
                         if (isCurrent) ItemCatcher.savedItem = null;
