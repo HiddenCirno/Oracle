@@ -3,6 +3,7 @@ using Comfort.Common;
 using EFT;
 using EFT.Interactive;
 using EFT.InventoryLogic;
+using Oracle.RaidManager;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -17,70 +18,17 @@ namespace Oracle.Utils
     /// </summary>
     public class ItemSpawner
     {
-        /// <summary>
-        /// 尝试异步添加物品到玩家物品栏
-        /// </summary>
-        /// <param name="player">玩家实例</param>
-        /// <param name="templateId">指定的物品ID(模板id, 即tpl, 非唯一ID, 这两个东西都使用MongoId规范是真的害人....)</param>
-        /// <returns></returns>
-        public static async Task SpawnItemIntoInventoryAsync(Player player, string templateId)
+
+        public static void AddItemToManager(string templateId)
         {
-            //提取单例和当前实例
+
             var itemFactory = Singleton<ItemFactoryClass>.Instance;
-            var gameWorld = PluginsCore.CorrectGameWorld;
-            //防御性检查
-            if (itemFactory == null || gameWorld == null) return;
-            if (!itemFactory.ItemTemplates.ContainsKey(templateId)) return;
+            if (itemFactory == null || !itemFactory.ItemTemplates.ContainsKey(templateId)) return;
             //随机生成一个新的唯一ID
             string newId = MongoID.Generate();
-            //构造物品
             Item newItem = itemFactory.CreateItem(newId, templateId, null);
             if (newItem == null) return;
-            //带勾
-            if (ItemSpawnerCfg.ForcedFiR.Value) newItem.SpawnedInSession = true;
-            //设置物品堆叠
-            newItem.StackObjectsCount = ItemSpawnerCfg.CustomStackSize.Value;
-            if (newItem.Template.StackMaxSize > 1 && ItemSpawnerCfg.MaxStack.Value)
-            {
-                newItem.StackObjectsCount = newItem.Template.StackMaxSize;
-            }
-            //异步读取物品资产, 防止出现问题
-            await LoadItemBundlesAsync(newItem);
-            //自定义寻址
-            ItemAddress targetLocation = FindEmptyLocation(player, newItem);
-            //有效地址, 尝试发包
-            if (targetLocation != null)
-            {
-                //配置网络包
-                var addOperationResult = InteractionsHandlerClass.Add(
-                    newItem,
-                    targetLocation,
-                    player.InventoryController,
-                    false
-                );
-                //发包成功
-                if (addOperationResult.Succeeded)
-                {
-                    try
-                    {
-                        //执行
-                        //这里会弹出无源错误, 在战局内这个错误不影响实际使用, Fika环境下可能出现同步问题但问题不大, 因此直接捕获即可
-                        player.InventoryController.TryRunNetworkTransaction(addOperationResult);
-                        // Console.WriteLine($"成功将物品放入背包: {newItem.Name.Localized()}");
-                    }
-                    catch (Exception) { }
-                }
-                else
-                {
-                    //未知原因导致的发包失败, 转为掉落物品
-                    DropItemToGround(player, newItem, gameWorld);
-                }
-            }
-            else
-            {
-                //背包满了, 掉落物品
-                DropItemToGround(player, newItem, gameWorld);
-            }
+            ItemCatcher.SavedItems.Add(newItem);
         }
 
         /// <summary>
@@ -101,7 +49,7 @@ namespace Oracle.Utils
             //带勾
             //异步读取物品资产, 防止出现问题
             await LoadItemBundlesAsync(item);
-            Item clonedItem = item.CloneItem().ReassignAllIds().CleanAndResetItem(ItemSpawnerCfg.ForcedFiR.Value); ;
+            Item clonedItem = item.CloneItem().ReassignAllIds().CleanAndResetItem(ItemManagerGUI.SpawnedInSession); ;
             //自定义寻址
             ItemAddress targetLocation = FindEmptyLocation(player, clonedItem);
             //有效地址, 尝试发包
@@ -155,7 +103,7 @@ namespace Oracle.Utils
             try
             {
                 //复制物品-清洗ID-清洗状态, 通过两个拓展方法一步完成
-                Item clonedItem = originalItem.CloneItem().ReassignAllIds().CleanAndResetItem(ItemSpawnerCfg.ForcedFiR.Value);;
+                Item clonedItem = originalItem.CloneItem().ReassignAllIds().CleanAndResetItem(ItemManagerGUI.SpawnedInSession);
                 //递归加载所有物品资产
                 await LoadItemBundlesAsync(clonedItem);
                 //生成掉落物
@@ -263,27 +211,6 @@ namespace Oracle.Utils
                 );
             }
         }
-        /// <summary>
-        /// 桥接方法, 用于直接使用
-        /// </summary>
-        /// <param name="player">玩家实例</param>
-        /// <param name="templateId">物品ID</param>
-        public static async void SpawnItemIntoInventory(Player player, string templateId)
-        {
-            try
-            {
-                await SpawnItemIntoInventoryAsync(player, templateId);
-            }
-            catch (Exception ex)
-            {
-                //捕获
-                NotificationManagerClass.DisplayMessageNotification(
-                    "生成物品失败！",
-                    EFT.Communications.ENotificationDurationType.Default,
-                    EFT.Communications.ENotificationIconType.Alert
-                );
-            }
-        }
 
         /// <summary>
         /// 桥接方法, 用于直接使用
@@ -366,9 +293,6 @@ namespace Oracle.Utils
     public static class ItemSpawnerCfg
     {
         internal static ConfigEntry<string> TargetItemId { get; set; }
-        internal static ConfigEntry<bool> MaxStack { get; set; }
-        internal static ConfigEntry<bool> ForcedFiR { get; set; }
-        internal static ConfigEntry<int> CustomStackSize { get; set; }
 
         /// <summary>
         /// 配置项初始化
@@ -380,25 +304,7 @@ namespace Oracle.Utils
                 "虚空造物",
                 "物品 Template ID",
                 "59faff1d86f7746c51718c9c",
-                "请输入你想生成的物品的24位16进制ID"
-            );
-            MaxStack = config.Bind(
-                "虚空造物",
-                "强制最大堆叠",
-                false,
-                "刷出的物品为最大堆叠而不是单个"
-            );
-            ForcedFiR = config.Bind(
-                "虚空造物",
-                "强制物品带勾",
-                true,
-                "刷出的物品为战局中发现状态"
-            );
-            CustomStackSize = config.Bind(
-                "虚空造物",
-                "自定义堆叠数量(强制性)",
-                1,
-                "自定义刷出物品的堆叠数"
+                "输入需要添加到实例管理器的物品ID"
             );
         }
     }

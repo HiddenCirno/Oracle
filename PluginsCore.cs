@@ -106,9 +106,9 @@ namespace Oracle
         {
             //全局绘制开关
             if (!HotKeyManager.UniGUI.Value) return;
+            _itemManagerGUI.OnGUI();
             //空指针防御
             if (CorrectGameWorld == null || CorrectPlayer == null || CorrectGameWorld.AllAlivePlayersList == null) return;
-            _itemManagerGUI.OnGUI();
             _aiManagerGUI.OnGUI();
             _lootManagerGUI.OnGUI();
             //只在重绘调用

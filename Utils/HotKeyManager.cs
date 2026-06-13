@@ -18,7 +18,7 @@ namespace Oracle.Utils
         internal static ConfigEntry<KeyCode> AimbotKey { get; set; }
         internal static ConfigEntry<KeyCode> ChangeAimTargetKey { get; set; }
         internal static ConfigEntry<KeyCode> LootESPNameModeKey { get; set; }
-        internal static ConfigEntry<KeyCode> SpawnItemKey { get; set; }
+        internal static ConfigEntry<KeyCode> AddItemKey { get; set; }
         internal static ConfigEntry<KeyboardShortcut> CopyItemKey { get; set; }
         internal static ConfigEntry<KeyCode> ItemManagerKey { get; set; }
         internal static ConfigEntry<KeyCode> BotManagerKey { get; set; }
@@ -135,9 +135,10 @@ namespace Oracle.Utils
             {
                 LootESPCfg.ShowItemFullName.Value = !LootESPCfg.ShowItemFullName.Value;
             }
-            if (Input.GetKeyDown(SpawnItemKey.Value))
+            if (Input.GetKeyDown(AddItemKey.Value))
             {
-                ItemSpawner.SpawnItemIntoInventory(PluginsCore.CorrectPlayer, ItemSpawnerCfg.TargetItemId.Value);
+                //ItemSpawner.SpawnItemIntoInventory(PluginsCore.CorrectPlayer, ItemSpawnerCfg.TargetItemId.Value);
+                ItemSpawner.AddItemToManager(ItemSpawnerCfg.TargetItemId.Value);
             }
             if (Input.GetKeyDown(DropItemKey.Value))
             {
@@ -215,17 +216,17 @@ namespace Oracle.Utils
                 true,
                 "启用后切换功能开关将不会有任何提示"
             );
-            SpawnItemKey = config.Bind<KeyCode>(
+            AddItemKey = config.Bind<KeyCode>(
                 "快捷键设置",
-                "生成物品",
+                "创建实例",
                 KeyCode.KeypadDivide,
-                "按下后生成物品"
+                "按下后将指定ID的物品作为实例添加到实例管理器"
             );
             DropItemKey = config.Bind<KeyCode>(
                 "快捷键设置",
                 "复制物品",
                 KeyCode.KeypadDivide,
-                "按下后生成并掉落复制的物品"
+                "按下后生成并掉落当前选择的物品"
             );
             CopyItemKey = config.Bind(
                 "快捷键设置",

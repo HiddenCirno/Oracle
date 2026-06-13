@@ -16,6 +16,7 @@ namespace Oracle.RaidManager
         public Vector2 _scrollPos;
         public Vector2 itemScrollPos = Vector2.zero;
         private GameObject _inputManager;
+        public static bool SpawnedInSession = true;
 
         // 图标缓存池
         public Dictionary<string, Texture2D> _iconCache = new Dictionary<string, Texture2D>();
@@ -55,6 +56,20 @@ namespace Oracle.RaidManager
 
         public void DrawWindow(int windowID)
         {
+            //SpawnedInSession = GUI.Toggle(new Rect(_windowRect.width - 165, 4, 115, 20), SpawnedInSession, "战局内寻找(FIR)");
+
+            //你妈个逼我用你妈的复选框
+            //深色 按钮 方块 文本
+            //按钮是按钮文本是文本按钮按了变透明
+            //那他妈的也没有hover效果啊我操了
+            //真该死
+            //总之他妈的把按钮和文本分开
+            //早该这么干了 ◪※
+            var toggleText = SpawnedInSession ? "<b><color=#80FF80>※</color></b> 带勾" : "<b><color=#FF8080>〼</color></b> 带勾";
+            if (GUI.Button(new Rect(_windowRect.width - 110, 4, 60, 20), toggleText, flatButtonStyle))
+            {
+                SpawnedInSession = !SpawnedInSession;
+            }
             // ---- 右上角关闭按钮 (使用统一的 redButtonStyle) ----
             if (GUI.Button(new Rect(_windowRect.width - 45, 4, 40, 20), "关闭", redButtonStyle))
             {
