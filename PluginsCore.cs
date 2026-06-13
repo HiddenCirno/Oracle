@@ -8,7 +8,7 @@ using Oracle.Utils;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
-using static Oracle.Utils.PlayerStatusEdit;
+using static Oracle.Utils.InfinityStaminaAndNoFallenDamage;
 
 namespace Oracle
 {

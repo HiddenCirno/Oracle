@@ -8,7 +8,7 @@ using UnityEngine;
 
 namespace Oracle.Utils
 {
-    public class PlayerStatusEdit
+    public class InfinityStaminaAndNoFallenDamage
     {
         /// <summary>
         /// 耐力锁定脚本

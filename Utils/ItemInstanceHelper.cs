@@ -37,7 +37,7 @@ namespace Oracle.Utils
         /// <summary>
         /// 使用sha256生成符合MongoId规范的HEX字符串
         /// </summary>
-        private static string GenerateSafeHexId(string originalId, string salt)
+        public static string GenerateSafeHexId(string originalId, string salt)
         {
             //没什么好注释的, 这种东西在新时代可以直接丢给AI解释了
             if (_sha256 == null) _sha256 = SHA256.Create();
