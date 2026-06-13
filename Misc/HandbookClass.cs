@@ -12,7 +12,7 @@ namespace Oracle.Misc
         /// <summary>
         /// 通过原版路由请求手册
         /// </summary>
-        /// <param name="request">请求内容, 无实际影响, 这里使用了原版路由, 它永远不会被使用</param>
+        /// <param name="request">请求内容, 无实际影响, 这里使用了原版路由, 所以它永远不会被使用</param>
         /// <returns></returns>
         public static string GetHandbookData(string request)
         {
