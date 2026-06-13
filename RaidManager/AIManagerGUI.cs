@@ -18,23 +18,11 @@ namespace Oracle.RaidManager
         public bool _isMenuOpen = false;
         public Rect _windowRect = new Rect(480, 20, 500, 600); // 默认在物品管理器右侧
         public Vector2 _scrollPos;
-        private GameObject _inputManager;
 
         // --- 头像异步缓存池 ---
         public Dictionary<string, Texture2D> _iconCache = new Dictionary<string, Texture2D>();
         // 用于存储正在后台渲染中的头像请求
         public Dictionary<string, GClass929> _pendingIcons = new Dictionary<string, GClass929>();
-
-        // --- 扁平化 UI 样式缓存 ---
-        private GUIStyle flatWindowStyle;
-        private GUIStyle flatBoxStyle;
-        private GUIStyle flatButtonStyle;
-        private GUIStyle redButtonStyle;
-        private GUIStyle blueButtonStyle; // 新增蓝色按钮样式用于搜身
-        private GUIStyle flatScrollbarStyle;
-        private GUIStyle flatScrollbarThumbStyle;
-        private GUIStyle closeButtonStyle;
-        private bool isStyleInitialized = false;
 
         public void Update()
         {
@@ -42,7 +30,7 @@ namespace Oracle.RaidManager
             if (Input.GetKeyDown(HotKeyManager.BotManagerKey.Value))
             {
                 _isMenuOpen = !_isMenuOpen;
-                ToggleCursor(_isMenuOpen);
+                MouseManager.ToggleCursor(_isMenuOpen);
             }
         }
 
@@ -50,22 +38,18 @@ namespace Oracle.RaidManager
         {
             if (!_isMenuOpen) return;
 
-            if (isStyleInitialized && (flatWindowStyle == null || flatWindowStyle.normal.background == null))
-            {
-                isStyleInitialized = false;
-            }
+            UIStyleManager.EnsureInitialized();
 
-            InitFlatUI();
             GUI.backgroundColor = Color.white;
 
-            _windowRect = GUI.Window(8849, _windowRect, DrawWindow, "系统指令 - 战局实体管理器 (按 F9 隐藏)", flatWindowStyle);
+            _windowRect = GUI.Window(8849, _windowRect, DrawWindow, "系统指令 - 战局实体管理器 (按 F9 隐藏)", UIStyleManager.WindowStyle);
         }
 
         public void DrawWindow(int windowID)
         {
             // ---- 右上角区域 ----
             // 1. 全歼按钮 (放在关闭按钮左侧)
-            if (GUI.Button(new Rect(_windowRect.width - 135, 4, 85, 20), "全部杀死", redButtonStyle))
+            if (GUI.Button(new Rect(_windowRect.width - 135, 4, 85, 20), "全部杀死", UIStyleManager.RedButtonStyle))
             {
                 if (PluginsCore.CorrectGameWorld != null && PluginsCore.CorrectGameWorld.AllAlivePlayersList != null)
                 {
@@ -83,23 +67,23 @@ namespace Oracle.RaidManager
             }
 
             // ---- 右上角关闭按钮 ----
-            if (GUI.Button(new Rect(_windowRect.width - 45, 4, 40, 20), "关闭", closeButtonStyle))
+            if (GUI.Button(new Rect(_windowRect.width - 45, 4, 40, 20), "关闭", UIStyleManager.RedButtonStyle))
             {
                 _isMenuOpen = false;
-                ToggleCursor(false);
+                MouseManager.ToggleCursor(false);
             }
 
             GUIStyle origScroll = GUI.skin.verticalScrollbar;
             GUIStyle origThumb = GUI.skin.verticalScrollbarThumb;
-            GUI.skin.verticalScrollbar = flatScrollbarStyle;
-            GUI.skin.verticalScrollbarThumb = flatScrollbarThumbStyle;
+            GUI.skin.verticalScrollbar = UIStyleManager.ScrollbarStyle;
+            GUI.skin.verticalScrollbarThumb = UIStyleManager.ScrollbarThumbStyle;
 
             _scrollPos = GUILayout.BeginScrollView(_scrollPos);
 
             // 防御：确保游戏世界和玩家列表已加载
             if (PluginsCore.CorrectGameWorld == null || PluginsCore.CorrectGameWorld.AllAlivePlayersList == null)
             {
-                GUILayout.Label("未进入战局或 AI 列表未初始化。", flatBoxStyle);
+                GUILayout.Label("未进入战局或 AI 列表未初始化。", UIStyleManager.BoxStyle);
             }
             else
             {
@@ -120,7 +104,7 @@ namespace Oracle.RaidManager
                     var entityInfo = PlayerESP.GetEntityInfo(player, isTeammate, false);
 
                     // --- 绘制 ---
-                    GUILayout.BeginHorizontal(flatBoxStyle);
+                    GUILayout.BeginHorizontal(UIStyleManager.BoxStyle);
 
                     // 头像绘制逻辑不变
                     Texture2D icon = GetPlayerIcon(player);
@@ -130,7 +114,7 @@ namespace Oracle.RaidManager
                     }
                     else
                     {
-                        GUILayout.Box("生成中", flatButtonStyle, GUILayout.Width(64), GUILayout.Height(64));
+                        GUILayout.Box("生成中", UIStyleManager.NormalButtonStyle, GUILayout.Width(64), GUILayout.Height(64));
                     }
 
                     // --- 实体信息绘制 ---
@@ -144,7 +128,7 @@ namespace Oracle.RaidManager
                     GUILayout.BeginVertical(GUILayout.Width(80));
 
                     // ⭐ 新增：搜身按钮
-                    if (GUILayout.Button("搜索", blueButtonStyle, GUILayout.Height(30)))
+                    if (GUILayout.Button("搜索", UIStyleManager.BlueButtonStyle, GUILayout.Height(30)))
                     {
                         RemoteSearchPlayer(player);
                     }
@@ -152,7 +136,7 @@ namespace Oracle.RaidManager
                     GUILayout.Space(4); // 间距
 
                     // 杀死按钮
-                    if (GUILayout.Button("杀死", redButtonStyle, GUILayout.Height(30)))
+                    if (GUILayout.Button("杀死", UIStyleManager.RedButtonStyle, GUILayout.Height(30)))
                     {
                         player.KillMe(EBodyPartColliderType.HeadCommon, 999999999);
                     }
@@ -163,7 +147,7 @@ namespace Oracle.RaidManager
 
                 if (aliveCount == 0)
                 {
-                    GUILayout.Label("当前战局中没有可用的非友军实体。", flatBoxStyle);
+                    GUILayout.Label("当前战局中没有可用的非友军实体。", UIStyleManager.BoxStyle);
                 }
             }
 
@@ -314,110 +298,6 @@ namespace Oracle.RaidManager
             }
 
             return null;
-        }
-
-        public void ToggleCursor(bool unlock)
-        {
-            if (_inputManager == null) _inputManager = GameObject.Find("___Input");
-
-            Cursor.visible = unlock;
-
-            if (unlock)
-            {
-                Cursor.lockState = CursorLockMode.None;
-                CursorSettings.SetCursor(ECursorType.Idle);
-                Comfort.Common.Singleton<GUISounds>.Instance.PlayUISound(EUISoundType.MenuContextMenu);
-            }
-            else
-            {
-                Cursor.lockState = CursorLockMode.Locked;
-                CursorSettings.SetCursor(ECursorType.Invisible);
-                Comfort.Common.Singleton<GUISounds>.Instance.PlayUISound(EUISoundType.MenuDropdown);
-            }
-
-            if (_inputManager != null) _inputManager.SetActive(!unlock);
-        }
-
-        // ==========================================
-        // 样式初始化核心方法
-        // ==========================================
-        private void InitFlatUI()
-        {
-            if (isStyleInitialized)
-            {
-                if (flatWindowStyle != null && flatWindowStyle.normal.background == null)
-                {
-                    isStyleInitialized = false;
-                }
-                else
-                {
-                    return;
-                }
-            }
-
-            flatWindowStyle = new GUIStyle(GUI.skin.window);
-            flatWindowStyle.normal.background = MakeTex(1, 1, new Color(0.15f, 0.16f, 0.18f, 1f));
-            flatWindowStyle.focused.background = flatWindowStyle.normal.background;
-            flatWindowStyle.onNormal.background = flatWindowStyle.normal.background;
-            flatWindowStyle.normal.textColor = Color.white;
-            flatWindowStyle.border = new RectOffset(1, 1, 20, 1);
-
-            flatBoxStyle = new GUIStyle(GUI.skin.box);
-            flatBoxStyle.normal.background = MakeTex(1, 1, new Color(0.20f, 0.21f, 0.23f, 1f));
-            flatBoxStyle.normal.textColor = new Color(0.9f, 0.9f, 0.9f, 1f);
-            flatBoxStyle.border = new RectOffset(0, 0, 0, 0);
-
-            flatButtonStyle = new GUIStyle(GUI.skin.button);
-            flatButtonStyle.normal.background = MakeTex(1, 1, new Color(0.25f, 0.26f, 0.28f, 1f));
-            flatButtonStyle.hover.background = MakeTex(1, 1, new Color(0.35f, 0.36f, 0.39f, 1f));
-            flatButtonStyle.active.background = MakeTex(1, 1, new Color(0.12f, 0.13f, 0.15f, 1f));
-            flatButtonStyle.normal.textColor = Color.white;
-            flatButtonStyle.hover.textColor = Color.white;
-            flatButtonStyle.active.textColor = Color.gray;
-            flatButtonStyle.border = new RectOffset(0, 0, 0, 0);
-            flatButtonStyle.margin = new RectOffset(2, 2, 2, 2);
-
-            redButtonStyle = new GUIStyle(flatButtonStyle);
-            redButtonStyle.normal.background = MakeTex(1, 1, new Color(0.5f, 0.15f, 0.15f, 1f));
-            redButtonStyle.hover.background = MakeTex(1, 1, new Color(0.6f, 0.2f, 0.2f, 1f));
-            redButtonStyle.active.background = MakeTex(1, 1, new Color(0.3f, 0.1f, 0.1f, 1f));
-            redButtonStyle.alignment = TextAnchor.MiddleCenter;
-
-            // ⭐ 新增：搜身专属的蓝色按钮
-            blueButtonStyle = new GUIStyle(flatButtonStyle);
-            blueButtonStyle.normal.background = MakeTex(1, 1, new Color(0.15f, 0.35f, 0.55f, 1f));
-            blueButtonStyle.hover.background = MakeTex(1, 1, new Color(0.25f, 0.45f, 0.65f, 1f));
-            blueButtonStyle.active.background = MakeTex(1, 1, new Color(0.1f, 0.25f, 0.4f, 1f));
-            blueButtonStyle.alignment = TextAnchor.MiddleCenter;
-
-            flatScrollbarStyle = new GUIStyle(GUI.skin.verticalScrollbar);
-            flatScrollbarStyle.normal.background = MakeTex(1, 1, new Color(0.12f, 0.13f, 0.15f, 1f));
-            flatScrollbarStyle.fixedWidth = 10f;
-            flatScrollbarStyle.border = new RectOffset(0, 0, 0, 0);
-
-            flatScrollbarThumbStyle = new GUIStyle(GUI.skin.verticalScrollbarThumb);
-            flatScrollbarThumbStyle.normal.background = MakeTex(1, 1, new Color(0.3f, 0.31f, 0.33f, 1f));
-            flatScrollbarThumbStyle.hover.background = MakeTex(1, 1, new Color(0.4f, 0.41f, 0.43f, 1f));
-            flatScrollbarThumbStyle.active.background = MakeTex(1, 1, new Color(0.5f, 0.51f, 0.53f, 1f));
-            flatScrollbarThumbStyle.fixedWidth = 10f;
-            flatScrollbarThumbStyle.border = new RectOffset(0, 0, 0, 0);
-
-            closeButtonStyle = new GUIStyle(redButtonStyle);
-
-            isStyleInitialized = true;
-        }
-
-        private Texture2D MakeTex(int width, int height, Color col)
-        {
-            Color[] pix = new Color[width * height];
-            for (int i = 0; i < pix.Length; ++i)
-            {
-                pix[i] = col;
-            }
-            Texture2D result = new Texture2D(width, height);
-            result.SetPixels(pix);
-            result.Apply();
-            return result;
         }
     }
 }
