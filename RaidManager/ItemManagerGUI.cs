@@ -51,8 +51,7 @@ namespace Oracle.RaidManager
             //真该死
             //总之他妈的把按钮和文本分开
             //早该这么干了 ◪※
-            var toggleText = SpawnedInSession ? "带勾" : "带勾";
-            if (GUI.Button(new Rect(_windowRect.width - 110, 4, 60, 20), toggleText, SpawnedInSession ? UIStyleManager.BlueButtonStyle : UIStyleManager.RedButtonStyle))
+            if (GUI.Button(new Rect(_windowRect.width - 90, 4, 40, 20), "带勾", SpawnedInSession ? UIStyleManager.BlueButtonStyle : UIStyleManager.RedButtonStyle))
             {
                 SpawnedInSession = !SpawnedInSession;
             }

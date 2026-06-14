@@ -27,6 +27,8 @@ namespace Oracle.RaidManager
         public bool _isMenuOpen = false;
         public Rect _windowRect = new Rect(480, 20, 500, 600); // 默认位置
         public Vector2 _scrollPos;
+        public static bool ShowLooseLoot = true;
+        public static bool ShowStaticLoot = true;
 
         public Dictionary<string, Texture2D> _iconCache = new Dictionary<string, Texture2D>();
 
@@ -73,6 +75,14 @@ namespace Oracle.RaidManager
 
         public void DrawWindow(int windowID)
         {
+            if (GUI.Button(new Rect(_windowRect.width - 90, 4, 40, 20), "地面", ShowLooseLoot ? UIStyleManager.BlueButtonStyle : UIStyleManager.RedButtonStyle))
+            {
+                ShowLooseLoot = !ShowLooseLoot;
+            }
+            if (GUI.Button(new Rect(_windowRect.width - 135, 4, 40, 20), "容器", ShowStaticLoot ? UIStyleManager.BlueButtonStyle : UIStyleManager.RedButtonStyle))
+            {
+                ShowStaticLoot = !ShowStaticLoot;
+            }
             // 关闭按钮
             if (GUI.Button(new Rect(_windowRect.width - 45, 4, 40, 20), "关闭", UIStyleManager.RedButtonStyle))
             {
@@ -104,52 +114,54 @@ namespace Oracle.RaidManager
                 foreach (LootData loot in sortedLoot)
                 {
                     //if (loot.LootableItem == null) continue; //哎, 白写
-                    GUILayout.BeginHorizontal(UIStyleManager.BoxStyle);
-
-                    // 1. 物品图标
-                    Texture2D icon = GetCachedIcon(loot.ItemRef);
-                    if (icon != null) GUILayout.Label(icon, GUILayout.Width(64), GUILayout.Height(64));
-                    else GUILayout.Label("加载中", GUILayout.Width(64), GUILayout.Height(64));
-
-                    // 2. 物品信息 (过滤掉你富文本里的颜色标签，或者直接用原始名字)
-                    GUILayout.BeginVertical();
-                    // 这里为了 UI 干净，直接调用物品的 Localized 名字，而不是 ESP 里的全尺寸富文本
-                    GUILayout.Label($"<b><color=#{ColorUtility.ToHtmlStringRGB(loot.ItemColor)}>{loot.ItemRef.Name.Localized()}</color></b>");
-                    GUILayout.Label($"<color=grey>价值: {loot.Price} 卢布 | 距离: {loot.Distance}米</color>");
-                    GUILayout.Label($"<color=grey>{LootESP.GetContainerName(loot.Container)}</color>");
-                    GUILayout.EndVertical();
-
-                    // 3. 操作按钮 (宽度稍微加宽一点适应文字)
-                    GUILayout.BeginVertical(GUILayout.Width(110));
-
-                    // --- 新增：隔空取物按钮 ---
-                    // 使用之前统一的红色或默认按钮样式皆可，这里用红色表示“破坏平衡”的超能力
-                    if (GUILayout.Button("隔空拾取", UIStyleManager.BlueButtonStyle, GUILayout.Height(30)))
+                    if((ShowStaticLoot && loot.Container != null) || (ShowLooseLoot && loot.Container == null))
                     {
-                        Player mainPlayer = PluginsCore.CorrectPlayer;
-                        if (mainPlayer != null)
+                        GUILayout.BeginHorizontal(UIStyleManager.BoxStyle);
+                        // 1. 物品图标
+                        Texture2D icon = GetCachedIcon(loot.ItemRef);
+                        if (icon != null) GUILayout.Label(icon, GUILayout.Width(64), GUILayout.Height(64));
+                        else GUILayout.Label("加载中", GUILayout.Width(64), GUILayout.Height(64));
+
+                        // 2. 物品信息 (过滤掉你富文本里的颜色标签，或者直接用原始名字)
+                        GUILayout.BeginVertical();
+                        // 这里为了 UI 干净，直接调用物品的 Localized 名字，而不是 ESP 里的全尺寸富文本
+                        GUILayout.Label($"<b><color=#{ColorUtility.ToHtmlStringRGB(loot.ItemColor)}>{loot.ItemRef.Name.Localized()}</color></b>");
+                        GUILayout.Label($"<color=grey>价值: {loot.Price} 卢布 | 距离: {loot.Distance}米</color>");
+                        GUILayout.Label($"<color=grey>{LootESP.GetContainerName(loot.Container)}</color>");
+                        GUILayout.EndVertical();
+
+                        // 3. 操作按钮 (宽度稍微加宽一点适应文字)
+                        GUILayout.BeginVertical(GUILayout.Width(110));
+
+                        // --- 新增：隔空取物按钮 ---
+                        // 使用之前统一的红色或默认按钮样式皆可，这里用红色表示“破坏平衡”的超能力
+                        if (GUILayout.Button("隔空拾取", UIStyleManager.BlueButtonStyle, GUILayout.Height(30)))
                         {
-                            PickupLootItemEx(mainPlayer, loot);
+                            Player mainPlayer = PluginsCore.CorrectPlayer;
+                            if (mainPlayer != null)
+                            {
+                                PickupLootItemEx(mainPlayer, loot);
+                            }
                         }
+
+                        // 加一点间距让它们不要贴得太死
+                        GUILayout.Space(4);
+
+                        // --- 原有的：捕获元数据按钮 ---
+                        if (GUILayout.Button("复制实例", UIStyleManager.BlueButtonStyle, GUILayout.Height(30)))
+                        {
+                            Item clonedItem = loot.ItemRef.CloneItem().ReassignAllIds();
+                            ItemCatcher.SavedItems.Add(clonedItem);
+                            ItemCatcher.savedItem = clonedItem;
+
+                            NotificationManagerClass.DisplayMessageNotification(
+                                $"已捕获 {loot.ItemRef.Name.Localized()} 的元数据！"
+                            );
+                        }
+
+                        GUILayout.EndVertical();
+                        GUILayout.EndHorizontal();
                     }
-
-                    // 加一点间距让它们不要贴得太死
-                    GUILayout.Space(4);
-
-                    // --- 原有的：捕获元数据按钮 ---
-                    if (GUILayout.Button("复制实例", UIStyleManager.BlueButtonStyle, GUILayout.Height(30)))
-                    {
-                        Item clonedItem = loot.ItemRef.CloneItem().ReassignAllIds();
-                        ItemCatcher.SavedItems.Add(clonedItem);
-                        ItemCatcher.savedItem = clonedItem;
-
-                        NotificationManagerClass.DisplayMessageNotification(
-                            $"已捕获 {loot.ItemRef.Name.Localized()} 的元数据！"
-                        );
-                    }
-
-                    GUILayout.EndVertical();
-                    GUILayout.EndHorizontal();
                 }
             }
 
