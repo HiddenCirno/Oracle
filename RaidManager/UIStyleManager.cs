@@ -43,7 +43,7 @@ namespace Oracle.RaidManager
             // ----- 2. 普通容器背景（原 AIManagerGUI.flatBoxStyle）-----
             BoxStyle = new GUIStyle(GUI.skin.box);
             BoxStyle.normal.background = MakeTex(1, 1, new Color(0.20f, 0.21f, 0.23f, 1f));
-            BoxStyle.normal.textColor = new Color(0.9f, 0.9f, 0.9f, 1f);
+            BoxStyle.normal.textColor = new Color(0.9f, 0.9f, 0.9f, 1f); 
             BoxStyle.border = new RectOffset(0, 0, 0, 0);
 
             // ----- 3. 选中容器背景（原 ItemManagerGUI.flatBoxStyleActive）-----
@@ -54,9 +54,9 @@ namespace Oracle.RaidManager
 
             // ----- 4. 普通按钮（原 AIManagerGUI.flatButtonStyle）-----
             NormalButtonStyle = new GUIStyle(GUI.skin.button);
-            NormalButtonStyle.normal.background = MakeTex(1, 1, new Color(0.25f, 0.26f, 0.28f, 1f));
-            NormalButtonStyle.hover.background = MakeTex(1, 1, new Color(0.35f, 0.36f, 0.39f, 1f));
-            NormalButtonStyle.active.background = MakeTex(1, 1, new Color(0.12f, 0.13f, 0.15f, 1f));
+            NormalButtonStyle.normal.background = MakeTex(1, 1, new Color(0.25f, 0.26f, 0.28f, 1f)); 
+            NormalButtonStyle.hover.background = MakeTex(1, 1, new Color(0.35f, 0.36f, 0.39f, 1f)); 
+            NormalButtonStyle.active.background = MakeTex(1, 1, new Color(0.12f, 0.13f, 0.15f, 1f)); 
             NormalButtonStyle.normal.textColor = Color.white;
             NormalButtonStyle.hover.textColor = Color.white;
             NormalButtonStyle.active.textColor = Color.gray;
@@ -65,16 +65,16 @@ namespace Oracle.RaidManager
 
             // ----- 5. 红色按钮（原 AIManagerGUI.redButtonStyle）-----
             RedButtonStyle = new GUIStyle(NormalButtonStyle);
-            RedButtonStyle.normal.background = MakeTex(1, 1, new Color(0.5f, 0.15f, 0.15f, 1f));
-            RedButtonStyle.hover.background = MakeTex(1, 1, new Color(0.6f, 0.2f, 0.2f, 1f));
-            RedButtonStyle.active.background = MakeTex(1, 1, new Color(0.3f, 0.1f, 0.1f, 1f));
+            RedButtonStyle.normal.background = MakeTex(1, 1, new Color(0.5f, 0.2f, 0.2f)); 
+            RedButtonStyle.hover.background = MakeTex(1, 1, new Color(0.7f, 0.3f, 0.3f)); 
+            RedButtonStyle.active.background = MakeTex(1, 1, new Color(0.3f, 0.2f, 0.2f)); 
             RedButtonStyle.alignment = TextAnchor.MiddleCenter;
 
             // ----- 6. 蓝色按钮（原 AIManagerGUI.blueButtonStyle）-----
             BlueButtonStyle = new GUIStyle(NormalButtonStyle);
-            BlueButtonStyle.normal.background = MakeTex(1, 1, new Color(0.15f, 0.35f, 0.55f, 1f));
-            BlueButtonStyle.hover.background = MakeTex(1, 1, new Color(0.25f, 0.45f, 0.65f, 1f));
-            BlueButtonStyle.active.background = MakeTex(1, 1, new Color(0.1f, 0.25f, 0.4f, 1f));
+            BlueButtonStyle.normal.background = MakeTex(1, 1, new Color(0.2f, 0.3f, 0.5f)); 
+            BlueButtonStyle.hover.background = MakeTex(1, 1, new Color(0.3f, 0.4f, 0.6f)); 
+            BlueButtonStyle.active.background = MakeTex(1, 1, new Color(0.1f, 0.2f, 0.3f)); 
             BlueButtonStyle.alignment = TextAnchor.MiddleCenter;
 
             // ----- 7. 输入框样式（原 ItemManagerGUI.flatTextFieldStyle）-----
@@ -94,9 +94,9 @@ namespace Oracle.RaidManager
             ScrollbarStyle.border = new RectOffset(0, 0, 0, 0);
 
             ScrollbarThumbStyle = new GUIStyle(GUI.skin.verticalScrollbarThumb);
-            ScrollbarThumbStyle.normal.background = MakeTex(1, 1, new Color(0.15f, 0.35f, 0.55f, 1f));
-            ScrollbarThumbStyle.hover.background = MakeTex(1, 1, new Color(0.25f, 0.45f, 0.65f, 1f));
-            ScrollbarThumbStyle.active.background = MakeTex(1, 1, new Color(0.1f, 0.25f, 0.4f, 1f));
+            ScrollbarThumbStyle.normal.background = MakeTex(1, 1, new Color(0.3f, 0.31f, 0.33f, 1f));
+            ScrollbarThumbStyle.hover.background = MakeTex(1, 1, new Color(0.4f, 0.41f, 0.43f, 1f));
+            ScrollbarThumbStyle.active.background = MakeTex(1, 1, new Color(0.5f, 0.51f, 0.53f, 1f));
             ScrollbarThumbStyle.fixedWidth = 10f;
             ScrollbarThumbStyle.border = new RectOffset(0, 0, 0, 0);
 
@@ -113,6 +113,5 @@ namespace Oracle.RaidManager
             result.Apply();
             return result;
         }
-        //颜色到时候直接全改成配置模式
     }
 }
