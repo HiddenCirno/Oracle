@@ -9,6 +9,7 @@ using EFT.UI.DragAndDrop;
 using GPUInstancer;
 using HarmonyLib;
 using Oracle.ESP;
+using Oracle.ItemSpawn;
 using Oracle.Utils;
 using System;
 using System.Collections.Generic;

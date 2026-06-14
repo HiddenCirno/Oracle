@@ -1,6 +1,8 @@
 ﻿using BepInEx.Configuration;
 using EFT.Communications;
+using Oracle.Combat;
 using Oracle.ESP;
+using Oracle.ItemSpawn;
 using UnityEngine;
 
 namespace Oracle.Utils

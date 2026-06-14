@@ -5,6 +5,7 @@ using Oracle.Utils;
 using System.Collections.Generic;
 using EFT;
 using EFT.UI;
+using Oracle.ItemSpawn;
 
 namespace Oracle.RaidManager
 {

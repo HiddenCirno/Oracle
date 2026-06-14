@@ -6,7 +6,7 @@ using HarmonyLib;
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace Oracle.Utils
+namespace Oracle.Combat
 {
     public class InfinityStaminaAndNoFallenDamage
     {

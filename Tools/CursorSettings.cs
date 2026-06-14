@@ -3,7 +3,7 @@ using SPT.Reflection.Utils;
 using System.Linq;
 using System.Reflection;
 
-namespace Oracle.Utils
+namespace Oracle.Tools
 {
     /// <summary>
     /// 用于调用塔科夫底层鼠标样式的反射工具类

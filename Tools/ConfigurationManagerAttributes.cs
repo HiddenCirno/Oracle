@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace Oracle.Misc
+namespace Oracle.Tools
 {
     internal sealed class ConfigurationManagerAttributes
     {

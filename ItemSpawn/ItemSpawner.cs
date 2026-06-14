@@ -11,7 +11,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using UnityEngine;
 
-namespace Oracle.Utils
+namespace Oracle.ItemSpawn
 {
     /// <summary>
     /// 虚空造物部分

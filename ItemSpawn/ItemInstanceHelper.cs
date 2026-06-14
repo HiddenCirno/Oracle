@@ -4,7 +4,7 @@ using System;
 using System.Security.Cryptography;
 using System.Text;
 
-namespace Oracle.Utils
+namespace Oracle.ItemSpawn
 {
     /// <summary>
     /// 用于物品复制的辅助工具类

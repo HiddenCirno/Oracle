@@ -5,7 +5,7 @@ using HarmonyLib;
 using Oracle.ESP;
 using UnityEngine;
 
-namespace Oracle.Utils
+namespace Oracle.Combat
 {
     /// <summary>
     /// 自瞄部分

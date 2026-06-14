@@ -4,11 +4,12 @@ using EFT;
 using EFT.Ballistics;
 using EFT.InventoryLogic;
 using HarmonyLib;
-using Oracle.Misc;
+using Oracle.ItemSpawn;
+using Oracle.Tools;
 using System;
 using System.Reflection;
 
-namespace Oracle.Utils
+namespace Oracle.Combat
 {
     public static class InfiniteAmmo
     {
