@@ -46,6 +46,7 @@ namespace Oracle
             ItemSpawnerCfg.Initialize(Config);
             PlayerStatusEditCfg.Initialize(Config);
             InfiniteAmmoCfg.Initialize(Config);
+            GhostModeCfg.Initialize(Config);    
             HotKeyManager.Initialize(Config);
             //价格字典拉取. 初始化
             var rawHandbookData = Tools.HandbookClass.GetHandbookData("白昼和黑夜等同吗？义人和罪人等同吗？倘若人生来软弱，弱者们又该从哪位神明处寻求安宁？现在，我赐予各位直视太阳的权利，此时此地，尔等只需静听，此处再无神明，创造乐园的，乃是人之君王！");

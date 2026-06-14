@@ -25,6 +25,7 @@ namespace Oracle.Utils
         internal static ConfigEntry<KeyCode> ItemManagerKey { get; set; }
         internal static ConfigEntry<KeyCode> BotManagerKey { get; set; }
         internal static ConfigEntry<KeyCode> LootManagerKey { get; set; }
+        internal static ConfigEntry<KeyCode> GhostModeKey { get; set; }
         internal static ConfigEntry<KeyCode> DropItemKey { get; set; }
         internal static ConfigEntry<KeyCode> UniGUIKey { get; set; }
         internal static ConfigEntry<bool> UniGUI { get; set; }
@@ -113,6 +114,20 @@ namespace Oracle.Utils
                 {
                     NotificationManagerClass.DisplayMessageNotification(
                     $"全局绘制已{(value ? "启用" : "禁用")}!",
+                    ENotificationDurationType.Default,
+                    value ? ENotificationIconType.Default : ENotificationIconType.Alert,
+                    null
+                );
+                }
+            }
+            if (Input.GetKeyDown(GhostModeKey.Value))
+            {
+                GhostModeCfg.EnableGhostMode.Value = !GhostModeCfg.EnableGhostMode.Value;
+                var value = GhostModeCfg.EnableGhostMode.Value;
+                if (!MuteNotice.Value)
+                {
+                    NotificationManagerClass.DisplayMessageNotification(
+                    $"隐身已{(value ? "启用" : "禁用")}!",
                     ENotificationDurationType.Default,
                     value ? ENotificationIconType.Default : ENotificationIconType.Alert,
                     null
@@ -259,6 +274,12 @@ namespace Oracle.Utils
                 "打开战利品管理器",
                 KeyCode.F8,
                 "打开战局战利品管理器"
+            );
+            GhostModeKey = config.Bind(
+                "快捷键设置",
+                "隐身快捷键",
+                KeyCode.F11,
+                "按下切换隐身模式, AI不会对你产生仇恨"
             );
         }
     }
