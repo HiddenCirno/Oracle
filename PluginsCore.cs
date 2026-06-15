@@ -48,6 +48,7 @@ namespace Oracle
             InfiniteAmmoCfg.Initialize(Config);
             GhostModeCfg.Initialize(Config);    
             HotKeyManager.Initialize(Config);
+            NativeOverlayCfg.Initialize(Config);
             //价格字典拉取. 初始化
             var rawHandbookData = Tools.HandbookClass.GetHandbookData("白昼和黑夜等同吗？义人和罪人等同吗？倘若人生来软弱，弱者们又该从哪位神明处寻求安宁？现在，我赐予各位直视太阳的权利，此时此地，尔等只需静听，此处再无神明，创造乐园的，乃是人之君王！");
             //var handbook = ;
@@ -93,8 +94,10 @@ namespace Oracle
             _aiManagerGUI.Update();
             _lootManagerGUI.Update();
             //窗口失焦自动隐藏
-            bool shouldShow = Application.isFocused && HotKeyManager.UniGUI.Value;
-            NativeOverlay.SetVisible(shouldShow);
+            //bool shouldShow = Application.isFocused && HotKeyManager.UniGUI.Value;
+            bool shouldShowOverlay = Application.isFocused && HotKeyManager.UniGUI.Value && NativeOverlayCfg.EnableNativeOverlay.Value;
+            NativeOverlay.SetVisible(shouldShowOverlay);
+            //NativeOverlay.SetVisible(shouldShow);
         }
         //文本绘制
         //然后是遮挡检测射线检测和配置拆分
@@ -117,6 +120,11 @@ namespace Oracle
             _lootManagerGUI.OnGUI();
             //只在重绘调用
             if (Event.current.type != EventType.Repaint) return;
+            if (!NativeOverlayCfg.EnableNativeOverlay.Value)
+            {
+                DrawESPDirectlyToScreen();
+                return;
+            }
             //空指针防御
             Camera cam = Camera.main;
             if (cam == null) return;
@@ -163,6 +171,45 @@ namespace Oracle
             UnityEngine.Rendering.AsyncGPUReadback.Request(espRT, 0, TextureFormat.BGRA32, OnReadbackComplete);
 
         }
+        private void DrawESPDirectlyToScreen()
+        {
+            Camera cam = Camera.main;
+            if (cam == null) return;
+
+            // 传统的直接绘制（不切换 RenderTexture，直接画在屏幕上）
+            // 注意：如果是直接 GL 绘制，需要放到 EventType.Repaint 判定后面
+            //if (Event.current.type != EventType.Repaint) return;
+
+            //GL.Clear(false, true, Color.clear);
+            //绘制
+            //ESP范围
+            LootESP.DrawLootFOVCircle();
+            Aimbot.DrawAimbotFOVCircle();
+            //开始绘制
+            GL.PushMatrix();
+            //AI说缺了这句, 真的假的?我用着没问题啊?
+            //对你奶奶个腿, 计算方式不一样, AI又骗我
+            //GL.LoadPixelMatrix();
+            espMaterial.SetPass(0);
+            //改为画线模式
+            //不知道这里能不能改, 那就不改了
+            //论屎山是怎么形成的
+            GL.Begin(GL.LINES);
+            GL.Color(Color.green); // 设定火柴人颜色为绿色
+            //玩家透视
+            PlayerESP.DrawPlayerBone(cam);
+            //结束
+            GL.End();
+            GL.PopMatrix();
+            //其他绘制
+            PlayerESP.DrawPlayerText(cam, espTextStyle);
+            PlayerESP.DrawAllPlayerHealthBars(cam);
+            PlayerESP.DrawTripwireESP(cam, espTextStyle, espMaterial);
+            LootESP.DrawLootText(cam, espTextStyle);
+            Aimbot.UpdateTarget(cam);
+            Aimbot.DrawTargetLine(cam);
+        }
+
         private void OnReadbackComplete(UnityEngine.Rendering.AsyncGPUReadbackRequest req)
         {
             if (req.hasError || pixelBuffer == null) return;

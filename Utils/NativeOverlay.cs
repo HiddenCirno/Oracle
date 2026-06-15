@@ -1,4 +1,5 @@
-﻿using System;
+﻿using BepInEx.Configuration;
+using System;
 using System.Runtime.InteropServices;
 
 namespace Oracle.Utils
@@ -102,6 +103,29 @@ namespace Oracle.Utils
                 UpdateFrame(new byte[screenW * screenH * 4]);
                 isVisible = false;
             }
+        }
+    }
+
+    /// <summary>
+    /// 配置项定义
+    /// </summary>
+    public class NativeOverlayCfg
+    {
+
+        internal static ConfigEntry<bool> EnableNativeOverlay { get; set; }
+
+        /// <summary>
+        /// 配置项初始化
+        /// </summary>
+        /// <param name="config">传入配置实例</param>
+        public static void Initialize(ConfigFile config)
+        {
+            EnableNativeOverlay = config.Bind(
+                "通用设置",
+                "启用叠加层",
+                false,
+                "启用后捕获窗口将捕获不到绘制层"
+            );
         }
     }
 }
