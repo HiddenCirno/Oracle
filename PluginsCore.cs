@@ -24,6 +24,7 @@ namespace Oracle
         private ItemManagerGUI _itemManagerGUI = new ItemManagerGUI();
         private AIManagerGUI _aiManagerGUI = new AIManagerGUI();
         private LootManagerGUI _lootManagerGUI = new LootManagerGUI();
+        private BotGeneratorGUI _botGeneratorGUI = new BotGeneratorGUI();
         //绘制样式缓存
         public GUIStyle espTextStyle;
         public Material espMaterial;
@@ -94,6 +95,7 @@ namespace Oracle
             _itemManagerGUI.Update();
             _aiManagerGUI.Update();
             _lootManagerGUI.Update();
+            _botGeneratorGUI.Update();
             //窗口失焦自动隐藏
             //bool shouldShow = Application.isFocused && HotKeyManager.UniGUI.Value;
             // 1. 获取当前是否【应该启用】叠加层
@@ -149,6 +151,7 @@ namespace Oracle
             if (CorrectGameWorld == null || CorrectPlayer == null || CorrectGameWorld.AllAlivePlayersList == null) return;
             _aiManagerGUI.OnGUI();
             _lootManagerGUI.OnGUI();
+            _botGeneratorGUI.OnGUI();
             //只在重绘调用
             if (Event.current.type != EventType.Repaint) return;
             if (!NativeOverlayCfg.EnableNativeOverlay.Value)

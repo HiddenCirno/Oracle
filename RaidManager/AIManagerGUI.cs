@@ -9,6 +9,7 @@ using Oracle.ESP;
 using Oracle.Utils;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UIElements;
 
 namespace Oracle.RaidManager
 {
@@ -127,21 +128,51 @@ namespace Oracle.RaidManager
                     GUILayout.EndVertical();
 
                     // --- 操作按钮区域 (上下平分 64 的高度) ---
-                    GUILayout.BeginVertical(GUILayout.Width(80));
+                    GUILayout.BeginVertical(GUILayout.Width(130)); // 加宽以容纳左右两个按钮
 
-                    // ⭐ 新增：搜身按钮
-                    if (GUILayout.Button("搜索", UIStyleManager.BlueButtonStyle, GUILayout.Height(30)))
+                    BotOwner botOwner = player.AIData?.BotOwner;
+
+                    // 第一行：传送 + 搜索
+                    GUILayout.BeginHorizontal();
+
+                    // 1. 传送按钮
+                    if (GUILayout.Button("传送", UIStyleManager.BlueButtonStyle, GUILayout.Height(30), GUILayout.MinWidth(60)))
+                    {
+                        TeleportBotToMe(player);
+                    }
+
+                    // 2. 搜身按钮
+                    if (GUILayout.Button("搜索", UIStyleManager.BlueButtonStyle, GUILayout.Height(30), GUILayout.MinWidth(60)))
                     {
                         RemoteSearchPlayer(player);
                     }
+                    GUILayout.EndHorizontal();
 
-                    GUILayout.Space(4); // 间距
+                    GUILayout.Space(4); // 上下间距
 
-                    // 杀死按钮
-                    if (GUILayout.Button("杀死", UIStyleManager.RedButtonStyle, GUILayout.Height(30)))
+                    // 第二行：冻结 + 杀死
+                    GUILayout.BeginHorizontal();
+
+                    // 3. 冻结按钮 (判断状态)
+                    //bool isFrozen = botOwner != null && botOwner.BotState == EBotState.ActiveFail;
+                    //string freezeText = isFrozen ? "解冻" : "冻结";
+                    //GUIStyle freezeStyle = "isFrozen" ? UIStyleManager.RedButtonStyle : UIStyleManager.BlueButtonStyle;
+
+                    // 如果对方是真玩家 (botOwner == null)，为了美观保持按钮置灰
+                    GUI.enabled = false;
+                    //直接禁用按钮得了
+                    if (GUILayout.Button("冻结", UIStyleManager.BlueButtonStyle, GUILayout.Height(30), GUILayout.MinWidth(60)))
+                    {
+                        ToggleFreezeBot(botOwner);
+                    }
+                    GUI.enabled = true;
+
+                    // 4. 杀死按钮
+                    if (GUILayout.Button("杀死", UIStyleManager.RedButtonStyle, GUILayout.Height(30), GUILayout.MinWidth(60)))
                     {
                         player.KillMe(EBodyPartColliderType.HeadCommon, 999999999);
                     }
+                    GUILayout.EndHorizontal();
 
                     GUILayout.EndVertical();
                     GUILayout.EndHorizontal();
@@ -159,6 +190,76 @@ namespace Oracle.RaidManager
             GUI.skin.verticalScrollbarThumb = origThumb;
 
             GUI.DragWindow(new Rect(0, 0, _windowRect.width - 50, 25));
+        }
+
+        // ==========================================
+        // ⭐ 新增：将实体传送到面前
+        // ==========================================
+        private void TeleportBotToMe(Player targetPlayer)
+        {
+            Player mainPlayer = PluginsCore.CorrectPlayer;
+            if (mainPlayer == null || targetPlayer == null) return;
+
+            // 1. 计算坐标：自己正前方 2 米，稍微抬高一点防止卡地皮
+            Vector3 targetPos = mainPlayer.Position + mainPlayer.Transform.forward * 2f;
+            targetPos.y += 0.2f;
+
+            // 2. 直接调用塔科夫原生的安全传送方法
+            // 第二个参数 onServerToo 传 false 即可，SPT环境下单机生效
+            targetPlayer.Teleport(targetPos, true);
+
+            NotificationManagerClass.DisplayMessageNotification($"已将 {targetPlayer.Profile?.Nickname} 传送到面前！");
+        }
+
+        // ==========================================
+        // ⭐ 新增：冻结 / 解冻 AI 逻辑
+        // ==========================================
+        private void ToggleFreezeBot(BotOwner botOwner)
+        {
+            if (botOwner.BotState == EBotState.ActiveFail)
+            {
+                ResumeBot(botOwner);
+                NotificationManagerClass.DisplayMessageNotification("AI 已解冻。");
+            }
+            else
+            {
+                PauseBot(botOwner);
+                NotificationManagerClass.DisplayMessageNotification("AI 已冻结，变成植物人靶子。");
+            }
+        }
+
+        /// <summary>
+        /// 纯净版冻结：利用 ActiveFail 漏洞彻底瘫痪大脑
+        /// </summary>
+        public void PauseBot(BotOwner bot)
+        {
+            if (bot == null || bot.BotState != EBotState.Active) return;
+
+            // 1. 必须先踩一脚死刹车，并清空当前目标。
+            // 如果不踩刹车，虽然大脑死了，但 Unity 底层的寻路组件(NavMeshAgent)还会因为惯性走到上一个终点。
+            bot.StopMove();
+            bot.MovementPause(99999f); // 物理锁死移动意图
+            bot.AimingManager.CurrentAiming?.LoseTarget();
+            bot.Memory.GoalEnemy = null;
+
+            // 2. 卡系统的 Bug：设为 ActiveFail
+            // 这样 UpdateManual() 会被彻底跳过，且游戏后台的自动激活机制也会无视它。
+            // 它的肉体依然有呼吸，中枪依然会判定死亡掉落，但永远不会还击和索敌。
+            bot.BotState = EBotState.ActiveFail;
+        }
+
+        /// <summary>
+        /// 纯净版解冻：恢复激活
+        /// </summary>
+        public void ResumeBot(BotOwner bot)
+        {
+            if (bot == null || bot.BotState != EBotState.ActiveFail) return;
+
+            // 解除物理移动限制
+            bot.MovementResume();
+
+            // 直接切回 Active，它的 UpdateManual 会在下一帧无缝接管，重新开始找掩体和索敌
+            bot.BotState = EBotState.Active;
         }
 
         [HarmonyPatch(typeof(GClass2234), "TryFindChangedContainer")]
