@@ -12,6 +12,8 @@ namespace Oracle.Utils
         //引入Windows底层API
         [DllImport("user32.dll", SetLastError = true)]
         private static extern IntPtr CreateWindowEx(int dwExStyle, string lpClassName, string lpWindowName, int dwStyle, int x, int y, int nWidth, int nHeight, IntPtr hWndParent, IntPtr hMenu, IntPtr hInstance, IntPtr lpParam);
+        [DllImport("user32.dll", SetLastError = true)]
+        private static extern bool DestroyWindow(IntPtr hWnd);
         [DllImport("user32.dll")] private static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);
         [DllImport("user32.dll")] private static extern IntPtr GetDC(IntPtr hWnd);
         [DllImport("user32.dll")] private static extern int ReleaseDC(IntPtr hWnd, IntPtr hDC);
@@ -21,6 +23,8 @@ namespace Oracle.Utils
         [DllImport("gdi32.dll")] private static extern bool DeleteObject(IntPtr hObject);
         [DllImport("user32.dll")] private static extern bool UpdateLayeredWindow(IntPtr hwnd, IntPtr hdcDst, ref POINT pptDst, ref SIZE psize, IntPtr hdcSrc, ref POINT pptSrc, int crKey, ref BLENDFUNCTION pblend, int dwFlags);
         [DllImport("gdi32.dll")] private static extern IntPtr CreateDIBSection(IntPtr hdc, ref BITMAPINFO pbmi, uint iUsage, out IntPtr ppvBits, IntPtr hSection, uint dwOffset);
+
+        
         //设置基本配置项
         [StructLayout(LayoutKind.Sequential)] public struct POINT { public int x, y; }
         [StructLayout(LayoutKind.Sequential)] public struct SIZE { public int cx, cy; }
@@ -83,6 +87,35 @@ namespace Oracle.Utils
             DeleteDC(memDC);
             ReleaseDC(IntPtr.Zero, screenDC);
         }
+
+        /// <summary>
+        /// 🌟 新增：彻底摧毁叠加层窗口并释放资源
+        /// </summary>
+        public static void Destroy()
+        {
+            if (hwnd == IntPtr.Zero) return;
+
+            try
+            {
+                // 1. 隐藏窗口并擦除最后一帧的画面，防止视觉残留
+                ShowWindow(hwnd, SW_HIDE);
+                UpdateFrame(new byte[screenW * screenH * 4]);
+
+                // 2. 调用 Windows API 销毁窗口
+                DestroyWindow(hwnd);
+            }
+            catch
+            {
+                // 忽略显隐导致的异常，确保 hwnd 能够被重置
+            }
+            finally
+            {
+                // 3. 将句柄重置为 Zero，以便后续可以重新 Initialize
+                hwnd = IntPtr.Zero;
+                isVisible = false;
+            }
+        }
+
         /// <summary>
         /// 控制窗口显隐
         /// </summary>

@@ -35,6 +35,7 @@ namespace Oracle
         //帧率限制
         private float espRefreshRate = 1f / 50f;
         private float lastEspDrawTime = 0f;
+        private bool isOverlayInitialized = false;
         public void Awake()
         {
             var harmony = new Harmony(PluginsInfo.GUID);
@@ -95,8 +96,32 @@ namespace Oracle
             _lootManagerGUI.Update();
             //窗口失焦自动隐藏
             //bool shouldShow = Application.isFocused && HotKeyManager.UniGUI.Value;
-            bool shouldShowOverlay = Application.isFocused && HotKeyManager.UniGUI.Value && NativeOverlayCfg.EnableNativeOverlay.Value;
-            NativeOverlay.SetVisible(shouldShowOverlay);
+            // 1. 获取当前是否【应该启用】叠加层
+            // 条件：配置项开启 且 游戏窗口处于聚焦状态
+            // 2. 状态机：根据配置动态创建或摧毁
+            // 1. 先判断【总开关】：玩家到底用不用过直播功能？
+            if (NativeOverlayCfg.EnableNativeOverlay.Value)
+            {
+                // 如果配置是开启的，但叠加层之前被彻底干掉了，这里才重新初始化（低频操作）
+                if (!isOverlayInitialized)
+                {
+                    NativeOverlay.Initialize(Screen.width, Screen.height);
+                    isOverlayInitialized = true;
+                }
+
+                // 2. 在总开关开启的前提下，由【游戏聚焦】和【菜单快捷键】共同控制显隐（高频操作，无感隐藏）
+                bool shouldShowOverlay = Application.isFocused && HotKeyManager.UniGUI.Value;
+                NativeOverlay.SetVisible(shouldShowOverlay);
+            }
+            else
+            {
+                // 3. 只有当玩家【彻底取消勾选】了配置项时，才触发摧毁释放句柄（低频操作）
+                if (isOverlayInitialized)
+                {
+                    NativeOverlay.Destroy();
+                    isOverlayInitialized = false;
+                }
+            }
 
             //NativeOverlay.SetVisible(shouldShow);
         }
@@ -123,7 +148,7 @@ namespace Oracle
             if (Event.current.type != EventType.Repaint) return;
             if (!NativeOverlayCfg.EnableNativeOverlay.Value)
             {
-                DrawESPDirectlyToScreen();
+                DrawESP();
                 return;
             }
             //空指针防御
@@ -144,35 +169,14 @@ namespace Oracle
             LootESP.DrawLootFOVCircle();
             Aimbot.DrawAimbotFOVCircle();
             //开始绘制
-            GL.PushMatrix(); 
-            //AI说缺了这句, 真的假的?我用着没问题啊?
-            //对你奶奶个腿, 计算方式不一样, AI又骗我
-            //GL.LoadPixelMatrix();
-            espMaterial.SetPass(0);
-            //改为画线模式
-            //不知道这里能不能改, 那就不改了
-            //论屎山是怎么形成的
-            GL.Begin(GL.LINES);
-            GL.Color(Color.green); // 设定火柴人颜色为绿色
-            //玩家透视
-            PlayerESP.DrawPlayerBone(cam);
-            //结束
-            GL.End();
-            GL.PopMatrix(); 
-            //其他绘制
-            PlayerESP.DrawPlayerText(cam, espTextStyle);
-            PlayerESP.DrawAllPlayerHealthBars(cam);
-            PlayerESP.DrawTripwireESP(cam, espTextStyle, espMaterial);
-            LootESP.DrawLootText(cam, espTextStyle); 
-            Aimbot.UpdateTarget(cam);
-            Aimbot.DrawTargetLine(cam);
+            DrawESP();
             //窗口焦点归位
             RenderTexture.active = prevRT;
             //将图像流异步传输给窗口
             UnityEngine.Rendering.AsyncGPUReadback.Request(espRT, 0, TextureFormat.BGRA32, OnReadbackComplete);
 
         }
-        private void DrawESPDirectlyToScreen()
+        private void DrawESP()
         {
             Camera cam = Camera.main;
             if (cam == null) return;
