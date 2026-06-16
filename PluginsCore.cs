@@ -97,6 +97,7 @@ namespace Oracle
             //bool shouldShow = Application.isFocused && HotKeyManager.UniGUI.Value;
             bool shouldShowOverlay = Application.isFocused && HotKeyManager.UniGUI.Value && NativeOverlayCfg.EnableNativeOverlay.Value;
             NativeOverlay.SetVisible(shouldShowOverlay);
+
             //NativeOverlay.SetVisible(shouldShow);
         }
         //文本绘制
@@ -175,7 +176,6 @@ namespace Oracle
         {
             Camera cam = Camera.main;
             if (cam == null) return;
-
             // 传统的直接绘制（不切换 RenderTexture，直接画在屏幕上）
             // 注意：如果是直接 GL 绘制，需要放到 EventType.Repaint 判定后面
             //if (Event.current.type != EventType.Repaint) return;

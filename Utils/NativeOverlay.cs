@@ -121,7 +121,7 @@ namespace Oracle.Utils
         public static void Initialize(ConfigFile config)
         {
             EnableNativeOverlay = config.Bind(
-                "通用设置",
+                "绘制设置",
                 "启用叠加层",
                 false,
                 "启用后捕获窗口将捕获不到绘制层"

@@ -3,6 +3,7 @@ using EFT;
 using EFT.Ballistics;
 using HarmonyLib;
 using Oracle.ESP;
+using Oracle.Utils;
 using UnityEngine;
 
 namespace Oracle.Combat
@@ -16,6 +17,9 @@ namespace Oracle.Combat
         /// 独立的渲染材质, 防止冲突
         /// </summary>
         private static Material aimbotMaterial;
+
+        private static float targetUpdateRate = 1f / AimbotCfg.AimbotTargetUpdateRate.Value; //加个配置的事
+        private static float lastUpdateTime = 0f;
         /// <summary>
         /// 内部变量, 当前瞄准的目标
         /// </summary>
@@ -36,6 +40,12 @@ namespace Oracle.Combat
         /// <param name="cam">当前摄像机</param>
         public static void UpdateTarget(Camera cam)
         {
+            if (Time.time - lastUpdateTime < targetUpdateRate)
+            {
+                return;
+            }
+
+            lastUpdateTime = Time.time;
             //关闭自瞄停止运行
             if (!AimbotCfg.EnableAimbot.Value)
             {
@@ -231,6 +241,7 @@ namespace Oracle.Combat
     public class AimbotCfg
     {
         internal static ConfigEntry<bool> EnableAimbot { get; set; }
+        internal static ConfigEntry<int> AimbotTargetUpdateRate { get; set; }
         internal static ConfigEntry<bool> SuperMagicBullet { get; set; }
         internal static ConfigEntry<bool> DrawAimbotFov { get; set; }
         internal static ConfigEntry<bool> DrawTargetLine { get; set; }
@@ -272,6 +283,10 @@ namespace Oracle.Combat
             AimbotFovRadius = config.Bind(
                 "自瞄设置", "自瞄 FOV 半径", 150f,
                 new ConfigDescription("自瞄圆环的大小", new AcceptableValueRange<float>(10f, 1000f))
+            );
+            AimbotTargetUpdateRate = config.Bind(
+                "自瞄设置", "自瞄目标更新频率", 20,
+                new ConfigDescription("每秒的目标检测和更新频率", new AcceptableValueRange<int>(10, 50))
             );
             MagicBulletSpeed = config.Bind(
                 "自瞄设置", "魔法子弹加速度", 20f,
