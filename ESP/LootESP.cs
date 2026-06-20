@@ -49,6 +49,8 @@ namespace Oracle.ESP
 
         public static class PriceColor
         {
+            //愿望单物品
+            public static readonly Color TierEX = new Color(0.862f, 0.078f, 0.235f);
             public static readonly Color TierX = Color.gray;
             public static readonly Color Tier0 = Color.white;
             public static readonly Color Tier1 = new Color(0f, 0.666f, 0f);
@@ -88,6 +90,7 @@ namespace Oracle.ESP
         {
             switch (level)
             {
+                case 9: return PriceColor.TierEX;
                 case 8: return PriceColor.TierX;
                 case 7: return PriceColor.Tier6;
                 case 6: return PriceColor.Tier5;
@@ -181,46 +184,44 @@ namespace Oracle.ESP
         /// <param name="textStyle">样式</param>
         public static void DrawLootText(Camera cam, GUIStyle textStyle)
         {
-            if (CachedLootList == null || CachedLootList.Count == 0 || !LootESPCfg.EnableLootESP.Value) return;
-            //查找中心
-            Vector2 screenCenter = new Vector2(Screen.width / 2f, Screen.height / 2f);
-            float fovRadius = LootESPCfg.LootESPFovRange.Value;
-            //富文本防御, 避免问题
-            textStyle.richText = true;
-            textStyle.normal.textColor = Color.white;
-            foreach (LootData loot in CachedLootList)
-            {
-                Vector3 screenPos = cam.WorldToScreenPoint(loot.Position);
-                if (screenPos.z > 0.01f)
+            if (CachedLootList == null || CachedLootList.Count == 0) return;
+                //查找中心
+                Vector2 screenCenter = new Vector2(Screen.width / 2f, Screen.height / 2f);
+                float fovRadius = LootESPCfg.LootESPFovRange.Value;
+                //富文本防御, 避免问题
+                foreach (LootData loot in CachedLootList)
                 {
-                    float screenX = screenPos.x;
-                    //展开容器战利品表
-                    float screenY = Screen.height - screenPos.y + loot.YOffset;
-                    //FOV计算
-                    if (LootESPCfg.EnableLootESPFov.Value)
+                    Vector3 screenPos = cam.WorldToScreenPoint(loot.Position);
+                    if (screenPos.z > 0.01f)
                     {
-                        //白名单绘制
-                        if (loot.Price < LootESPCfg.LootESPFovMinPrice.Value)
+                        float screenX = screenPos.x;
+                        //展开容器战利品表
+                        float screenY = Screen.height - screenPos.y + loot.YOffset;
+                        //FOV计算
+                        if (LootESPCfg.EnableLootESPFov.Value)
                         {
-                            Vector2 itemScreenPos = new Vector2(screenX, screenY);
-                            float distToCenter = Vector2.Distance(screenCenter, itemScreenPos);
-                            //脱离范围
-                            if (distToCenter > fovRadius) continue;
+                            //白名单绘制
+                            if (loot.Price < LootESPCfg.LootESPFovMinPrice.Value)
+                            {
+                                Vector2 itemScreenPos = new Vector2(screenX, screenY);
+                                float distToCenter = Vector2.Distance(screenCenter, itemScreenPos);
+                                //脱离范围
+                                if (distToCenter > fovRadius) continue;
+                            }
                         }
-                    }
-                    string espText = $"{loot.Name}";
-                    //绘制
-                    if(loot.Container != null && LootESPCfg.EnableContainerLootESP.Value)
-                    {
-                        GUI.Label(new Rect(screenX - 100, screenY - 20, 200, 40), espText, textStyle);
-                    }
-                    if (loot.Container == null && LootESPCfg.EnableLooseLootESP.Value)
-                    {
-                        GUI.Label(new Rect(screenX - 100, screenY - 20, 200, 40), espText, textStyle);
+                        string espText = $"{loot.Name}";
+                        //绘制
+                        if (loot.Container != null && LootESPCfg.EnableContainerLootESP.Value)
+                        {
+                            GUI.Label(new Rect(screenX - 100, screenY - 20, 200, 40), espText, textStyle);
+                        }
+                        if (loot.Container == null && LootESPCfg.EnableLooseLootESP.Value)
+                        {
+                            GUI.Label(new Rect(screenX - 100, screenY - 20, 200, 40), espText, textStyle);
+                        }
                     }
                 }
             }
-        }
 
         /// <summary>
         /// 扫描协程
@@ -440,7 +441,6 @@ namespace Oracle.ESP
     /// </summary>
     public class LootESPCfg
     {
-        internal static ConfigEntry<bool> EnableLootESP { get; set; }
         internal static ConfigEntry<bool> EnableContainerLootESP { get; set; }
         internal static ConfigEntry<bool> EnableLooseLootESP { get; set; }
         internal static ConfigEntry<int> LootESPMaxDistance { get; set; }
@@ -456,12 +456,6 @@ namespace Oracle.ESP
         /// <param name="config">传入配置实例</param>
         public static void Initialize(ConfigFile config)
         {
-            EnableLootESP = config.Bind<bool>(
-                "物资透视",
-                "启用物资透视",
-                true,
-                "物资透视总开关"
-            );
             EnableLooseLootESP = config.Bind<bool>(
                 "物资透视",
                 "启用松散物资透视",

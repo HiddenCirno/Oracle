@@ -72,7 +72,9 @@ namespace Oracle.ESP
 
             if (info != null)
             {
-                name = IsAllEnglish(info.Nickname) ? info.Nickname : GStruct21.ConvertToLatinic(info.Nickname);
+                var role = info.Settings?.Role.ToString().ToLower() ?? "assault";
+                //迷宫小弟、玩家和全英文名不经过转换，反向筛选西里尔字母
+                name = ((info.Side == EPlayerSide.Bear || info.Side == EPlayerSide.Usec) || (role == "tagillahelperagro") || IsAllEnglish(info.Nickname))  ? info.Nickname : GStruct21.ConvertToLatinic(info.Nickname);
 
                 if (info.Side.ToString() == "Savage")
                 {
@@ -98,6 +100,7 @@ namespace Oracle.ESP
             string roleLabel = "Scav";
             string colorHex = "#FFFF8B";
 
+            //这里是不是可以加上多角色适配？
             // 核心优先级逻辑
             if (role.Contains("boss") || IsSpecialBoss(role)) { roleLabel = "Boss"; colorHex = "#CE0000"; }
             else if (role == "bossboarsniper" || role == "marksman") { roleLabel = "狙击Scav"; colorHex = "#00FA9A"; }

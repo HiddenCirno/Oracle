@@ -51,6 +51,7 @@ namespace Oracle
             GhostModeCfg.Initialize(Config);    
             HotKeyManager.Initialize(Config);
             NativeOverlayCfg.Initialize(Config);
+            CorpseESPCfg.Initialize(Config);
             //价格字典拉取. 初始化
             var rawHandbookData = Tools.HandbookClass.GetHandbookData("白昼和黑夜等同吗？义人和罪人等同吗？倘若人生来软弱，弱者们又该从哪位神明处寻求安宁？现在，我赐予各位直视太阳的权利，此时此地，尔等只需静听，此处再无神明，创造乐园的，乃是人之君王！");
             //var handbook = ;
@@ -86,6 +87,8 @@ namespace Oracle
             StartCoroutine(LootESP.LootScannerCoroutine());
             //绊雷扫描协程
             StartCoroutine(PlayerESP.TripwireScannerCoroutine());
+            //尸体扫描协程
+            StartCoroutine(CorpseESP.CorpseScannerCoroutine());
         }
         public void Update()
         {
@@ -175,9 +178,6 @@ namespace Oracle
             RenderTexture.active = espRT;
             GL.Clear(false, true, Color.clear);
             //绘制
-            //ESP范围
-            LootESP.DrawLootFOVCircle();
-            Aimbot.DrawAimbotFOVCircle();
             //开始绘制
             DrawESP();
             //窗口焦点归位
@@ -220,6 +220,7 @@ namespace Oracle
             PlayerESP.DrawAllPlayerHealthBars(cam);
             PlayerESP.DrawTripwireESP(cam, espTextStyle, espMaterial);
             LootESP.DrawLootText(cam, espTextStyle);
+            CorpseESP.DrawCorpseText(cam, espTextStyle);
             Aimbot.UpdateTarget(cam);
             Aimbot.DrawTargetLine(cam);
         }

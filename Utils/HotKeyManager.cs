@@ -14,12 +14,11 @@ namespace Oracle.Utils
     {
         //配置定义
         internal static ConfigEntry<KeyCode> PlayerESPKey { get; set; }
-        internal static ConfigEntry<KeyCode> LootESPKey { get; set; }
         internal static ConfigEntry<KeyCode> LooseLootESPKey { get; set; }
         internal static ConfigEntry<KeyCode> ContainerLootESPKey { get; set; }
         internal static ConfigEntry<KeyCode> AimbotKey { get; set; }
         internal static ConfigEntry<KeyCode> ChangeAimTargetKey { get; set; }
-        internal static ConfigEntry<KeyCode> LootESPNameModeKey { get; set; }
+        internal static ConfigEntry<KeyCode> CorpseESPKey { get; set; }
         internal static ConfigEntry<KeyCode> AddItemKey { get; set; }
         internal static ConfigEntry<KeyboardShortcut> CopyItemKey { get; set; }
         internal static ConfigEntry<KeyCode> ItemManagerKey { get; set; }
@@ -48,20 +47,6 @@ namespace Oracle.Utils
                         value ? ENotificationIconType.Default : ENotificationIconType.Alert,
                         null
                     );
-                }
-            }
-            if (Input.GetKeyDown(LootESPKey.Value))
-            {
-                LootESPCfg.EnableLootESP.Value = !LootESPCfg.EnableLootESP.Value;
-                var value = LootESPCfg.EnableLootESP.Value;
-                if (!MuteNotice.Value)
-                {
-                    NotificationManagerClass.DisplayMessageNotification(
-                    $"物资透视已{(value ? "启用" : "禁用")}!",
-                    ENotificationDurationType.Default,
-                    value ? ENotificationIconType.Default : ENotificationIconType.Alert,
-                    null
-                );
                 }
             }
             if (Input.GetKeyDown(LooseLootESPKey.Value))
@@ -148,9 +133,19 @@ namespace Oracle.Utils
                 );
                 }
             }
-            if (Input.GetKeyDown(LootESPNameModeKey.Value))
+            if (Input.GetKeyDown(CorpseESPKey.Value))
             {
-                LootESPCfg.ShowItemFullName.Value = !LootESPCfg.ShowItemFullName.Value;
+                CorpseESPCfg.EnableCorpseESP.Value = !CorpseESPCfg.EnableCorpseESP.Value;
+                var value = CorpseESPCfg.EnableCorpseESP.Value;
+                if (!MuteNotice.Value)
+                {
+                    NotificationManagerClass.DisplayMessageNotification(
+                    $"尸体透视已{(value ? "启用" : "禁用")}!",
+                    ENotificationDurationType.Default,
+                    value ? ENotificationIconType.Default : ENotificationIconType.Alert,
+                    null
+                );
+                }
             }
             if (Input.GetKeyDown(AddItemKey.Value))
             {
@@ -176,38 +171,30 @@ namespace Oracle.Utils
                 "按下切换玩家透视"
             );
 
-            LootESPKey = config.Bind<KeyCode>(
-                "快捷键设置",
-                "全局物资透视快捷键",
-                KeyCode.F3,
-                "按下切换所有物资透视"
-            );
-
             LooseLootESPKey = config.Bind<KeyCode>(
                 "快捷键设置",
                 "散落物资透视快捷键",
-                KeyCode.F4,
+                KeyCode.F3,
                 "按下切换地上的散落物资透视"
             );
 
             ContainerLootESPKey = config.Bind<KeyCode>(
                 "快捷键设置",
                 "容器物资透视快捷键",
-                KeyCode.F5,
+                KeyCode.F4,
                 "按下切换容器(如箱子/衣服/包)物资透视"
             );
-
+            CorpseESPKey = config.Bind<KeyCode>(
+                "快捷键设置",
+                "尸体透视快捷键",
+                KeyCode.F5,
+                "切换尸体透视"
+            );
             AimbotKey = config.Bind<KeyCode>(
                 "快捷键设置",
                 "自瞄快捷键",
                 KeyCode.F6,
                 "按下切换自瞄与魔法子弹功能"
-            );
-            LootESPNameModeKey = config.Bind<KeyCode>(
-                "快捷键设置",
-                "切换物资透视长短名字",
-                KeyCode.F7,
-                "切换物资透视长短名字"
             );
             UniGUIKey = config.Bind<KeyCode>(
                 "快捷键设置",
