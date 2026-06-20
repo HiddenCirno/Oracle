@@ -8,8 +8,9 @@ namespace Oracle.RaidManager
     {
         private static GameObject _inputManager;
 
-        public static void ToggleCursor(bool unlock)
+        public static void ToggleCursor()
         {
+            var unlock = AIManagerGUI._isMenuOpen || BotGeneratorGUI._isMenuOpen || LootManagerGUI._isMenuOpen || ItemManagerGUI._isMenuOpen;
             if (_inputManager == null)
                 _inputManager = GameObject.Find("___Input");
 

@@ -16,7 +16,7 @@ namespace Oracle.RaidManager
     public class BotGeneratorGUI
     {
         // UI 状态
-        public bool _isMenuOpen = false;
+        public static bool _isMenuOpen = false;
         public Rect _windowRect = new Rect(480, 20, 520, 380); // 稍微宽一点，高度不用太高
         public Vector2 _scrollPos;
 
@@ -39,7 +39,7 @@ namespace Oracle.RaidManager
             if (Input.GetKeyDown(KeyCode.F7)) // 或者 HotKeyManager.BotGeneratorKey.Value
             {
                 _isMenuOpen = !_isMenuOpen;
-                MouseManager.ToggleCursor(_isMenuOpen);
+                MouseManager.ToggleCursor();
             }
         }
         private void EnsureRolesLoaded()
@@ -71,7 +71,7 @@ namespace Oracle.RaidManager
             if (GUI.Button(new Rect(_windowRect.width - 45, 4, 40, 20), "关闭", UIStyleManager.RedButtonStyle))
             {
                 _isMenuOpen = false;
-                MouseManager.ToggleCursor(false);
+                MouseManager.ToggleCursor();
             }
 
             GUILayout.Space(10);

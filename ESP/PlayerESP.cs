@@ -119,7 +119,8 @@ namespace Oracle.ESP
         private static bool IsSpecialBoss(string role)
         {
             return role == "followerbirdeye" || role == "followerbigpipe" ||
-                   role == "infectedtagilla" || role.StartsWith("sectant");
+                   role == "infectedtagilla" || role == "sectantoni" ||
+                   role == "sectantpredvestnik" || role == "sectantprizark";
         }
 
         /// <summary>

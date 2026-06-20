@@ -142,6 +142,8 @@ namespace Oracle
         //生成AI不太现实, 太麻烦了, 而且没法做到同步生成
         //所以PvELive里那些生成AI的外挂是咋做到的呢?
         //想不通, DenDevTool也是异步延迟生成的AI
+        //也许应该再加一个闪现
+        //AI传送和冻结修不好, 不整了
         public void OnGUI()
         {
             //全局绘制开关

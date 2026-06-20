@@ -12,7 +12,7 @@ namespace Oracle.RaidManager
     public class ItemManagerGUI
     {
         // UI 状态
-        public bool _isMenuOpen = false;
+        public static bool _isMenuOpen = false;
         public Rect _windowRect = new Rect(20, 20, 460, 600); // 初始窗口位置和大小
         public Vector2 _scrollPos;
         public Vector2 itemScrollPos = Vector2.zero;
@@ -26,7 +26,7 @@ namespace Oracle.RaidManager
             if (Input.GetKeyDown(HotKeyManager.ItemManagerKey.Value))
             {
                 _isMenuOpen = !_isMenuOpen;
-                MouseManager.ToggleCursor(_isMenuOpen);
+                MouseManager.ToggleCursor();
             }
         }
 
@@ -60,7 +60,7 @@ namespace Oracle.RaidManager
             if (GUI.Button(new Rect(_windowRect.width - 45, 4, 40, 20), "关闭", UIStyleManager.RedButtonStyle))
             {
                 _isMenuOpen = false;
-                MouseManager.ToggleCursor(false);
+                MouseManager.ToggleCursor();
             }
 
             GUIStyle origScroll = GUI.skin.verticalScrollbar;
