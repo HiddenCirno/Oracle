@@ -8,7 +8,9 @@ using Oracle.ItemSpawn;
 using Oracle.RaidManager;
 using Oracle.Utils;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Reflection;
 using UnityEngine;
 using static Oracle.Combat.InfinityStaminaAndNoFallenDamage;
 
@@ -20,7 +22,8 @@ namespace Oracle
         public static Player CorrectPlayer { get; set; }
         public static string CorrectGroupId { get; set; }
         public static GameWorld CorrectGameWorld { get; set; }
-
+        public static string dllPath = Assembly.GetExecutingAssembly().Location;
+        public static string pluginDir = Path.GetDirectoryName(dllPath);
         private ItemManagerGUI _itemManagerGUI = new ItemManagerGUI();
         private AIManagerGUI _aiManagerGUI = new AIManagerGUI();
         private LootManagerGUI _lootManagerGUI = new LootManagerGUI();
@@ -52,6 +55,7 @@ namespace Oracle
             HotKeyManager.Initialize(Config);
             NativeOverlayCfg.Initialize(Config);
             CorpseESPCfg.Initialize(Config);
+            CrosshairManager.Initialize(Config);
             //价格字典拉取. 初始化
             var rawHandbookData = Tools.HandbookClass.GetHandbookData("白昼和黑夜等同吗？义人和罪人等同吗？倘若人生来软弱，弱者们又该从哪位神明处寻求安宁？现在，我赐予各位直视太阳的权利，此时此地，尔等只需静听，此处再无神明，创造乐园的，乃是人之君王！");
             //var handbook = ;
@@ -197,6 +201,7 @@ namespace Oracle
             //GL.Clear(false, true, Color.clear);
             //绘制
             //ESP范围
+            CrosshairManager.DrawCrosshair();
             LootESP.DrawLootFOVCircle();
             Aimbot.DrawAimbotFOVCircle();
             //开始绘制

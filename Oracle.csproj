@@ -3,7 +3,7 @@
   <PropertyGroup>
     <TargetFramework>netstandard2.1</TargetFramework>
     <Nullable>enable</Nullable>
-	  <OutDir>I:\TKF\BepInEx\plugins</OutDir>
+	  <OutDir>I:\TKF\BepInEx\plugins\Oracle</OutDir>
 	  <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
 	  <AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>
   </PropertyGroup>
@@ -60,5 +60,11 @@
 	    <Private>False</Private>
 	  </Reference>
   </ItemGroup>
+
+	<ItemGroup>
+		<None Include="crosshairs\*.png">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</None>
+	</ItemGroup>
 
 </Project>

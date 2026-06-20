@@ -52,7 +52,7 @@ namespace Oracle.ESP
                     CachedCorpseList.Clear();
                     continue;
                 }
-                Console.WriteLine(CachedCorpseList.Count);
+                //Console.WriteLine(CachedCorpseList.Count);
                 List<CorpseData> tempCorpseList = new List<CorpseData>();
                 Vector3 myPos = PluginsCore.CorrectPlayer.Transform.position;
                 float maxDistance = CorpseESPCfg.CorpseESPMaxDistance.Value;
