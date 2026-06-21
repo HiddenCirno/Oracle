@@ -28,13 +28,6 @@ namespace Oracle
         public static GameWorld CorrectGameWorld { get; set; }
         public static string dllPath = Assembly.GetExecutingAssembly().Location;
         public static string pluginDir = Path.GetDirectoryName(dllPath);
-        private ItemManagerGUI _itemManagerGUI = new ItemManagerGUI();
-        private AIManagerGUI _aiManagerGUI = new AIManagerGUI();
-        private LootManagerGUI _lootManagerGUI = new LootManagerGUI();
-        private BotGeneratorGUI _botGeneratorGUI = new BotGeneratorGUI();
-        //绘制样式缓存
-        public GUIStyle espTextStyle;
-        public Material espMaterial;
         //价格字典定义
         public static Dictionary<string, int> HandbookDict;
         //透明图材质和图像流缓存
@@ -43,7 +36,7 @@ namespace Oracle
         //帧率限制
         private float espRefreshRate = 1f / 50f;
         private float lastEspDrawTime = 0f;
-        private bool isOverlayInitialized = false;
+        private static bool isOverlayInitialized = false;
         public void Awake()
         {
             var harmony = new Harmony(PluginsInfo.GUID);
@@ -60,20 +53,6 @@ namespace Oracle
         }
         public void Start()
         {
-            //初始化线条样式
-            espMaterial = new Material(Shader.Find("Hidden/Internal-Colored"));
-            espMaterial.hideFlags = HideFlags.HideAndDontSave;
-            espMaterial.SetInt("_SrcBlend", (int)UnityEngine.Rendering.BlendMode.SrcAlpha);
-            espMaterial.SetInt("_DstBlend", (int)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
-            espMaterial.SetInt("_Cull", (int)UnityEngine.Rendering.CullMode.Off);
-            espMaterial.SetInt("_ZWrite", 0);
-            espMaterial.SetInt("_ZTest", (int)UnityEngine.Rendering.CompareFunction.Always);
-            //初始化文本样式
-            espTextStyle = new GUIStyle();
-            espTextStyle.fontSize = 12;
-            espTextStyle.fontStyle = FontStyle.Bold;
-            espTextStyle.alignment = TextAnchor.MiddleCenter;
-            espTextStyle.richText = true;
             //拦截
             espRT = new RenderTexture(Screen.width, Screen.height, 0, RenderTextureFormat.ARGB32);
             espRT.Create();
@@ -88,15 +67,22 @@ namespace Oracle
             //尸体扫描协程
             StartCoroutine(CorpseESP.CorpseScannerCoroutine());
             InitializeKeyUpdate();
-            InitializeManagerGUI();
+            InitializeEventSubscribe();
+            RenderUtils.Initialize();
         }
         public void Update()
         {
-            OracleEvent.OnKeyUpdate?.Invoke();
+            OracleEvent.Update();
             //快捷键监听
             HotKeyManager.KeyUpdate();
             //窗口失焦自动隐藏
             //bool shouldShow = Application.isFocused && HotKeyManager.UniGUI.Value;
+            UpdateNativeOverlay();
+
+            //NativeOverlay.SetVisible(shouldShow);
+        }
+        public static void UpdateNativeOverlay()
+        {
             // 1. 获取当前是否【应该启用】叠加层
             // 条件：配置项开启 且 游戏窗口处于聚焦状态
             // 2. 状态机：根据配置动态创建或摧毁
@@ -123,8 +109,6 @@ namespace Oracle
                     isOverlayInitialized = false;
                 }
             }
-
-            //NativeOverlay.SetVisible(shouldShow);
         }
         //文本绘制
         //然后是遮挡检测射线检测和配置拆分
@@ -147,14 +131,16 @@ namespace Oracle
         {
             //全局绘制开关
             if (!HotKeyManager.UniGUI.Value) return;
-            OracleEvent.OnManagerGUIDraw?.Invoke();
+            OracleEvent.DrawManagerGUI();
+            OracleEvent.DrawCrosshair();
             //空指针防御
             if (CorrectGameWorld == null || CorrectPlayer == null || CorrectGameWorld.AllAlivePlayersList == null) return;
             //只在重绘调用
             if (Event.current.type != EventType.Repaint) return;
             if (!NativeOverlayCfg.EnableNativeOverlay.Value)
             {
-                DrawESP();
+                OracleEvent.Draw();
+                //DrawESP();
                 return;
             }
             //空指针防御
@@ -172,51 +158,13 @@ namespace Oracle
             GL.Clear(false, true, Color.clear);
             //绘制
             //开始绘制
-            DrawESP();
+            OracleEvent.Draw();
+            //DrawESP();
             //窗口焦点归位
             RenderTexture.active = prevRT;
             //将图像流异步传输给窗口
             UnityEngine.Rendering.AsyncGPUReadback.Request(espRT, 0, TextureFormat.BGRA32, OnReadbackComplete);
 
-        }
-        private void DrawESP()
-        {
-            Camera cam = Camera.main;
-            if (cam == null) return;
-            // 传统的直接绘制（不切换 RenderTexture，直接画在屏幕上）
-            // 注意：如果是直接 GL 绘制，需要放到 EventType.Repaint 判定后面
-            //if (Event.current.type != EventType.Repaint) return;
-
-            //GL.Clear(false, true, Color.clear);
-            //绘制
-            //ESP范围
-            CrosshairManager.DrawCrosshair();
-            LootESP.DrawLootFOVCircle();
-            Aimbot.DrawAimbotFOVCircle();
-            //开始绘制
-            GL.PushMatrix();
-            //AI说缺了这句, 真的假的?我用着没问题啊?
-            //对你奶奶个腿, 计算方式不一样, AI又骗我
-            //GL.LoadPixelMatrix();
-            espMaterial.SetPass(0);
-            //改为画线模式
-            //不知道这里能不能改, 那就不改了
-            //论屎山是怎么形成的
-            GL.Begin(GL.LINES);
-            GL.Color(Color.green); // 设定火柴人颜色为绿色
-            //玩家透视
-            PlayerESP.DrawPlayerBone(cam);
-            //结束
-            GL.End();
-            GL.PopMatrix();
-            //其他绘制
-            PlayerESP.DrawPlayerText(cam, espTextStyle);
-            PlayerESP.DrawAllPlayerHealthBars(cam);
-            PlayerESP.DrawTripwireESP(cam, espTextStyle, espMaterial);
-            LootESP.DrawLootText(cam, espTextStyle);
-            CorpseESP.DrawCorpseText(cam, espTextStyle);
-            Aimbot.UpdateTarget(cam);
-            Aimbot.DrawTargetLine(cam);
         }
         private void OnReadbackComplete(UnityEngine.Rendering.AsyncGPUReadbackRequest req)
         {
@@ -286,10 +234,10 @@ namespace Oracle
                 }
             }
         }
-        private void InitializeManagerGUI()
+        private void InitializeEventSubscribe()
         {
             // 获取接口的类型
-            Type targetInterface = typeof(IOracleManagerGUI);
+            Type targetInterface = typeof(IOracleEventSubscribe);
 
             // 获取当前运行的 DLL 中的所有类型
             Type[] allTypes = Assembly.GetExecutingAssembly().GetTypes();
@@ -302,7 +250,7 @@ namespace Oracle
                     try
                     {
                         // 实例化它
-                        IOracleManagerGUI configInstance = (IOracleManagerGUI)Activator.CreateInstance(type);
+                        IOracleEventSubscribe configInstance = (IOracleEventSubscribe)Activator.CreateInstance(type);
 
                         // 调用初始化方法
                         configInstance.SubscribeEvent();

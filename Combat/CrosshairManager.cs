@@ -1,5 +1,6 @@
 ﻿using BepInEx;
 using BepInEx.Configuration;
+using Oracle.Data;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -9,70 +10,27 @@ using static Oracle.Data.OracleInterface;
 
 namespace Oracle.ESP
 {
-    public class CrosshairManager : IOracleCfg
+    public class CrosshairManager: IOracleCrosshair
     {
-        public static ConfigEntry<bool> EnableCrosshair;
-        public static ConfigEntry<string> SelectedCrosshair;
 
         private static Texture2D _cachedCrosshairTex;
         private static string _lastLoadedCrosshairName = "";
-        private const string FallbackImageName = "无图片";
+        public const string FallbackImageName = "无图片";
 
         // 准星图片存放目录
-        private static string CrosshairDirectory => Path.Combine(PluginsCore.pluginDir, "crosshairs");
+        public static string CrosshairDirectory => Path.Combine(PluginsCore.pluginDir, "crosshairs");
 
-        /// <summary>
-        /// 初始化配置与文件扫描
-        /// </summary>
-        public void Initialize(ConfigFile config)
+        public void SubscribeEvent()
         {
-            if (!Directory.Exists(CrosshairDirectory))
-            {
-                Directory.CreateDirectory(CrosshairDirectory);
-            }
-
-            // 1. 扫描目录下所有 PNG 图片
-            List<string> availableImages = Directory.GetFiles(CrosshairDirectory, "*.png")
-                                                    .Select(Path.GetFileName)
-                                                    .ToList();
-
-            if (availableImages.Count == 0)
-            {
-                availableImages.Add(FallbackImageName);
-            }
-
-            // 2. 绑定总开关
-            EnableCrosshair = config.Bind(
-                "屏幕准星 / Overlay",
-                "启用自定义准星/覆盖层",
-                true,
-                "在屏幕中心绘制自定义PNG图片"
-            );
-
-            // 3. 绑定下拉菜单
-            SelectedCrosshair = config.Bind(
-                "屏幕准星 / Overlay",
-                "选择图片样式",
-                availableImages[0],
-                new ConfigDescription(
-                    $"选择准星图片 (请将png文件放入 {CrosshairDirectory} 目录下)",
-                    new AcceptableValueList<string>(availableImages.ToArray())
-                )
-            );
-
-            // 4. 监听配置变更，玩家在 F12 菜单切换图片时动态重载
-            SelectedCrosshair.SettingChanged += (sender, args) => LoadCrosshairTexture();
-
-            // 首次初始化加载
-            LoadCrosshairTexture();
+            OracleEvent.OnDrawCrosshair += DrawCrosshair;
         }
 
         /// <summary>
         /// 从本地流读取图片并生成 Texture2D (严禁在 OnGUI 中调用)
         /// </summary>
-        private static void LoadCrosshairTexture()
+        public static void LoadCrosshairTexture()
         {
-            string fileName = SelectedCrosshair.Value;
+            string fileName = CrosshairManagerCfg.SelectedCrosshair.Value;
             if (string.IsNullOrEmpty(fileName) || fileName == FallbackImageName) return;
 
             string fullPath = Path.Combine(CrosshairDirectory, fileName);
@@ -114,7 +72,7 @@ namespace Oracle.ESP
         /// </summary>
         public static void DrawCrosshair()
         {
-            if (!EnableCrosshair.Value || _cachedCrosshairTex == null) return;
+            if (!CrosshairManagerCfg.EnableCrosshair.Value || _cachedCrosshairTex == null) return;
 
             // 获取图片真实的像素宽高
             float texWidth = _cachedCrosshairTex.width;
@@ -127,5 +85,56 @@ namespace Oracle.ESP
             // 绘制
             GUI.DrawTexture(new Rect(x, y, texWidth, texHeight), _cachedCrosshairTex);
         }
+    }
+    public class CrosshairManagerCfg : IOracleCfg
+    {
+        public static ConfigEntry<bool> EnableCrosshair;
+        public static ConfigEntry<string> SelectedCrosshair;
+        /// <summary>
+        /// 初始化配置与文件扫描
+        /// </summary>
+        public void Initialize(ConfigFile config)
+        {
+            if (!Directory.Exists(CrosshairManager.CrosshairDirectory))
+            {
+                Directory.CreateDirectory(CrosshairManager.CrosshairDirectory);
+            }
+
+            // 1. 扫描目录下所有 PNG 图片
+            List<string> availableImages = Directory.GetFiles(CrosshairManager.CrosshairDirectory, "*.png")
+                                                    .Select(Path.GetFileName)
+                                                    .ToList();
+
+            if (availableImages.Count == 0)
+            {
+                availableImages.Add(CrosshairManager.FallbackImageName);
+            }
+
+            // 2. 绑定总开关
+            EnableCrosshair = config.Bind(
+                "屏幕准星 / Overlay",
+                "启用自定义准星/覆盖层",
+                true,
+                "在屏幕中心绘制自定义PNG图片"
+            );
+
+            // 3. 绑定下拉菜单
+            SelectedCrosshair = config.Bind(
+                "屏幕准星 / Overlay",
+                "选择图片样式",
+                availableImages[0],
+                new ConfigDescription(
+                    $"选择准星图片 (请将png文件放入 {CrosshairManager.CrosshairDirectory} 目录下)",
+                    new AcceptableValueList<string>(availableImages.ToArray())
+                )
+            );
+
+            // 4. 监听配置变更，玩家在 F12 菜单切换图片时动态重载
+            SelectedCrosshair.SettingChanged += (sender, args) => CrosshairManager.LoadCrosshairTexture();
+
+            // 首次初始化加载
+            CrosshairManager.LoadCrosshairTexture();
+        }
+
     }
 }

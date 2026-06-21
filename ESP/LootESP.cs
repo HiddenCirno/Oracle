@@ -3,6 +3,7 @@ using EFT;
 using EFT.Hideout;
 using EFT.Interactive;
 using EFT.InventoryLogic;
+using Oracle.Data;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -31,7 +32,7 @@ namespace Oracle.ESP
     /// <summary>
     /// 物资透视部分
     /// </summary>
-    public class LootESP
+    public class LootESP : IOracleESP
     {
         /// <summary>
         /// 约束透视范围
@@ -47,7 +48,20 @@ namespace Oracle.ESP
         /// 唯一的全局容器表
         /// </summary>
         public static LootableContainer[] CachedContainers;
+        public void SubscribeEvent()
+        {
+            OracleEvent.OnDrawESP += OnDrawESP;
+        }
 
+        // ⭐ 2. 独立的绘制入口
+        private void OnDrawESP()
+        {
+            Camera cam = Camera.main;
+            if (cam == null) return;
+
+            DrawLootFOVCircle();
+            DrawLootText(cam, RenderUtils.EspTextStyle); // 统一使用 RenderUtils 的样式
+        }
         public static class PriceColor
         {
             //愿望单物品
@@ -421,63 +435,16 @@ namespace Oracle.ESP
         }
 
         /// <summary>
-        /// 画圆方法
-        /// </summary>
-        /// <param name="center">中心点</param>
-        /// <param name="radius">半径</param>
-        /// <param name="color">颜色</param>
-        /// <param name="segments">圆的精度(分段数)</param>
-        public static void DrawCircle(Vector2 center, float radius, Color color, int segments = 64)
-        {
-            //画圆
-            if (Event.current.type != EventType.Repaint) return;
-            //材质初始化
-            if (!lineMaterial)
-            {
-                lineMaterial = new Material(Shader.Find("Hidden/Internal-Colored"));
-                lineMaterial.hideFlags = HideFlags.HideAndDontSave;
-                lineMaterial.SetInt("_SrcBlend", (int)UnityEngine.Rendering.BlendMode.SrcAlpha);
-                lineMaterial.SetInt("_DstBlend", (int)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
-                lineMaterial.SetInt("_Cull", (int)UnityEngine.Rendering.CullMode.Off);
-                lineMaterial.SetInt("_ZWrite", 0);
-            }
-            //启用材质
-            lineMaterial.SetPass(0);
-            //矩阵绘制(在OnGUI内全局绘制的前面, 此处有End就无问题, 否则会炸掉队列)
-            GL.PushMatrix();
-            GL.LoadPixelMatrix();
-            //绘制
-            GL.Begin(GL.LINES);
-            GL.Color(color);
-            float angleStep = 2f * Mathf.PI / segments;
-            for (int i = 0; i < segments; i++)
-            {
-                float angle1 = i * angleStep;
-                float angle2 = (i + 1) * angleStep;
-
-                float x1 = center.x + Mathf.Cos(angle1) * radius;
-                float y1 = center.y + Mathf.Sin(angle1) * radius;
-                float x2 = center.x + Mathf.Cos(angle2) * radius;
-                float y2 = center.y + Mathf.Sin(angle2) * radius;
-
-                GL.Vertex3(x1, y1, 0);
-                GL.Vertex3(x2, y2, 0);
-            }
-            GL.End();
-            GL.PopMatrix();
-        }
-        /// <summary>
         /// 绘制约束范围
         /// </summary>
         public static void DrawLootFOVCircle()
         {
-            //是否可见
             if (!LootESPCfg.ShowLootESPFov.Value) return;
-            //查找中心和半径
             Vector2 screenCenter = new Vector2(Screen.width / 2f, Screen.height / 2f);
             float fovRadius = LootESPCfg.LootESPFovRange.Value;
-            //绘制
-            DrawCircle(screenCenter, fovRadius, new Color(0.8f, 1f, 1f, 0.4f), 64);
+
+            // ⭐ 3. 直接调用 RenderUtils 里的画圆方法
+            RenderUtils.DrawCircle(screenCenter, fovRadius, new Color(0.8f, 1f, 1f, 0.4f), 64);
         }
     }
     /// <summary>

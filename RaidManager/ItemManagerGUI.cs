@@ -24,8 +24,8 @@ namespace Oracle.RaidManager
         public Dictionary<string, Texture2D> _iconCache = new Dictionary<string, Texture2D>();
         public void SubscribeEvent()
         {
-            OracleEvent.OnManagerGUIDraw += OnGUI;
-            OracleEvent.OnKeyUpdate += Update;
+            OracleEvent.OnDrawManagerGUI += OnGUI;
+            OracleEvent.OnUpdate += Update;
         }
         public void Update()
         {

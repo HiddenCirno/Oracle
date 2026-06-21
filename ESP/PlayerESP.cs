@@ -2,6 +2,7 @@
 using CommonAssets.Scripts.Game.LabyrinthEvent;
 using EFT;
 using EFT.SynchronizableObjects;
+using Oracle.Data;
 using System;
 using System.Collections.Generic;
 using System.Reflection;
@@ -13,7 +14,7 @@ namespace Oracle.ESP
     /// <summary>
     /// 玩家透视部分
     /// </summary>
-    public class PlayerESP
+    public class PlayerESP : IOracleESP
     {
         /// <summary>
         /// 用于缓存绊雷数据的结构体，避免在 OnGUI 中使用反射
@@ -60,7 +61,36 @@ namespace Oracle.ESP
             // 格式化输出方便直接给GUI调用
             public string ToEspString() => $"{LevelText} {SideText} <color=#FFFF00>{Distance}米</color>".Trim();
         }
+        public void SubscribeEvent()
+        {
+            // 订阅统一的渲染频道
+            OracleEvent.OnDrawESP += OnDrawESP;
+        }
+        private void OnDrawESP()
+        {
+            Camera cam = Camera.main;
+            if (cam == null) return;
 
+            // 1. 2D 文本和 UI 直接画
+            PlayerESP.DrawPlayerText(cam, RenderUtils.EspTextStyle);
+            PlayerESP.DrawAllPlayerHealthBars(cam);
+            PlayerESP.DrawTripwireESP(cam, RenderUtils.EspTextStyle, RenderUtils.EspMaterial);
+
+            // 2. 3D 骨骼线段，必须自己包裹 GL 状态！
+            if (Event.current.type == EventType.Repaint)
+            {
+                RenderUtils.EspMaterial.SetPass(0);
+                GL.PushMatrix();
+                // GL.LoadPixelMatrix(); (如果有必要的话)
+                GL.Begin(GL.LINES);
+
+                // 画骨骼
+                PlayerESP.DrawPlayerBone(cam);
+
+                GL.End();
+                GL.PopMatrix();
+            }
+        }
         public static EntityDisplayInfo GetEntityInfo(Player player, bool isTeammate, bool includeName = true)
         {
             var info = player.Profile?.Info;

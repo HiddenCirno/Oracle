@@ -2,6 +2,7 @@
 using EFT;
 using EFT.Ballistics;
 using HarmonyLib;
+using Oracle.Data;
 using Oracle.ESP;
 using Oracle.Utils;
 using UnityEngine;
@@ -12,12 +13,8 @@ namespace Oracle.Combat
     /// <summary>
     /// 自瞄部分
     /// </summary>
-    public class Aimbot
+    public class Aimbot : IOracleAimbot
     {
-        /// <summary>
-        /// 独立的渲染材质, 防止冲突
-        /// </summary>
-        private static Material aimbotMaterial;
 
         private static float targetUpdateRate = 1f / AimbotCfg.AimbotTargetUpdateRate.Value; //加个配置的事
         private static float lastUpdateTime = 0f;
@@ -26,14 +23,42 @@ namespace Oracle.Combat
         /// </summary>
         public static Player LockedTarget { get; private set; }
         /// <summary>
-        /// 绘制自瞄范围
+        /// 绘制约束范围
         /// </summary>
+
         public static void DrawAimbotFOVCircle()
         {
             if (!AimbotCfg.EnableAimbot.Value || !AimbotCfg.DrawAimbotFov.Value) return;
             Vector2 screenCenter = new Vector2(Screen.width / 2f, Screen.height / 2f);
             float fovRadius = AimbotCfg.AimbotFovRadius.Value;
-            DrawCircle(screenCenter, fovRadius, new Color(1f, 0f, 0f, 0.3f), 64);
+            RenderUtils.DrawCircle(screenCenter, fovRadius, new Color(1f, 0f, 0f, 0.3f), 64);
+        }
+        
+        public void SubscribeEvent()
+        {
+            // ⭐ 逻辑更新归 Update 频道
+            OracleEvent.OnUpdate += OnLogicUpdate;
+            // ⭐ 画图归 GUI 频道
+            OracleEvent.OnDrawAimbot += OnDrawGUI;
+        }
+
+        private void OnLogicUpdate()
+        {
+            Camera cam = Camera.main;
+            if (cam != null)
+            {
+                UpdateTarget(cam); // 原来被错误地放在 DrawESP 里的逻辑，移回这里！
+            }
+        }
+
+        private void OnDrawGUI()
+        {
+            Camera cam = Camera.main;
+            if (cam == null) return;
+
+            // 使用统一的 RenderUtils 画图，删掉原来 Aimbot 自己写的那些 material 和画图方法
+            DrawAimbotFOVCircle();
+            DrawTargetLine(cam);
         }
         /// <summary>
         /// 更新瞄准目标
@@ -115,74 +140,9 @@ namespace Oracle.Combat
             Vector2 screenCenter = new Vector2(Screen.width / 2f, Screen.height / 2f);
             Vector3 endPos = new Vector3(screenPos.x, screenPos.y, 0);
             //画线
-            DrawLine(screenCenter, endPos, new Color(1f, 0f, 0f, 0.8f));
+            RenderUtils.DrawLine(screenCenter, endPos, new Color(1f, 0f, 0f, 0.8f));
         }
-        /// <summary>
-        /// 初始化材质球
-        /// </summary>
-        private static void InitMaterial()
-        {
-            if (!aimbotMaterial)
-            {
-                aimbotMaterial = new Material(Shader.Find("Hidden/Internal-Colored"));
-                aimbotMaterial.hideFlags = HideFlags.HideAndDontSave;
-                aimbotMaterial.SetInt("_SrcBlend", (int)UnityEngine.Rendering.BlendMode.SrcAlpha);
-                aimbotMaterial.SetInt("_DstBlend", (int)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
-                aimbotMaterial.SetInt("_Cull", (int)UnityEngine.Rendering.CullMode.Off);
-                aimbotMaterial.SetInt("_ZWrite", 0);
-            }
-        }
-        /// <summary>
-        /// 画圆方法
-        /// </summary>
-        /// <param name="center">中心点</param>
-        /// <param name="radius">半径</param>
-        /// <param name="color">颜色</param>
-        /// <param name="segments">圆的精度(分段数)</param>
-        public static void DrawCircle(Vector2 center, float radius, Color color, int segments)
-        {
-            if (Event.current.type != EventType.Repaint) return;
-            InitMaterial();
-            aimbotMaterial.SetPass(0);
-            GL.PushMatrix();
-            GL.LoadPixelMatrix();
-            GL.Begin(GL.LINES);
-            GL.Color(color);
-            float angleStep = 2f * Mathf.PI / segments;
-            for (int i = 0; i < segments; i++)
-            {
-                float angle1 = i * angleStep;
-                float angle2 = (i + 1) * angleStep;
-                float x1 = center.x + Mathf.Cos(angle1) * radius;
-                float y1 = center.y + Mathf.Sin(angle1) * radius;
-                float x2 = center.x + Mathf.Cos(angle2) * radius;
-                float y2 = center.y + Mathf.Sin(angle2) * radius;
-                GL.Vertex3(x1, y1, 0);
-                GL.Vertex3(x2, y2, 0);
-            }
-            GL.End();
-            GL.PopMatrix();
-        }
-        /// <summary>
-        /// 画线
-        /// </summary>
-        /// <param name="start">起始点</param>
-        /// <param name="end">结束点</param>
-        /// <param name="color">颜色</param>
-        public static void DrawLine(Vector2 start, Vector3 end, Color color)
-        {
-            if (Event.current.type != EventType.Repaint) return;
-            InitMaterial();
-            aimbotMaterial.SetPass(0);
-            GL.PushMatrix();
-            GL.LoadPixelMatrix();
-            GL.Begin(GL.LINES);
-            GL.Color(color);
-            GL.Vertex3(start.x, start.y, 0);
-            GL.Vertex3(end.x, end.y, 0);
-            GL.End();
-            GL.PopMatrix();
-        }
+        
     }
     //后坐力Patch
     [HarmonyPatch(typeof(ShotEffector), nameof(ShotEffector.Process))]

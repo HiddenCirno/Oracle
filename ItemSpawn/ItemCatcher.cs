@@ -31,7 +31,7 @@ namespace Oracle.ItemSpawn
         private static bool _copyKeyLastFrame = false;
         public void RegisterKeyUpdate()
         {
-            OracleEvent.OnKeyUpdate += KeyUpdate;
+            OracleEvent.OnUpdate += KeyUpdate;
         }
         /// <summary>
         /// 快捷键监听

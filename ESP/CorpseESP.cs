@@ -1,6 +1,7 @@
 ﻿using BepInEx.Configuration;
 using EFT;
 using EFT.Interactive;
+using Oracle.Data;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
@@ -22,7 +23,7 @@ namespace Oracle.ESP
     /// <summary>
     /// 独立的尸体透视部分
     /// </summary>
-    public class CorpseESP
+    public class CorpseESP : IOracleESP
     {
         /// <summary>
         /// 唯一的全局尸体缓存表
@@ -38,7 +39,19 @@ namespace Oracle.ESP
             public static readonly Color Scav = new Color(1f, 0.64f, 0f);      // 橙色：死去的Scav
             public static readonly Color Boss = new Color(0.78f, 0f, 0.78f);    // 紫色：死去的Boss/追随者
         }
+        public void SubscribeEvent()
+        {
+            OracleEvent.OnDrawESP += OnDrawESP;
+        }
 
+        // ⭐ 2. 独立的绘制入口
+        private void OnDrawESP()
+        {
+            Camera cam = Camera.main;
+            if (cam == null) return;
+
+            DrawCorpseText(cam, RenderUtils.EspTextStyle);
+        }
         /// <summary>
         /// 独立的尸体扫描协程
         /// </summary>

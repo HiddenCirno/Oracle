@@ -29,8 +29,8 @@ namespace Oracle.RaidManager
 
         public void SubscribeEvent()
         {
-            OracleEvent.OnManagerGUIDraw += OnGUI;
-            OracleEvent.OnKeyUpdate += Update;
+            OracleEvent.OnDrawManagerGUI += OnGUI;
+            OracleEvent.OnUpdate += Update;
         }
 
         public void Update()
