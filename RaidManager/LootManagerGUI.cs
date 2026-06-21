@@ -108,14 +108,14 @@ namespace Oracle.RaidManager
 
             _scrollPos = GUILayout.BeginScrollView(_scrollPos);
 
-            if (LootESP.CachedLootList == null || LootESP.CachedLootList.Count == 0)
+            if (OracleLootManager.CachedLootList == null || OracleLootManager.CachedLootList.Count == 0)
             {
                 GUILayout.Label("当前扫描范围内没有符合价值条件的物资。", UIStyleManager.BoxStyle);
             }
             else
             {
                 // ⭐ 按照价格从高到低排序，防止好东西被淹没在垃圾堆里
-                var sortedLoot = LootESP.CachedLootList
+                var sortedLoot = OracleLootManager.CachedLootList
                     .OrderByDescending(l => l.ItemLevel)
                     .ThenByDescending(l => l.Price)
                     .ToList();
@@ -136,7 +136,7 @@ namespace Oracle.RaidManager
                         // 这里为了 UI 干净，直接调用物品的 Localized 名字，而不是 ESP 里的全尺寸富文本
                         GUILayout.Label($"<b><color=#{ColorUtility.ToHtmlStringRGB(loot.ItemColor)}>{loot.ItemRef.Name.Localized()}</color></b>");
                         GUILayout.Label($"<color=grey>价值: {loot.Price} 卢布 | 距离: {loot.Distance}米</color>");
-                        GUILayout.Label($"<color=grey>{LootESP.GetContainerName(loot.Container)}</color>");
+                        GUILayout.Label($"<color=grey>{OracleLootManager.GetContainerName(loot.Container)} 数量: {loot.StackCount}</color>");
                         GUILayout.EndVertical();
 
                         // 3. 操作按钮 (宽度稍微加宽一点适应文字)

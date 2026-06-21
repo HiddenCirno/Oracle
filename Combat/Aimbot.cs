@@ -100,9 +100,9 @@ namespace Oracle.Combat
                 string targetGroupId = player.Profile?.Info?.GroupId ?? "";
                 if (!string.IsNullOrEmpty(PluginsCore.CorrectGroupId) && targetGroupId == PluginsCore.CorrectGroupId) continue;
                 //距离过滤
-                if (!PlayerESP.IsInRange(maxDist, myPos, player.Transform.position)) continue;
+                if (!OraclePlayerManager.IsInRange(maxDist, myPos, player.Transform.position)) continue;
                 //找头
-                Vector3? headPos = AimbotCfg.AimbotPartSetting.Value == "头部" ? PlayerESP.GetBonePos(player.PlayerBones.Head) : PlayerESP.GetBonePos(player.PlayerBones.Spine3);
+                Vector3? headPos = AimbotCfg.AimbotPartSetting.Value == "头部" ? OraclePlayerManager.GetBonePos(player.PlayerBones.Head) : OraclePlayerManager.GetBonePos(player.PlayerBones.Spine3);
                 if (!headPos.HasValue) continue;
                 //深度过滤
                 Vector3 screenPos = cam.WorldToScreenPoint(headPos.Value);
@@ -116,7 +116,7 @@ namespace Oracle.Combat
                 if (distToCenter < minDistance)
                 {
                     //可视化判断
-                    if (PlayerESP.IsPlayerVisible(cam.transform.position, player, PlayerESP.HighPolyWithTerrainMask))
+                    if (OraclePlayerManager.IsPlayerVisible(cam.transform.position, player, OraclePlayerManager.HighPolyWithTerrainMask))
                     {
                         minDistance = distToCenter;
                         bestTarget = player;
@@ -135,7 +135,7 @@ namespace Oracle.Combat
             //依旧功能开关+防御
             if (!AimbotCfg.EnableAimbot.Value || !AimbotCfg.DrawTargetLine.Value || LockedTarget == null || LockedTarget.PlayerBones == null) return;
             //找头
-            Vector3? headPos = AimbotCfg.AimbotPartSetting.Value == "头部" ? PlayerESP.GetBonePos(LockedTarget.PlayerBones.Head) : PlayerESP.GetBonePos(LockedTarget.PlayerBones.Spine3);
+            Vector3? headPos = AimbotCfg.AimbotPartSetting.Value == "头部" ? OraclePlayerManager.GetBonePos(LockedTarget.PlayerBones.Head) : OraclePlayerManager.GetBonePos(LockedTarget.PlayerBones.Spine3);
             if (!headPos.HasValue) return;
             //3d转2d
             Vector3 screenPos = cam.WorldToScreenPoint(headPos.Value);
@@ -183,7 +183,7 @@ namespace Oracle.Combat
             if (player != PluginsCore.CorrectPlayer.ProfileId)
                 return;
             //找头
-            Vector3? targetPos = AimbotCfg.AimbotPartSetting.Value == "头部" ? PlayerESP.GetBonePos(Aimbot.LockedTarget.PlayerBones.Head) : PlayerESP.GetBonePos(Aimbot.LockedTarget.PlayerBones.Spine3);
+            Vector3? targetPos = AimbotCfg.AimbotPartSetting.Value == "头部" ? OraclePlayerManager.GetBonePos(Aimbot.LockedTarget.PlayerBones.Head) : OraclePlayerManager.GetBonePos(Aimbot.LockedTarget.PlayerBones.Spine3);
             //空值, 返回
             if (targetPos == null)
                 return;

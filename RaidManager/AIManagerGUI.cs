@@ -116,7 +116,7 @@ namespace Oracle.RaidManager
                     aliveCount++;
 
                     // --- 调用新的重构逻辑 ---
-                    var entityInfo = PlayerESP.GetEntityInfo(player, isTeammate, false);
+                    var entityInfo = OraclePlayerManager.GetEntityInfo(player, isTeammate, false);
 
                     // --- 绘制 ---
                     GUILayout.BeginHorizontal(UIStyleManager.BoxStyle);

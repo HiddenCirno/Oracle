@@ -61,9 +61,9 @@ namespace Oracle
             //启动覆盖层
             NativeOverlay.Initialize(Screen.width, Screen.height);
             //战利品扫描协程
-            StartCoroutine(LootESP.LootScannerCoroutine());
+            StartCoroutine(OracleLootManager.LootScannerCoroutine());
             //绊雷扫描协程
-            StartCoroutine(PlayerESP.TripwireScannerCoroutine());
+            StartCoroutine(OracleTripwireManager.TripwireScannerCoroutine());
             //尸体扫描协程
             StartCoroutine(CorpseESP.CorpseScannerCoroutine());
             InitializeKeyUpdate();
@@ -278,7 +278,7 @@ namespace Oracle
             //挂载脚本
             __instance.MainPlayer.gameObject.AddComponent<PlayerStatusEditComponent>();
             //缓存容器
-            LootESP.CachedContainers = UnityEngine.Object.FindObjectsOfType<EFT.Interactive.LootableContainer>();
+            OracleLootManager.CachedContainers = UnityEngine.Object.FindObjectsOfType<EFT.Interactive.LootableContainer>();
         }
     }
 }
