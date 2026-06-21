@@ -3,6 +3,7 @@ using EFT;
 using EFT.Game.Spawning;
 using EFT.UI;
 using HarmonyLib;
+using Oracle.Data;
 using Oracle.Utils; // 你的 HotKeyManager 等工具类所在命名空间
 using System;
 using System.Collections.Generic;
@@ -10,10 +11,11 @@ using System.Reflection;
 using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.Assertions.Must;
+using static Oracle.Data.OracleInterface;
 
 namespace Oracle.RaidManager
 {
-    public class BotGeneratorGUI
+    public class BotGeneratorGUI : IOracleManagerGUI
     {
         // UI 状态
         public static bool _isMenuOpen = false;
@@ -32,9 +34,14 @@ namespace Oracle.RaidManager
 
         // 防止狂点按钮导致游戏崩溃
         private bool _isSpawning = false;
-
+        public void SubscribeEvent()
+        {
+            OracleEvent.OnManagerGUIDraw += OnGUI;
+            OracleEvent.OnKeyUpdate += Update;
+        }
         public void Update()
         {
+            if (PluginsCore.CorrectGameWorld == null || PluginsCore.CorrectPlayer == null || PluginsCore.CorrectGameWorld.AllAlivePlayersList == null) return;
             // 假设你在 HotKeyManager 里配了一个 BotGeneratorKey，这里暂且用 F7 演示
             if (Input.GetKeyDown(KeyCode.F7)) // 或者 HotKeyManager.BotGeneratorKey.Value
             {
@@ -85,11 +92,6 @@ namespace Oracle.RaidManager
             GUILayout.BeginHorizontal();
             GUILayout.Label("<b>生成数量 (1-20):</b>", GUILayout.Width(110));
             _spawnAmountStr = GUILayout.TextField(_spawnAmountStr, UIStyleManager.TextFieldStyle, GUILayout.Width(80));
-
-            GUILayout.Space(20);
-
-            // 禁用 AI 大脑开关
-            _disableBrain = GUILayout.Toggle(_disableBrain, " <b>禁用 AI 大脑 (原地挂机当靶子)</b>");
             GUILayout.EndHorizontal();
 
             GUILayout.EndVertical();
@@ -209,7 +211,7 @@ namespace Oracle.RaidManager
                 spawner
             );
             var profile = data._profileData as BotProfileDataClass;
-            if(profile == null)
+            if (profile == null)
             {
                 Console.WriteLine(123);
             }

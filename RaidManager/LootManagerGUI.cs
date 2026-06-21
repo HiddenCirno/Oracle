@@ -8,6 +8,7 @@ using EFT.UI;
 using EFT.UI.DragAndDrop;
 using GPUInstancer;
 using HarmonyLib;
+using Oracle.Data;
 using Oracle.ESP;
 using Oracle.ItemSpawn;
 using Oracle.Utils;
@@ -19,11 +20,12 @@ using System.Runtime.Serialization;
 using UnityEngine;
 using static GetActionsClass;
 using static MoveOperationClass;
+using static Oracle.Data.OracleInterface;
 using static RootMotion.FinalIK.InteractionTrigger.Range;
 
 namespace Oracle.RaidManager
 {
-    public class LootManagerGUI
+    public class LootManagerGUI : IOracleManagerGUI
     {
         public static bool _isMenuOpen = false;
         public Rect _windowRect = new Rect(480, 20, 500, 600); // 默认位置
@@ -34,7 +36,7 @@ namespace Oracle.RaidManager
         public Dictionary<string, Texture2D> _iconCache = new Dictionary<string, Texture2D>();
 
 
-        
+
         [HarmonyPatch(typeof(InteractionsHandlerClass), "smethod_14")]
         public class InteractionsHandlerClassPatch
         {
@@ -51,15 +53,20 @@ namespace Oracle.RaidManager
             }
         }
 
-
+        public void SubscribeEvent()
+        {
+            OracleEvent.OnManagerGUIDraw += OnGUI;
+            OracleEvent.OnKeyUpdate += Update;
+        }
         public void Update()
         {
+            if (PluginsCore.CorrectGameWorld == null || PluginsCore.CorrectPlayer == null || PluginsCore.CorrectGameWorld.AllAlivePlayersList == null) return;
             // 使用 F8 呼出战利品面板
             if (Input.GetKeyDown(HotKeyManager.LootManagerKey.Value))
             {
                 _isMenuOpen = !_isMenuOpen;
                 // 借用你写在 ItemManagerGUI 里的 ToggleCursor 逻辑（或者你可以把它提到 HotKeyManager 里公用）
-                MouseManager.ToggleCursor(); 
+                MouseManager.ToggleCursor();
             }
         }
 
@@ -115,7 +122,7 @@ namespace Oracle.RaidManager
                 foreach (LootData loot in sortedLoot)
                 {
                     //if (loot.LootableItem == null) continue; //哎, 白写
-                    if((ShowStaticLoot && loot.Container != null) || (ShowLooseLoot && loot.Container == null))
+                    if ((ShowStaticLoot && loot.Container != null) || (ShowLooseLoot && loot.Container == null))
                     {
                         GUILayout.BeginHorizontal(UIStyleManager.BoxStyle);
                         // 1. 物品图标
@@ -253,7 +260,7 @@ namespace Oracle.RaidManager
         {
             if (player == null) return;
 
-            if (loot.LootableItem!=null)
+            if (loot.LootableItem != null)
             {
                 // LooseLoot，直接走你已经调好的逻辑
                 PickupLootItem(player, loot.LootableItem);

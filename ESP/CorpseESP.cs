@@ -4,6 +4,7 @@ using EFT.Interactive;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using static Oracle.Data.OracleInterface;
 
 namespace Oracle.ESP
 {
@@ -43,26 +44,35 @@ namespace Oracle.ESP
         /// </summary>
         public static System.Collections.IEnumerator CorpseScannerCoroutine()
         {
+            // ⭐ 双缓冲预分配，给 200 的容量对于尸体来说已经管够了
+            List<CorpseData> frontBuffer = new List<CorpseData>(200);
+            List<CorpseData> backBuffer = new List<CorpseData>(200);
+            CachedCorpseList = frontBuffer;
+
             while (true)
             {
                 yield return new WaitForSeconds(2f);
 
                 if (PluginsCore.CorrectGameWorld == null || PluginsCore.CorrectPlayer == null || PluginsCore.CorrectGameWorld.LootItems == null)
                 {
-                    CachedCorpseList.Clear();
+                    backBuffer.Clear();
+                    var tmp = frontBuffer;
+                    frontBuffer = backBuffer;
+                    backBuffer = tmp;
+                    CachedCorpseList = frontBuffer;
                     continue;
                 }
-                //Console.WriteLine(CachedCorpseList.Count);
-                List<CorpseData> tempCorpseList = new List<CorpseData>();
+
+                // ⭐ 极速清空后台缓冲区
+                backBuffer.Clear();
+
                 Vector3 myPos = PluginsCore.CorrectPlayer.Transform.position;
                 float maxDistance = CorpseESPCfg.CorpseESPMaxDistance.Value;
 
-                // ⭐ 回归你的最初思路：遍历地上的战利品
                 foreach (var lootItem in PluginsCore.CorrectGameWorld.LootItems.GetValuesEnumerator())
                 {
                     if (lootItem == null || !lootItem.gameObject.activeSelf) continue;
 
-                    // ⭐ 终极杀招：直接判断这个 LootItem 在底层是不是一个 Corpse (尸体)
                     if (lootItem is Corpse corpse)
                     {
                         Vector3 corpsePos;
@@ -97,7 +107,7 @@ namespace Oracle.ESP
                             {
                                 nickName = deadPlayer.Profile.Nickname;
 
-                                // Boss 判定 (只有通过真实 Player 数据才能判断是不是 Boss)
+                                // Boss 判定
                                 if (deadPlayer.Profile.Info?.Settings?.Role != WildSpawnType.assault && deadPlayer.Profile.Side == EPlayerSide.Savage)
                                 {
                                     textColor = CorpseColor.Boss;
@@ -106,8 +116,7 @@ namespace Oracle.ESP
                             }
                         }
 
-                        // 分配基础阵营名称和颜色 (即使查不到真名，也能通过尸体自带的 Side 判断是啥阵营)
-                        if (roleTag != "BOSS") // 没被鉴定为Boss的话，走常规阵营判定
+                        if (roleTag != "BOSS")
                         {
                             if (corpseSide == EPlayerSide.Usec)
                             {
@@ -124,7 +133,8 @@ namespace Oracle.ESP
                         string hexColor = ColorUtility.ToHtmlStringRGB(textColor);
                         string formattedText = $"<color=#{hexColor}>[{roleTag}] {nickName}</color> <color=#FFFF00>{dist}米</color>";
 
-                        tempCorpseList.Add(new CorpseData
+                        // ⭐ 写入后台缓冲区
+                        backBuffer.Add(new CorpseData
                         {
                             PlayerRef = null,
                             Position = corpsePos,
@@ -134,8 +144,11 @@ namespace Oracle.ESP
                     }
                 }
 
-                // 原子级刷新
-                CachedCorpseList = tempCorpseList;
+                // ⭐ 瞬间交换指针
+                var temp = frontBuffer;
+                frontBuffer = backBuffer;
+                backBuffer = temp;
+                CachedCorpseList = frontBuffer;
             }
         }
 
@@ -174,12 +187,12 @@ namespace Oracle.ESP
     /// <summary>
     /// 尸体透视配置项
     /// </summary>
-    public class CorpseESPCfg
+    public class CorpseESPCfg : IOracleCfg
     {
         internal static ConfigEntry<bool> EnableCorpseESP { get; set; }
         internal static ConfigEntry<int> CorpseESPMaxDistance { get; set; }
 
-        public static void Initialize(ConfigFile config)
+        public void Initialize(ConfigFile config)
         {
             EnableCorpseESP = config.Bind<bool>(
                 "尸体透视",

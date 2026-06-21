@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using UnityEngine;
+using static Oracle.Data.OracleInterface;
 
 namespace Oracle.ESP
 {
@@ -243,11 +244,21 @@ namespace Oracle.ESP
         /// <returns></returns>
         public static System.Collections.IEnumerator LootScannerCoroutine()
         {
+            // ⭐ 1. 预分配内存空间（双缓冲技术与字典池）
+            // 假设一局游戏最多 1500 个物资，预分配足够大的容量，避免中途扩容产生 GC
+            List<LootData> frontBuffer = new List<LootData>(10000);
+            List<LootData> backBuffer = new List<LootData>(10000);
+            Dictionary<Vector3, int> positionOffsets = new Dictionary<Vector3, int>(2000);
+
+            // 初始指针分配
+            CachedLootList = frontBuffer;
+
             while (true)
             {
-                //等待1秒
+                // 等待1秒
                 yield return new WaitForSeconds(1f);
-                //空值检查和缓存清理
+
+                // 空值检查和缓存清理
                 if (PluginsCore.CorrectGameWorld == null || PluginsCore.CorrectPlayer == null)
                 {
                     if (CachedContainers != null)
@@ -256,56 +267,67 @@ namespace Oracle.ESP
                     }
                     continue;
                 }
-                //两个分开, 因为可能存在LootItem为空的情况, 此时无法清理缓存
-                if (PluginsCore.CorrectGameWorld == null || PluginsCore.CorrectPlayer == null || PluginsCore.CorrectGameWorld.LootItems == null)
+
+                if (PluginsCore.CorrectGameWorld.LootItems == null)
                 {
                     continue;
                 }
-                //存储扫描结果
-                List<LootData> tempLootList = new List<LootData>();
-                //读取玩家坐标
+
+                // ⭐ 2. 极速清空后台缓冲区和字典（不产生任何 GC 垃圾！）
+                backBuffer.Clear();
+                positionOffsets.Clear();
+
+                // 读取玩家坐标
                 Vector3 playerPos = PluginsCore.CorrectPlayer.Transform.position;
-                //配置最大透视距离
                 float maxLootDistance = LootESPCfg.LootESPMaxDistance.Value;
-                Dictionary<Vector3, int> positionOffsets = new Dictionary<Vector3, int>();
-                //遍历战利品
+
+                // 遍历战利品
                 foreach (var lootItem in PluginsCore.CorrectGameWorld.LootItems.GetValuesEnumerator())
                 {
                     if (lootItem == null || lootItem.Item == null || lootItem.gameObject == null) continue;
                     if (!lootItem.gameObject.activeSelf) continue;
-                    //熟悉的距离过滤
-                    //从PlayerESP调一下单步方法节省开销
-                    //他妈的节省不了一点, 我忘记dist有用了草
-                    //if (PlayerESP.IsInRange((int)maxLootDistance, playerPos, lootItem.transform.position)) continue;
-                    //其实可以, AI牛逼
+
                     if (!PlayerESP.IsInRange((int)maxLootDistance, playerPos, lootItem.transform.position)) continue;
+
                     float dist = Vector3.Distance(playerPos, lootItem.transform.position);
-                    TryAddLootData(tempLootList, positionOffsets, lootItem.Item, lootItem, null, LootESPCfg.ShowItemFullName.Value ? lootItem.Item.Name.Localized() : lootItem.Item.ShortName.Localized(), lootItem.transform.position, (int)dist);
-                    //TryAddLootData(tempLootList, lootItem.Item.TemplateId, lootItem.Item.ShortName.Localized(), lootItem.transform.position, (int)dist);
+
+                    // ⭐ 3. 写入后台缓冲区 backBuffer
+                    TryAddLootData(backBuffer, positionOffsets, lootItem.Item, lootItem, null,
+                        LootESPCfg.ShowItemFullName.Value ? lootItem.Item.Name.Localized() : lootItem.Item.ShortName.Localized(),
+                        lootItem.transform.position, (int)dist);
                 }
-                //容器透视
-                //防御检查
+
+                // 容器透视
                 if (CachedContainers != null)
                 {
                     foreach (var container in CachedContainers)
                     {
-                        //过滤容器本身
                         if (container?.ItemOwner?.RootItem == null) continue;
-                        //距离过滤
                         if (!PlayerESP.IsInRange((int)maxLootDistance, playerPos, container.transform.position)) continue;
+
                         int dist = Mathf.RoundToInt(Vector3.Distance(playerPos, container.transform.position));
-                        //容器名字读取
                         string containerName = GetContainerName(container);
-                        //加入缓存
+
                         foreach (var item in container.ItemOwner.RootItem.GetAllItems())
                         {
                             if (item == container.ItemOwner.RootItem) continue;
-                            TryAddLootData(tempLootList, positionOffsets, item, null, container, LootESPCfg.ShowItemFullName.Value ? item.Name.Localized() : item.ShortName.Localized(), container.transform.position, dist, $"[{containerName}]");
+
+                            // ⭐ 写入后台缓冲区 backBuffer
+                            TryAddLootData(backBuffer, positionOffsets, item, null, container,
+                                LootESPCfg.ShowItemFullName.Value ? item.Name.Localized() : item.ShortName.Localized(),
+                                container.transform.position, dist, $"[{containerName}]");
                         }
                     }
                 }
-                //刷新缓存列表
-                CachedLootList = tempLootList;
+
+                // ⭐ 4. 指针交换 (Swap)
+                // 瞬间完成，OnGUI 会在下一帧无缝读取新的 frontBuffer
+                var temp = frontBuffer;
+                frontBuffer = backBuffer;
+                backBuffer = temp;
+
+                // 刷新公共读取源
+                CachedLootList = frontBuffer;
             }
         }
 
@@ -461,7 +483,7 @@ namespace Oracle.ESP
     /// <summary>
     /// 配置项定义
     /// </summary>
-    public class LootESPCfg
+    public class LootESPCfg : IOracleCfg
     {
         internal static ConfigEntry<bool> EnableContainerLootESP { get; set; }
         internal static ConfigEntry<bool> EnableLooseLootESP { get; set; }
@@ -478,7 +500,7 @@ namespace Oracle.ESP
         /// 配置项初始化
         /// </summary>
         /// <param name="config">传入配置实例</param>
-        public static void Initialize(ConfigFile config)
+        public void Initialize(ConfigFile config)
         {
             EnableLooseLootESP = config.Bind<bool>(
                 "物资透视",

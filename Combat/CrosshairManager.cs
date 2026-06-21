@@ -5,10 +5,11 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using UnityEngine;
+using static Oracle.Data.OracleInterface;
 
 namespace Oracle.ESP
 {
-    public static class CrosshairManager
+    public class CrosshairManager : IOracleCfg
     {
         public static ConfigEntry<bool> EnableCrosshair;
         public static ConfigEntry<string> SelectedCrosshair;
@@ -23,7 +24,7 @@ namespace Oracle.ESP
         /// <summary>
         /// 初始化配置与文件扫描
         /// </summary>
-        public static void Initialize(ConfigFile config)
+        public void Initialize(ConfigFile config)
         {
             if (!Directory.Exists(CrosshairDirectory))
             {

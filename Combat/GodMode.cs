@@ -2,6 +2,7 @@
 using EFT;
 using EFT.HealthSystem;
 using HarmonyLib;
+using static Oracle.Data.OracleInterface;
 
 namespace Oracle.Combat
 {
@@ -73,13 +74,13 @@ namespace Oracle.Combat
             }
         }
     }
-    public class GodModeCfg
+    public class GodModeCfg : IOracleCfg
     {
         public static ConfigEntry<bool> Invincible { get; set; }
         public static ConfigEntry<bool> HealthLock { get; set; }
         public static ConfigEntry<bool> Undying { get; set; }
 
-        public static void Initialize(ConfigFile config)
+        public void Initialize(ConfigFile config)
         {
             Invincible = config.Bind("上帝模式", "1. 无敌模式", false, "开启后完全不受伤害，免疫一切负面状态（优先级最高）。");
             HealthLock = config.Bind("上帝模式", "2. 锁血模式", false, "开启后正常受击（可练受击技能），但瞬间回满血，且不会死亡。");

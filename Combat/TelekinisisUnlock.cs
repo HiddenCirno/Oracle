@@ -6,6 +6,7 @@ using HarmonyLib;
 using System;
 using System.Linq;
 using UnityEngine;
+using static Oracle.Data.OracleInterface;
 
 namespace Oracle.Combat
 {
@@ -98,10 +99,10 @@ namespace Oracle.Combat
             }
         }
     }
-    public class TelekinisisUnlockCfg
+    public class TelekinisisUnlockCfg : IOracleCfg
     {
         public static ConfigEntry<bool> EnableTelekinisisUnlock { get; set; }
-        public static void Initialize(ConfigFile config)
+        public void Initialize(ConfigFile config)
         {
             EnableTelekinisisUnlock = config.Bind("念力解锁", "启用念力解锁", false, "开启后可以无条件解锁任意上锁物体");
         }

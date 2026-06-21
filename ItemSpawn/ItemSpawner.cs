@@ -10,6 +10,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using UnityEngine;
+using static Oracle.Data.OracleInterface;
 
 namespace Oracle.ItemSpawn
 {
@@ -290,7 +291,7 @@ namespace Oracle.ItemSpawn
     /// <summary>
     /// 配置项定义
     /// </summary>
-    public static class ItemSpawnerCfg
+    public class ItemSpawnerCfg : IOracleCfg
     {
         internal static ConfigEntry<string> TargetItemId { get; set; }
 
@@ -298,7 +299,7 @@ namespace Oracle.ItemSpawn
         /// 配置项初始化
         /// </summary>
         /// <param name="config">传入配置实例</param>
-        public static void Initialize(ConfigFile config)
+        public void Initialize(ConfigFile config)
         {
             TargetItemId = config.Bind(
                 "虚空造物",

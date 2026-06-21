@@ -1,6 +1,7 @@
 ﻿using BepInEx.Configuration;
 using System;
 using System.Runtime.InteropServices;
+using static Oracle.Data.OracleInterface;
 
 namespace Oracle.Utils
 {
@@ -142,7 +143,7 @@ namespace Oracle.Utils
     /// <summary>
     /// 配置项定义
     /// </summary>
-    public class NativeOverlayCfg
+    public class NativeOverlayCfg : IOracleCfg
     {
 
         internal static ConfigEntry<bool> EnableNativeOverlay { get; set; }
@@ -151,7 +152,7 @@ namespace Oracle.Utils
         /// 配置项初始化
         /// </summary>
         /// <param name="config">传入配置实例</param>
-        public static void Initialize(ConfigFile config)
+        public void Initialize(ConfigFile config)
         {
             EnableNativeOverlay = config.Bind(
                 "绘制设置",

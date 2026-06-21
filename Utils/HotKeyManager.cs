@@ -4,13 +4,14 @@ using Oracle.Combat;
 using Oracle.ESP;
 using Oracle.ItemSpawn;
 using UnityEngine;
+using static Oracle.Data.OracleInterface;
 
 namespace Oracle.Utils
 {
     /// <summary>
     /// 快捷键管理器和全局配置定义
     /// </summary>
-    internal class HotKeyManager
+    internal class HotKeyManager : IOracleCfg
     {
         //配置定义
         internal static ConfigEntry<KeyCode> PlayerESPKey { get; set; }
@@ -34,7 +35,7 @@ namespace Oracle.Utils
         /// <summary>
         /// 按键监听, 挂载到Update里
         /// </summary>
-        public static void KeyStatusUpdate()
+        public static void KeyUpdate()
         {
             if (Input.GetKeyDown(PlayerESPKey.Value))
             {
@@ -168,7 +169,7 @@ namespace Oracle.Utils
         /// 配置项初始化
         /// </summary>
         /// <param name="config">传入配置实例</param>
-        public static void Initialize(ConfigFile config)
+        public void Initialize(ConfigFile config)
         {
             PlayerESPKey = config.Bind<KeyCode>(
                 "快捷键设置",

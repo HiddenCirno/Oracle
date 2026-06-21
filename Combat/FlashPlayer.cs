@@ -9,6 +9,7 @@ using Oracle.Tools;
 using System;
 using System.Reflection;
 using UnityEngine;
+using static Oracle.Data.OracleInterface;
 
 namespace Oracle.Combat
 {
@@ -33,7 +34,7 @@ namespace Oracle.Combat
     /// <summary>
     /// 配置项定义
     /// </summary>
-    public class FlashPlayerCfg
+    public class FlashPlayerCfg : IOracleCfg
     {
 
         internal static ConfigEntry<float> FlashDistance { get; set; }
@@ -42,7 +43,7 @@ namespace Oracle.Combat
         /// 配置项初始化
         /// </summary>
         /// <param name="config">传入配置实例</param>
-        public static void Initialize(ConfigFile config)
+        public void Initialize(ConfigFile config)
         {
             FlashDistance = config.Bind(
                 "闪现设置", "闪现距离", 3f,

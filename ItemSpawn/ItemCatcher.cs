@@ -6,18 +6,20 @@ using EFT.InventoryLogic;
 using EFT.UI;
 using EFT.UI.DragAndDrop;
 using HarmonyLib;
+using Oracle.Data;
 using Oracle.Utils;
 using System;
 using System.Collections.Generic;
 using System.Text;
 using UnityEngine;
+using static Oracle.Data.OracleInterface;
 
 namespace Oracle.ItemSpawn
 {
     /// <summary>
     /// 用于捕获物品实例的工具类
     /// </summary>
-    public class ItemCatcher
+    public class ItemCatcher : IOracleKeyUpdate
     {
         //变量缓存区
         //当前指针指向的物品实例
@@ -27,10 +29,14 @@ namespace Oracle.ItemSpawn
         public static Item savedItem = null;
         public static List<Item> SavedItems = new List<Item>();
         private static bool _copyKeyLastFrame = false;
+        public void RegisterKeyUpdate()
+        {
+            OracleEvent.OnKeyUpdate += KeyUpdate;
+        }
         /// <summary>
         /// 快捷键监听
         /// </summary>
-        public static void KeyUpdate()
+        public void KeyUpdate()
         {
             if (selectedItem == null)
                 return;

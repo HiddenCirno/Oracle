@@ -1,18 +1,22 @@
 ﻿using BepInEx;
+using BepInEx.Configuration;
 using EFT;
 using HarmonyLib;
 using Newtonsoft.Json;
 using Oracle.Combat;
+using Oracle.Data;
 using Oracle.ESP;
 using Oracle.ItemSpawn;
 using Oracle.RaidManager;
 using Oracle.Utils;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
 using UnityEngine;
 using static Oracle.Combat.InfinityStaminaAndNoFallenDamage;
+using static Oracle.Data.OracleInterface;
 
 namespace Oracle
 {
@@ -45,22 +49,7 @@ namespace Oracle
             var harmony = new Harmony(PluginsInfo.GUID);
             harmony.PatchAll();
             //配置初始化
-            PlayerESPCfg.Initialize(Config);
-            LootESPCfg.Initialize(Config);
-            AimbotCfg.Initialize(Config);
-            ItemSpawnerCfg.Initialize(Config);
-            PlayerStatusEditCfg.Initialize(Config);
-            InfiniteAmmoCfg.Initialize(Config);
-            GhostModeCfg.Initialize(Config);    
-            HotKeyManager.Initialize(Config);
-            NativeOverlayCfg.Initialize(Config);
-            CorpseESPCfg.Initialize(Config);
-            CrosshairManager.Initialize(Config);
-            NoMalfunctionCfg.Initialize(Config);
-            NoWeaponDurabilityCostCfg.Initialize(Config);
-            FlashPlayerCfg.Initialize(Config);
-            GodModeCfg.Initialize(Config);
-            TelekinisisUnlockCfg.Initialize(Config);
+            InitializeConfigs(Config);
             //价格字典拉取. 初始化
             var rawHandbookData = Tools.HandbookClass.GetHandbookData("白昼和黑夜等同吗？义人和罪人等同吗？倘若人生来软弱，弱者们又该从哪位神明处寻求安宁？现在，我赐予各位直视太阳的权利，此时此地，尔等只需静听，此处再无神明，创造乐园的，乃是人之君王！");
             //var handbook = ;
@@ -98,16 +87,14 @@ namespace Oracle
             StartCoroutine(PlayerESP.TripwireScannerCoroutine());
             //尸体扫描协程
             StartCoroutine(CorpseESP.CorpseScannerCoroutine());
+            InitializeKeyUpdate();
+            InitializeManagerGUI();
         }
         public void Update()
         {
+            OracleEvent.OnKeyUpdate?.Invoke();
             //快捷键监听
-            HotKeyManager.KeyStatusUpdate();
-            ItemCatcher.KeyUpdate();
-            _itemManagerGUI.Update();
-            _aiManagerGUI.Update();
-            _lootManagerGUI.Update();
-            _botGeneratorGUI.Update();
+            HotKeyManager.KeyUpdate();
             //窗口失焦自动隐藏
             //bool shouldShow = Application.isFocused && HotKeyManager.UniGUI.Value;
             // 1. 获取当前是否【应该启用】叠加层
@@ -160,12 +147,9 @@ namespace Oracle
         {
             //全局绘制开关
             if (!HotKeyManager.UniGUI.Value) return;
-            _itemManagerGUI.OnGUI();
+            OracleEvent.OnManagerGUIDraw?.Invoke();
             //空指针防御
             if (CorrectGameWorld == null || CorrectPlayer == null || CorrectGameWorld.AllAlivePlayersList == null) return;
-            _aiManagerGUI.OnGUI();
-            _lootManagerGUI.OnGUI();
-            _botGeneratorGUI.OnGUI();
             //只在重绘调用
             if (Event.current.type != EventType.Repaint) return;
             if (!NativeOverlayCfg.EnableNativeOverlay.Value)
@@ -234,7 +218,6 @@ namespace Oracle
             Aimbot.UpdateTarget(cam);
             Aimbot.DrawTargetLine(cam);
         }
-
         private void OnReadbackComplete(UnityEngine.Rendering.AsyncGPUReadbackRequest req)
         {
             if (req.hasError || pixelBuffer == null) return;
@@ -242,6 +225,96 @@ namespace Oracle
             req.GetData<byte>().CopyTo(pixelBuffer);
             //将图像流传输给窗口
             NativeOverlay.UpdateFrame(pixelBuffer);
+        }
+        private void InitializeConfigs(ConfigFile config)
+        {
+            // 获取接口的类型
+            Type targetInterface = typeof(IOracleCfg);
+
+            // 获取当前运行的 DLL 中的所有类型
+            Type[] allTypes = Assembly.GetExecutingAssembly().GetTypes();
+
+            foreach (Type type in allTypes)
+            {
+                // ⭐ 核心判断：如果这个类型继承了 IOracleConfig，且它本身是个能被实例化的类（不是抽象类或接口本身）
+                if (targetInterface.IsAssignableFrom(type) && !type.IsInterface && !type.IsAbstract)
+                {
+                    try
+                    {
+                        // 实例化它
+                        IOracleCfg configInstance = (IOracleCfg)Activator.CreateInstance(type);
+
+                        // 调用初始化方法
+                        configInstance.Initialize(config);
+
+                        Debug.Log($"[Oracle] 成功自动挂载配置模块: {type.Name}");
+                    }
+                    catch (Exception ex)
+                    {
+                        Debug.LogError($"[Oracle] 自动挂载配置模块 {type.Name} 失败: {ex.Message}");
+                    }
+                }
+            }
+        }
+        private void InitializeKeyUpdate()
+        {
+            // 获取接口的类型
+            Type targetInterface = typeof(IOracleKeyUpdate);
+
+            // 获取当前运行的 DLL 中的所有类型
+            Type[] allTypes = Assembly.GetExecutingAssembly().GetTypes();
+
+            foreach (Type type in allTypes)
+            {
+                // ⭐ 核心判断：如果这个类型继承了 IOracleConfig，且它本身是个能被实例化的类（不是抽象类或接口本身）
+                if (targetInterface.IsAssignableFrom(type) && !type.IsInterface && !type.IsAbstract)
+                {
+                    try
+                    {
+                        // 实例化它
+                        IOracleKeyUpdate configInstance = (IOracleKeyUpdate)Activator.CreateInstance(type);
+
+                        // 调用初始化方法
+                        configInstance.RegisterKeyUpdate();
+
+                        Debug.Log($"[Oracle] 成功自动挂载配置模块: {type.Name}");
+                    }
+                    catch (Exception ex)
+                    {
+                        Debug.LogError($"[Oracle] 自动挂载配置模块 {type.Name} 失败: {ex.Message}");
+                    }
+                }
+            }
+        }
+        private void InitializeManagerGUI()
+        {
+            // 获取接口的类型
+            Type targetInterface = typeof(IOracleManagerGUI);
+
+            // 获取当前运行的 DLL 中的所有类型
+            Type[] allTypes = Assembly.GetExecutingAssembly().GetTypes();
+
+            foreach (Type type in allTypes)
+            {
+                // ⭐ 核心判断：如果这个类型继承了 IOracleConfig，且它本身是个能被实例化的类（不是抽象类或接口本身）
+                if (targetInterface.IsAssignableFrom(type) && !type.IsInterface && !type.IsAbstract)
+                {
+                    try
+                    {
+                        // 实例化它
+                        IOracleManagerGUI configInstance = (IOracleManagerGUI)Activator.CreateInstance(type);
+
+                        // 调用初始化方法
+                        configInstance.SubscribeEvent();
+
+                        Debug.Log($"[Oracle] 成功自动挂载配置模块: {type.Name}");
+                    }
+                    catch (Exception ex)
+                    {
+                        Debug.LogError($"[Oracle] 自动挂载配置模块 {type.Name} 失败: {ex.Message}");
+                    }
+                }
+            }
         }
     }
     //游戏启动Patch, 用于捕获关键实例
@@ -257,7 +330,7 @@ namespace Oracle
             //挂载脚本
             __instance.MainPlayer.gameObject.AddComponent<PlayerStatusEditComponent>();
             //缓存容器
-            LootESP.CachedContainers = Object.FindObjectsOfType<EFT.Interactive.LootableContainer>();
+            LootESP.CachedContainers = UnityEngine.Object.FindObjectsOfType<EFT.Interactive.LootableContainer>();
         }
     }
 }

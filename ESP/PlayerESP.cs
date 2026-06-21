@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Reflection;
 using UnityEngine;
+using static Oracle.Data.OracleInterface;
 
 namespace Oracle.ESP
 {
@@ -135,21 +136,31 @@ namespace Oracle.ESP
             _tripwireStartField = typeof(TripwireProceduralMesh).GetField("vector3_0", BindingFlags.NonPublic | BindingFlags.Instance);
             _tripwireEndField = typeof(TripwireProceduralMesh).GetField("vector3_1", BindingFlags.NonPublic | BindingFlags.Instance);
 
+            // ⭐ 双缓冲预分配
+            List<TripwireData> frontBuffer = new List<TripwireData>(100);
+            List<TripwireData> backBuffer = new List<TripwireData>(100);
+            CachedTripwires = frontBuffer;
+
             while (true)
             {
                 yield return new WaitForSeconds(2f); // 每2秒扫描一次
 
-                if (PluginsCore.CorrectGameWorld == null || PluginsCore.CorrectPlayer == null)
+                if (PluginsCore.CorrectGameWorld == null || PluginsCore.CorrectPlayer == null || !PlayerESPCfg.EnableTripwireESP.Value)
                 {
-                    CachedTripwires.Clear();
+                    // 如果没开启或者不在战局，清空缓存并交换指针，防止上一局的残留画在屏幕上
+                    backBuffer.Clear();
+                    var tmp = frontBuffer;
+                    frontBuffer = backBuffer;
+                    backBuffer = tmp;
+                    CachedTripwires = frontBuffer;
                     continue;
                 }
 
-                if (!PlayerESPCfg.EnableTripwireESP.Value) continue;
+                // ⭐ 极速清空后台缓冲区
+                backBuffer.Clear();
 
-                List<TripwireData> tempTraps = new List<TripwireData>();
-
-                // 直接扫描地图上所有的 TripwireProceduralMesh 组件
+                // ⚠️ 注：FindObjectsOfType 底层会 new 一个数组，这里会产生微量 GC。
+                // 但因为是 2 秒一次，且不是在 OnGUI 里，所以完全可以接受。
                 TripwireProceduralMesh[] tripwires = UnityEngine.Object.FindObjectsOfType<TripwireProceduralMesh>();
 
                 foreach (TripwireProceduralMesh tripwire in tripwires)
@@ -163,11 +174,10 @@ namespace Oracle.ESP
                             // 通过反射提取起点和终点的世界坐标
                             Vector3 start = (Vector3)_tripwireStartField.GetValue(tripwire);
                             Vector3 end = (Vector3)_tripwireEndField.GetValue(tripwire);
-
-                            // 计算中点，用于显示文字标签
                             Vector3 center = (start + end) / 2f;
 
-                            tempTraps.Add(new TripwireData
+                            // ⭐ 写入后台缓冲区
+                            backBuffer.Add(new TripwireData
                             {
                                 StartPos = start,
                                 EndPos = end,
@@ -181,7 +191,11 @@ namespace Oracle.ESP
                     }
                 }
 
-                CachedTripwires = tempTraps;
+                // ⭐ 瞬间交换指针
+                var temp = frontBuffer;
+                frontBuffer = backBuffer;
+                backBuffer = temp;
+                CachedTripwires = frontBuffer;
             }
         }
 
@@ -712,7 +726,7 @@ namespace Oracle.ESP
     /// <summary>
     /// 配置项定义
     /// </summary>
-    public class PlayerESPCfg
+    public class PlayerESPCfg : IOracleCfg
     {
         internal static ConfigEntry<bool> EnablePlayerESP { get; set; }
         internal static ConfigEntry<bool> EnablePlayerInfoESP { get; set; }
@@ -726,7 +740,7 @@ namespace Oracle.ESP
         /// 配置项初始化
         /// </summary>
         /// <param name="config">传入配置实例</param>
-        public static void Initialize(ConfigFile config)
+        public void Initialize(ConfigFile config)
         {
             EnablePlayerESP = config.Bind<bool>(
                 "玩家透视",

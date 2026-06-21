@@ -5,6 +5,7 @@ using HarmonyLib;
 using Oracle.ESP;
 using Oracle.Utils;
 using UnityEngine;
+using static Oracle.Data.OracleInterface;
 
 namespace Oracle.Combat
 {
@@ -238,7 +239,7 @@ namespace Oracle.Combat
     /// <summary>
     /// 配置项定义
     /// </summary>
-    public class AimbotCfg
+    public class AimbotCfg : IOracleCfg
     {
         internal static ConfigEntry<bool> EnableAimbot { get; set; }
         internal static ConfigEntry<int> AimbotTargetUpdateRate { get; set; }
@@ -256,7 +257,7 @@ namespace Oracle.Combat
         /// 配置项初始化
         /// </summary>
         /// <param name="config">传入配置实例</param>
-        public static void Initialize(ConfigFile config)
+        public void Initialize(ConfigFile config)
         {
             EnableAimbot = config.Bind(
                 "自瞄设置", "启用自瞄逻辑", true, "自瞄模块总开关"

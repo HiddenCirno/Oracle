@@ -5,15 +5,17 @@ using EFT.InventoryLogic;
 using EFT.UI;
 using HarmonyLib;
 using JetBrains.Annotations;
+using Oracle.Data;
 using Oracle.ESP;
 using Oracle.Utils;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UIElements;
+using static Oracle.Data.OracleInterface;
 
 namespace Oracle.RaidManager
 {
-    public class AIManagerGUI
+    public class AIManagerGUI : IOracleManagerGUI
     {
         // UI 状态
         public static bool _isMenuOpen = false;
@@ -25,8 +27,17 @@ namespace Oracle.RaidManager
         // 用于存储正在后台渲染中的头像请求
         public Dictionary<string, GClass929> _pendingIcons = new Dictionary<string, GClass929>();
 
+        public void SubscribeEvent()
+        {
+            OracleEvent.OnManagerGUIDraw += OnGUI;
+            OracleEvent.OnKeyUpdate += Update;
+        }
+
         public void Update()
         {
+            //这玩意是不是可以抽象进工具类
+            //而且一二号顺序TMD是不是反了?
+            if (PluginsCore.CorrectGameWorld == null || PluginsCore.CorrectPlayer == null || PluginsCore.CorrectGameWorld.AllAlivePlayersList == null) return;
             // 使用 F9 作为 AI 控制台的呼出按键
             if (Input.GetKeyDown(HotKeyManager.BotManagerKey.Value))
             {

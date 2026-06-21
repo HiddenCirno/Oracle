@@ -3,6 +3,7 @@ using Comfort.Common;
 using EFT;
 using HarmonyLib;
 using System;
+using static Oracle.Data.OracleInterface;
 
 namespace Oracle.Combat
 {
@@ -30,11 +31,11 @@ namespace Oracle.Combat
     /// <summary>
     /// 配置项定义
     /// </summary>
-    public class GhostModeCfg
+    public class GhostModeCfg : IOracleCfg
     {
         internal static ConfigEntry<bool> EnableGhostMode { get; set; }
 
-        public static void Initialize(ConfigFile config)
+        public void Initialize(ConfigFile config)
         {
             EnableGhostMode = config.Bind(
                 "战斗修改",

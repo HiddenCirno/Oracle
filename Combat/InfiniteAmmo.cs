@@ -8,6 +8,7 @@ using Oracle.ItemSpawn;
 using Oracle.Tools;
 using System;
 using System.Reflection;
+using static Oracle.Data.OracleInterface;
 
 namespace Oracle.Combat
 {
@@ -85,7 +86,7 @@ namespace Oracle.Combat
     /// <summary>
     /// 配置项定义
     /// </summary>
-    public class InfiniteAmmoCfg
+    public class InfiniteAmmoCfg : IOracleCfg
     {
 
         internal static ConfigEntry<bool> EnableInfiniteAmmo { get; set; }
@@ -94,7 +95,7 @@ namespace Oracle.Combat
         /// 配置项初始化
         /// </summary>
         /// <param name="config">传入配置实例</param>
-        public static void Initialize(ConfigFile config)
+        public void Initialize(ConfigFile config)
         {
             EnableInfiniteAmmo = config.Bind(
                 "战斗修改",

@@ -1,15 +1,17 @@
-﻿using UnityEngine;
+﻿using EFT;
 using EFT.InventoryLogic;
+using EFT.UI;
 using EFT.UI.DragAndDrop; // 包含 ItemViewFactory
+using Oracle.Data;
+using Oracle.ItemSpawn;
 using Oracle.Utils;
 using System.Collections.Generic;
-using EFT;
-using EFT.UI;
-using Oracle.ItemSpawn;
+using UnityEngine;
+using static Oracle.Data.OracleInterface;
 
 namespace Oracle.RaidManager
 {
-    public class ItemManagerGUI
+    public class ItemManagerGUI : IOracleManagerGUI
     {
         // UI 状态
         public static bool _isMenuOpen = false;
@@ -20,7 +22,11 @@ namespace Oracle.RaidManager
 
         // 图标缓存池
         public Dictionary<string, Texture2D> _iconCache = new Dictionary<string, Texture2D>();
-
+        public void SubscribeEvent()
+        {
+            OracleEvent.OnManagerGUIDraw += OnGUI;
+            OracleEvent.OnKeyUpdate += Update;
+        }
         public void Update()
         {
             if (Input.GetKeyDown(HotKeyManager.ItemManagerKey.Value))

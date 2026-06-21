@@ -5,6 +5,7 @@ using EFT.InventoryLogic;
 using HarmonyLib;
 using System.Collections.Generic;
 using UnityEngine;
+using static Oracle.Data.OracleInterface;
 
 namespace Oracle.Combat
 {
@@ -111,7 +112,7 @@ namespace Oracle.Combat
     /// <summary>
     /// 配置项定义
     /// </summary>
-    public class PlayerStatusEditCfg
+    public class PlayerStatusEditCfg : IOracleCfg
     {
 
         internal static ConfigEntry<bool> EnableInfiniteStamina { get; set; }
@@ -122,7 +123,7 @@ namespace Oracle.Combat
         /// 配置项初始化
         /// </summary>
         /// <param name="config">传入配置实例</param>
-        public static void Initialize(ConfigFile config)
+        public void Initialize(ConfigFile config)
         {
             EnableInfiniteStamina = config.Bind(
                 "玩家属性",
