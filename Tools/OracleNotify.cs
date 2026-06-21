@@ -1,4 +1,5 @@
 ﻿using EFT.Communications;
+using Oracle.Utils;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -28,7 +29,7 @@ namespace Oracle.Tools
         public static void Message(string message, ENotificationIconType notificationType = ENotificationIconType.Default)
         {
             //等会儿回来补
-            if (true)
+            if (!GlobalCfg.MuteNotice.Value)
             {
                 NotificationManagerClass.DisplayMessageNotification(
                     message,

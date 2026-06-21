@@ -1,4 +1,5 @@
-﻿using Diz.LanguageExtensions;
+﻿using BepInEx.Configuration;
+using Diz.LanguageExtensions;
 using EFT;
 using EFT.Communications;
 using EFT.InventoryLogic;
@@ -39,7 +40,7 @@ namespace Oracle.RaidManager
             //而且一二号顺序TMD是不是反了?
             if (PluginsCore.CorrectGameWorld == null || PluginsCore.CorrectPlayer == null || PluginsCore.CorrectGameWorld.AllAlivePlayersList == null) return;
             // 使用 F9 作为 AI 控制台的呼出按键
-            if (Input.GetKeyDown(HotKeyManager.BotManagerKey.Value))
+            if (Input.GetKeyDown(AIManagerGUICfg.AIManagerKey.Value))
             {
                 _isMenuOpen = !_isMenuOpen;
                 MouseManager.ToggleCursor();
@@ -412,6 +413,23 @@ namespace Oracle.RaidManager
             }
 
             return null;
+        }
+    }
+    public class AIManagerGUICfg : IOracleCfg
+    {
+        internal static ConfigEntry<KeyCode> AIManagerKey { get; set; }
+        /// <summary>
+        /// 配置项初始化
+        /// </summary>
+        /// <param name="config">传入配置实例</param>
+        public void Initialize(ConfigFile config)
+        {
+            AIManagerKey = config.Bind(
+                "快捷键设置",
+                "打开AI管理器",
+                KeyCode.F9,
+                "打开战局AI管理器"
+            );
         }
     }
 }

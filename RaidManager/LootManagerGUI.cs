@@ -1,4 +1,5 @@
-﻿using Comfort.Common;
+﻿using BepInEx.Configuration;
+using Comfort.Common;
 using Diz.LanguageExtensions;
 using EFT;
 using EFT.InputSystem;
@@ -62,7 +63,7 @@ namespace Oracle.RaidManager
         {
             if (PluginsCore.CorrectGameWorld == null || PluginsCore.CorrectPlayer == null || PluginsCore.CorrectGameWorld.AllAlivePlayersList == null) return;
             // 使用 F8 呼出战利品面板
-            if (Input.GetKeyDown(HotKeyManager.LootManagerKey.Value))
+            if (Input.GetKeyDown(LootManagerGUICfg.LootManagerKey.Value))
             {
                 _isMenuOpen = !_isMenuOpen;
                 // 借用你写在 ItemManagerGUI 里的 ToggleCursor 逻辑（或者你可以把它提到 HotKeyManager 里公用）
@@ -307,6 +308,23 @@ namespace Oracle.RaidManager
                     Debug.LogError($"[远程打开容器异常]: {ex.Message}");
                 }
             }
+        }
+    }
+    public class LootManagerGUICfg : IOracleCfg
+    {
+        internal static ConfigEntry<KeyCode> LootManagerKey { get; set; }
+        /// <summary>
+        /// 配置项初始化
+        /// </summary>
+        /// <param name="config">传入配置实例</param>
+        public void Initialize(ConfigFile config)
+        {
+            LootManagerKey = config.Bind(
+                "快捷键设置",
+                "打开战利品管理器",
+                KeyCode.F8,
+                "打开战局战利品管理器"
+            );
         }
     }
 }

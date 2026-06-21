@@ -74,7 +74,7 @@ namespace Oracle
         {
             OracleEvent.Update();
             //快捷键监听
-            HotKeyManager.KeyUpdate();
+            GlobalCfg.KeyUpdate();
             //窗口失焦自动隐藏
             //bool shouldShow = Application.isFocused && HotKeyManager.UniGUI.Value;
             UpdateNativeOverlay();
@@ -97,7 +97,7 @@ namespace Oracle
                 }
 
                 // 2. 在总开关开启的前提下，由【游戏聚焦】和【菜单快捷键】共同控制显隐（高频操作，无感隐藏）
-                bool shouldShowOverlay = Application.isFocused && HotKeyManager.UniGUI.Value;
+                bool shouldShowOverlay = Application.isFocused && GlobalCfg.UniGUI.Value;
                 NativeOverlay.SetVisible(shouldShowOverlay);
             }
             else
@@ -130,7 +130,7 @@ namespace Oracle
         public void OnGUI()
         {
             //全局绘制开关
-            if (!HotKeyManager.UniGUI.Value) return;
+            if (!GlobalCfg.UniGUI.Value) return;
             OracleEvent.DrawManagerGUI();
             OracleEvent.DrawCrosshair();
             //空指针防御
@@ -147,7 +147,7 @@ namespace Oracle
             Camera cam = Camera.main;
             if (cam == null) return;
             //FPS限制, 仅在配置开启时启用, 能有一定的性能提升
-            if (Time.time - lastEspDrawTime < espRefreshRate && HotKeyManager.FPSLimit.Value)
+            if (Time.time - lastEspDrawTime < espRefreshRate && GlobalCfg.FPSLimit.Value)
             {
                 return;
             }

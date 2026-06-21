@@ -1,8 +1,11 @@
 ﻿using BepInEx.Configuration;
 using CommonAssets.Scripts.Game.LabyrinthEvent;
 using EFT;
+using EFT.Communications;
 using EFT.SynchronizableObjects;
 using Oracle.Data;
+using Oracle.Tools;
+using Oracle.Utils;
 using System;
 using System.Collections.Generic;
 using System.Reflection;
@@ -756,7 +759,7 @@ namespace Oracle.ESP
     /// <summary>
     /// 配置项定义
     /// </summary>
-    public class PlayerESPCfg : IOracleCfg
+    public class PlayerESPCfg : IOracleCfg, IOracleKeyUpdate
     {
         internal static ConfigEntry<bool> EnablePlayerESP { get; set; }
         internal static ConfigEntry<bool> EnablePlayerInfoESP { get; set; }
@@ -764,7 +767,7 @@ namespace Oracle.ESP
         internal static ConfigEntry<bool> EnablePlayerHealthBarESP { get; set; }
         internal static ConfigEntry<bool> EnablePlayerBoneESPHealthMode { get; set; }
         internal static ConfigEntry<int> PlayerESPMaxDistance { get; set; }
-
+        internal static ConfigEntry<KeyCode> PlayerESPKey { get; set; }
         internal static ConfigEntry<bool> EnableTripwireESP { get; set; } // 新增绊雷开关
         /// <summary>
         /// 配置项初始化
@@ -772,6 +775,12 @@ namespace Oracle.ESP
         /// <param name="config">传入配置实例</param>
         public void Initialize(ConfigFile config)
         {
+            PlayerESPKey = config.Bind<KeyCode>(
+                "玩家透视",
+                "玩家透视快捷键",
+                KeyCode.F2,
+                "按下切换玩家透视"
+            );
             EnablePlayerESP = config.Bind<bool>(
                 "玩家透视",
                 "启用玩家透视",
@@ -817,6 +826,19 @@ namespace Oracle.ESP
                 true,
                 "在屏幕上绘制出绊雷的触发实体线及距离"
             );
+        }
+        public void RegisterKeyUpdate()
+        {
+            OracleEvent.OnUpdate += KeyUpdate;
+        }
+        public static void KeyUpdate()
+        {
+            if (Input.GetKeyDown(PlayerESPKey.Value))
+            {
+                EnablePlayerESP.Value = !EnablePlayerESP.Value;
+                var value = EnablePlayerESP.Value;
+                OracleNotify.Message($"玩家透视已{(value ? "启用" : "禁用")}!", value ? ENotificationIconType.Default : ENotificationIconType.Alert, GlobalCfg.MuteNotice.Value);
+            }
         }
     }
 }

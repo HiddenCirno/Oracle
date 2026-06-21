@@ -1,12 +1,15 @@
 ﻿using BepInEx.Configuration;
 using EFT;
+using EFT.Communications;
 using EFT.HandBook;
 using EFT.HealthSystem;
+using EFT.Hideout;
 using EFT.InventoryLogic;
 using EFT.UI;
 using EFT.UI.DragAndDrop;
 using HarmonyLib;
 using Oracle.Data;
+using Oracle.Tools;
 using Oracle.Utils;
 using System;
 using System.Collections.Generic;
@@ -19,7 +22,7 @@ namespace Oracle.ItemSpawn
     /// <summary>
     /// 用于捕获物品实例的工具类
     /// </summary>
-    public class ItemCatcher : IOracleKeyUpdate
+    public class ItemCatcher
     {
         //变量缓存区
         //当前指针指向的物品实例
@@ -28,7 +31,6 @@ namespace Oracle.ItemSpawn
         //通过这种方式将物品实例保存到内存里以进行复制
         public static Item savedItem = null;
         public static List<Item> SavedItems = new List<Item>();
-        private static bool _copyKeyLastFrame = false;
         public void RegisterKeyUpdate()
         {
             OracleEvent.OnUpdate += KeyUpdate;
@@ -40,8 +42,7 @@ namespace Oracle.ItemSpawn
         {
             if (selectedItem == null)
                 return;
-            bool isCopyPressed = HotKeyManager.CopyItemKey.Value.IsPressed();
-            if (isCopyPressed && !_copyKeyLastFrame)
+            if (ItemSpawnerCfg.CopyItemKey.Value.IsDown())
             {
                 string itemID = selectedItem.TemplateId;
                 string itemName = selectedItem.Name.Localized();
@@ -49,6 +50,7 @@ namespace Oracle.ItemSpawn
                 savedItem = selectedItem.CloneItem().ReassignAllIds();//.CleanAndResetItem(ItemSpawnerCfg.ForcedFiR.Value);//这里不能清洗状态, 它涉及到带勾机制, 由玩家自己决定
                 SavedItems.Add(savedItem);
                 //游戏内通知
+                OracleNotify.Message($"物品{itemName}已存储至内存区域: {itemID}", ENotificationIconType.Default, GlobalCfg.MuteNotice.Value);
                 NotificationManagerClass.DisplayMessageNotification(
                     $"物品{itemName}已存储至内存区域: {itemID}",
                     EFT.Communications.ENotificationDurationType.Default,
@@ -56,7 +58,6 @@ namespace Oracle.ItemSpawn
                     null
                 );
             }
-            _copyKeyLastFrame = isCopyPressed;
         }
     }
     //Patch

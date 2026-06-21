@@ -1,4 +1,5 @@
-﻿using Comfort.Common;
+﻿using BepInEx.Configuration;
+using Comfort.Common;
 using EFT;
 using EFT.Game.Spawning;
 using EFT.UI;
@@ -43,7 +44,7 @@ namespace Oracle.RaidManager
         {
             if (PluginsCore.CorrectGameWorld == null || PluginsCore.CorrectPlayer == null || PluginsCore.CorrectGameWorld.AllAlivePlayersList == null) return;
             // 假设你在 HotKeyManager 里配了一个 BotGeneratorKey，这里暂且用 F7 演示
-            if (Input.GetKeyDown(KeyCode.F7)) // 或者 HotKeyManager.BotGeneratorKey.Value
+            if (Input.GetKeyDown(BotGeneratorGUICfg.BotGeneratorKey.Value)) // 或者 HotKeyManager.BotGeneratorKey.Value
             {
                 _isMenuOpen = !_isMenuOpen;
                 MouseManager.ToggleCursor();
@@ -217,6 +218,23 @@ namespace Oracle.RaidManager
             }
             Console.WriteLine(profile);
             spawner.TryToSpawnInZoneInner(randomBotZone, data, count, withCheckMinMax: false, newWave: true, null, forcedSpawn: true);
+        }
+    }
+    public class BotGeneratorGUICfg : IOracleCfg
+    {
+        internal static ConfigEntry<KeyCode> BotGeneratorKey { get; set; }
+        /// <summary>
+        /// 配置项初始化
+        /// </summary>
+        /// <param name="config">传入配置实例</param>
+        public void Initialize(ConfigFile config)
+        {
+            BotGeneratorKey = config.Bind(
+                "快捷键设置",
+                "打开Bot生成器",
+                KeyCode.F7,
+                "打开战局Bot生成器"
+            );
         }
     }
 }

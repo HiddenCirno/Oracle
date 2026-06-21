@@ -1,7 +1,10 @@
 ﻿using BepInEx.Configuration;
 using EFT;
+using EFT.Communications;
 using EFT.Interactive;
 using Oracle.Data;
+using Oracle.Tools;
+using Oracle.Utils;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
@@ -200,13 +203,20 @@ namespace Oracle.ESP
     /// <summary>
     /// 尸体透视配置项
     /// </summary>
-    public class CorpseESPCfg : IOracleCfg
+    public class CorpseESPCfg : IOracleCfg, IOracleKeyUpdate
     {
+        internal static ConfigEntry<KeyCode> CorpseESPKey { get; set; }
         internal static ConfigEntry<bool> EnableCorpseESP { get; set; }
         internal static ConfigEntry<int> CorpseESPMaxDistance { get; set; }
 
         public void Initialize(ConfigFile config)
         {
+            CorpseESPKey = config.Bind<KeyCode>(
+                "尸体透视",
+                "尸体透视快捷键",
+                KeyCode.F5,
+                "切换尸体透视"
+            );
             EnableCorpseESP = config.Bind<bool>(
                 "尸体透视",
                 "启用尸体透视",
@@ -223,6 +233,19 @@ namespace Oracle.ESP
                     new AcceptableValueRange<int>(50, 1000)
                 )
             );
+        }
+        public void RegisterKeyUpdate()
+        {
+            OracleEvent.OnUpdate += KeyUpdate;
+        }
+        public static void KeyUpdate()
+        {
+            if (Input.GetKeyDown(CorpseESPKey.Value))
+            {
+                EnableCorpseESP.Value = !EnableCorpseESP.Value;
+                var value = EnableCorpseESP.Value;
+                OracleNotify.Message($"尸体透视已{(value ? "启用" : "禁用")}!", value ? ENotificationIconType.Default : ENotificationIconType.Alert, GlobalCfg.MuteNotice.Value);
+            }
         }
     }
 }

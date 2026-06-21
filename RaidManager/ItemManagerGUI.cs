@@ -1,7 +1,9 @@
-﻿using EFT;
+﻿using BepInEx.Configuration;
+using EFT;
 using EFT.InventoryLogic;
 using EFT.UI;
 using EFT.UI.DragAndDrop; // 包含 ItemViewFactory
+using Oracle.Combat;
 using Oracle.Data;
 using Oracle.ItemSpawn;
 using Oracle.Utils;
@@ -29,7 +31,7 @@ namespace Oracle.RaidManager
         }
         public void Update()
         {
-            if (Input.GetKeyDown(HotKeyManager.ItemManagerKey.Value))
+            if (Input.GetKeyDown(ItemManagerGUICfg.ItemManagerKey.Value))
             {
                 _isMenuOpen = !_isMenuOpen;
                 MouseManager.ToggleCursor();
@@ -191,5 +193,22 @@ namespace Oracle.RaidManager
             return null;
         }
 
+    }
+    public class ItemManagerGUICfg : IOracleCfg
+    {
+        internal static ConfigEntry<KeyCode> ItemManagerKey { get; set; }
+        /// <summary>
+        /// 配置项初始化
+        /// </summary>
+        /// <param name="config">传入配置实例</param>
+        public void Initialize(ConfigFile config)
+        {
+            ItemManagerKey = config.Bind(
+                "快捷键设置",
+                "打开物品管理器",
+                KeyCode.F10,
+                "打开物品实例管理器"
+            );
+        }
     }
 }

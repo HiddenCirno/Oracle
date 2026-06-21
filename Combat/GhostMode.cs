@@ -1,8 +1,13 @@
 ﻿using BepInEx.Configuration;
 using Comfort.Common;
 using EFT;
+using EFT.Communications;
 using HarmonyLib;
+using Oracle.Data;
+using Oracle.Tools;
+using Oracle.Utils;
 using System;
+using UnityEngine;
 using static Oracle.Data.OracleInterface;
 
 namespace Oracle.Combat
@@ -31,12 +36,19 @@ namespace Oracle.Combat
     /// <summary>
     /// 配置项定义
     /// </summary>
-    public class GhostModeCfg : IOracleCfg
+    public class GhostModeCfg : IOracleCfg, IOracleKeyUpdate
     {
+        internal static ConfigEntry<KeyCode> GhostModeKey { get; set; }
         internal static ConfigEntry<bool> EnableGhostMode { get; set; }
 
         public void Initialize(ConfigFile config)
         {
+            GhostModeKey = config.Bind(
+                "战斗修改",
+                "隐身快捷键",
+                KeyCode.F11,
+                "按下切换隐身模式, AI不会对你产生仇恨"
+            );
             EnableGhostMode = config.Bind(
                 "战斗修改",
                 "隐身模式",
@@ -47,7 +59,20 @@ namespace Oracle.Combat
             // ⭐ 核心：订阅配置值改变事件
             EnableGhostMode.SettingChanged += OnGhostModeChanged;
         }
+        public void RegisterKeyUpdate()
+        {
+            OracleEvent.OnUpdate += KeyUpdate;
+        }
+        public static void KeyUpdate()
+        {
 
+            if (Input.GetKeyDown(GhostModeKey.Value))
+            {
+                EnableGhostMode.Value = !EnableGhostMode.Value;
+                var value = EnableGhostMode.Value;
+                OracleNotify.Message($"隐身已{(value ? "启用" : "禁用")}!", value ? ENotificationIconType.Default : ENotificationIconType.Alert, GlobalCfg.MuteNotice.Value);
+            }
+        }
         private static void OnGhostModeChanged(object sender, EventArgs e)
         {
             // 1. 安全检查：战局或玩家没加载完时绝对不执行

@@ -1,9 +1,12 @@
 ﻿using BepInEx.Configuration;
 using Comfort.Common;
 using EFT;
+using EFT.Communications;
 using EFT.Interactive;
 using EFT.InventoryLogic;
+using Oracle.Data;
 using Oracle.RaidManager;
+using Oracle.Tools;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -291,9 +294,12 @@ namespace Oracle.ItemSpawn
     /// <summary>
     /// 配置项定义
     /// </summary>
-    public class ItemSpawnerCfg : IOracleCfg
+    public class ItemSpawnerCfg : IOracleCfg, IOracleKeyUpdate
     {
+        internal static ConfigEntry<KeyCode> AddItemKey { get; set; }
+        internal static ConfigEntry<KeyboardShortcut> CopyItemKey { get; set; }
         internal static ConfigEntry<string> TargetItemId { get; set; }
+        internal static ConfigEntry<KeyCode> DropItemKey { get; set; }
 
         /// <summary>
         /// 配置项初始化
@@ -307,6 +313,39 @@ namespace Oracle.ItemSpawn
                 "59faff1d86f7746c51718c9c",
                 "输入需要添加到实例管理器的物品ID"
             );
+            AddItemKey = config.Bind<KeyCode>(
+                "虚空造物",
+                "创建实例",
+                KeyCode.KeypadDivide,
+                "按下后将指定ID的物品作为实例添加到实例管理器"
+            );
+            CopyItemKey = config.Bind(
+                "虚空造物",
+                "保存物品",
+                new KeyboardShortcut(KeyCode.C, KeyCode.LeftShift),
+                new ConfigDescription("将鼠标指向物品并按下此快捷键将物品组的实例复制保存到内存")
+            );
+            DropItemKey = config.Bind<KeyCode>(
+                "虚空造物",
+                "复制物品",
+                KeyCode.Keypad5,
+                "按下后生成并掉落当前选择的物品"
+            );
+        }
+        public void RegisterKeyUpdate()
+        {
+            OracleEvent.OnUpdate += KeyUpdate;
+        }
+        public static void KeyUpdate()
+        {
+            if (Input.GetKeyDown(AddItemKey.Value))
+            {
+                ItemSpawner.AddItemToManager(TargetItemId.Value);
+            }
+            if (Input.GetKeyDown(DropItemKey.Value))
+            {
+                ItemSpawner.CloneAndDropItem(PluginsCore.CorrectPlayer, ItemCatcher.savedItem);
+            }
         }
     }
 }

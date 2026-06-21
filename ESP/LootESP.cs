@@ -1,9 +1,12 @@
 ﻿using BepInEx.Configuration;
 using EFT;
+using EFT.Communications;
 using EFT.Hideout;
 using EFT.Interactive;
 using EFT.InventoryLogic;
 using Oracle.Data;
+using Oracle.Tools;
+using Oracle.Utils;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -450,8 +453,10 @@ namespace Oracle.ESP
     /// <summary>
     /// 配置项定义
     /// </summary>
-    public class LootESPCfg : IOracleCfg
+    public class LootESPCfg : IOracleCfg, IOracleKeyUpdate
     {
+        internal static ConfigEntry<KeyCode> LooseLootESPKey { get; set; }
+        internal static ConfigEntry<KeyCode> ContainerLootESPKey { get; set; }
         internal static ConfigEntry<bool> EnableContainerLootESP { get; set; }
         internal static ConfigEntry<bool> EnableLooseLootESP { get; set; }
         internal static ConfigEntry<int> LootESPMaxDistance { get; set; }
@@ -469,6 +474,19 @@ namespace Oracle.ESP
         /// <param name="config">传入配置实例</param>
         public void Initialize(ConfigFile config)
         {
+            LooseLootESPKey = config.Bind<KeyCode>(
+                "物资透视",
+                "散落物资透视快捷键",
+                KeyCode.F3,
+                "按下切换地上的散落物资透视"
+            );
+
+            ContainerLootESPKey = config.Bind<KeyCode>(
+                "物资透视",
+                "容器物资透视快捷键",
+                KeyCode.F4,
+                "按下切换容器(如箱子/衣服/包)物资透视"
+            );
             EnableLooseLootESP = config.Bind<bool>(
                 "物资透视",
                 "启用松散物资透视",
@@ -547,6 +565,25 @@ namespace Oracle.ESP
                     new AcceptableValueRange<int>(1000, 10000000)
                 )
             );
+        }
+        public void RegisterKeyUpdate()
+        {
+            OracleEvent.OnUpdate += KeyUpdate;
+        }
+        public static void KeyUpdate()
+        {
+            if (Input.GetKeyDown(LooseLootESPKey.Value))
+            {
+                EnableLooseLootESP.Value = !EnableLooseLootESP.Value;
+                var value = EnableLooseLootESP.Value;
+                OracleNotify.Message($"松散物资透视已{(value ? "启用" : "禁用")}!", value ? ENotificationIconType.Default : ENotificationIconType.Alert, GlobalCfg.MuteNotice.Value);
+            }
+            if (Input.GetKeyDown(ContainerLootESPKey.Value))
+            {
+                EnableContainerLootESP.Value = !EnableContainerLootESP.Value;
+                var value = EnableContainerLootESP.Value;
+                OracleNotify.Message($"容器物资透视已{(value ? "启用" : "禁用")}!", value ? ENotificationIconType.Default : ENotificationIconType.Alert, GlobalCfg.MuteNotice.Value);
+            }
         }
     }
 }

@@ -1,9 +1,11 @@
 ﻿using BepInEx.Configuration;
 using EFT;
 using EFT.Ballistics;
+using EFT.Communications;
 using HarmonyLib;
 using Oracle.Data;
 using Oracle.ESP;
+using Oracle.Tools;
 using Oracle.Utils;
 using UnityEngine;
 using static Oracle.Data.OracleInterface;
@@ -201,8 +203,10 @@ namespace Oracle.Combat
     /// <summary>
     /// 配置项定义
     /// </summary>
-    public class AimbotCfg : IOracleCfg
+    public class AimbotCfg : IOracleCfg, IOracleKeyUpdate
     {
+        internal static ConfigEntry<KeyCode> AimbotKey { get; set; }
+        internal static ConfigEntry<KeyCode> ChangeAimTargetKey { get; set; }
         internal static ConfigEntry<bool> EnableAimbot { get; set; }
         internal static ConfigEntry<int> AimbotTargetUpdateRate { get; set; }
         internal static ConfigEntry<bool> SuperMagicBullet { get; set; }
@@ -221,6 +225,18 @@ namespace Oracle.Combat
         /// <param name="config">传入配置实例</param>
         public void Initialize(ConfigFile config)
         {
+            AimbotKey = config.Bind<KeyCode>(
+                "自瞄设置",
+                "自瞄快捷键",
+                KeyCode.F6,
+                "按下切换自瞄与魔法子弹功能"
+            );
+            ChangeAimTargetKey = config.Bind<KeyCode>(
+                "自瞄设置",
+                "切换瞄准部位",
+                KeyCode.KeypadMultiply,
+                "按下切换瞄准的部位(头或胸)"
+            );
             EnableAimbot = config.Bind(
                 "自瞄设置", "启用自瞄逻辑", true, "自瞄模块总开关"
             );
@@ -270,6 +286,25 @@ namespace Oracle.Combat
                     )
                 )
             );
+        }
+        public void RegisterKeyUpdate()
+        {
+            OracleEvent.OnUpdate += KeyUpdate;
+        }
+        public static void KeyUpdate()
+        {
+            if (Input.GetKeyDown(AimbotKey.Value))
+            {
+                EnableAimbot.Value = !EnableAimbot.Value;
+                var value = EnableAimbot.Value;
+                OracleNotify.Message($"自瞄已{(value ? "启用" : "禁用")}!", value ? ENotificationIconType.Default : ENotificationIconType.Alert, GlobalCfg.MuteNotice.Value);
+            }
+            if (Input.GetKeyDown(ChangeAimTargetKey.Value))
+            {
+                AimbotPartSetting.Value = AimbotPartSetting.Value == "头部" ? "胸口" : "头部";
+                var value = AimbotPartSetting.Value;
+                OracleNotify.Message($"锁定部位切换到{value}", ENotificationIconType.Default, GlobalCfg.MuteNotice.Value);
+            }
         }
     }
 }
