@@ -22,7 +22,7 @@ namespace Oracle.ItemSpawn
     /// <summary>
     /// 用于捕获物品实例的工具类
     /// </summary>
-    public class ItemCatcher
+    public class ItemCatcher : IOracleKeyUpdate
     {
         //变量缓存区
         //当前指针指向的物品实例
@@ -51,12 +51,6 @@ namespace Oracle.ItemSpawn
                 SavedItems.Add(savedItem);
                 //游戏内通知
                 OracleNotify.Message($"物品{itemName}已存储至内存区域: {itemID}", ENotificationIconType.Default, GlobalCfg.MuteNotice.Value);
-                NotificationManagerClass.DisplayMessageNotification(
-                    $"物品{itemName}已存储至内存区域: {itemID}",
-                    EFT.Communications.ENotificationDurationType.Default,
-                    EFT.Communications.ENotificationIconType.Default,
-                    null
-                );
             }
         }
     }
