@@ -21,7 +21,7 @@ namespace Oracle.Combat
             static bool Prefix(Weapon __instance, float ammoBurnRatio, float overheatFactor, float skillWeaponTreatmentFactor, out float modsBurnRatio, ref float __result)
             {
                 modsBurnRatio = 1f;
-                if (true)
+                if (NoWeaponDurabilityCostCfg.EnableInfinityDurability.Value)
                 {
                     __result = 0f;
                     return false;
@@ -36,7 +36,7 @@ namespace Oracle.Combat
     public class NoWeaponDurabilityCostCfg
     {
 
-        internal static ConfigEntry<bool> EnableInfiniteAmmo { get; set; }
+        internal static ConfigEntry<bool> EnableInfinityDurability { get; set; }
 
         /// <summary>
         /// 配置项初始化
@@ -44,11 +44,11 @@ namespace Oracle.Combat
         /// <param name="config">传入配置实例</param>
         public static void Initialize(ConfigFile config)
         {
-            EnableInfiniteAmmo = config.Bind(
+            EnableInfinityDurability = config.Bind(
                 "战斗修改",
-                "无限子弹",
+                "无限耐久",
                 false,
-                "启用后开火将不消耗子弹"
+                "启用后开火将不消耗武器耐久"
             );
         }
     }

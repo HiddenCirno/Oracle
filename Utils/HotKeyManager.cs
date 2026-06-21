@@ -20,6 +20,7 @@ namespace Oracle.Utils
         internal static ConfigEntry<KeyCode> ChangeAimTargetKey { get; set; }
         internal static ConfigEntry<KeyCode> CorpseESPKey { get; set; }
         internal static ConfigEntry<KeyCode> AddItemKey { get; set; }
+        internal static ConfigEntry<KeyCode> FlashKey { get; set; }
         internal static ConfigEntry<KeyboardShortcut> CopyItemKey { get; set; }
         internal static ConfigEntry<KeyCode> ItemManagerKey { get; set; }
         internal static ConfigEntry<KeyCode> BotManagerKey { get; set; }
@@ -157,6 +158,11 @@ namespace Oracle.Utils
                 //ItemSpawner.SpawnItemIntoInventory(PluginsCore.CorrectPlayer, ItemSpawnerCfg.TargetItemId.Value);
                 ItemSpawner.CloneAndDropItem(PluginsCore.CorrectPlayer, ItemCatcher.savedItem);
             }
+            if (Input.GetKeyDown(FlashKey.Value))
+            {
+                //ItemSpawner.SpawnItemIntoInventory(PluginsCore.CorrectPlayer, ItemSpawnerCfg.TargetItemId.Value);
+                FlashPlayer.TeleportPlayer();
+            }
         }
         /// <summary>
         /// 配置项初始化
@@ -267,6 +273,12 @@ namespace Oracle.Utils
                 "隐身快捷键",
                 KeyCode.F11,
                 "按下切换隐身模式, AI不会对你产生仇恨"
+            );
+            FlashKey = config.Bind(
+                "快捷键设置",
+                "闪现快捷键",
+                KeyCode.Z,
+                "按下无视空间阻挡向前闪现一段距离"
             );
         }
     }

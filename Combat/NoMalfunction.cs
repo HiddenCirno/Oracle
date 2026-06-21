@@ -24,7 +24,7 @@ namespace Oracle.Combat
                 // 1. 判断这个控制器的主人是不是玩家自己 (通常 FirearmController 里会有 _player 或 Player 字段)
                 // 具体的字段名(如 _player)你要在你的反编译工具里点开 FirearmController 看一下
                 //好使
-                if (__instance != null && __instance == PluginsCore.CorrectPlayer.HandsController)
+                if (__instance != null && __instance == PluginsCore.CorrectPlayer.HandsController && NoMalfunctionCfg.EnableNoMalfunction.Value)
                 {
                     //Console.WriteLine("PatchingFirearmController as true");
                     // 2. 强制设置返回值为 None (无故障)
@@ -48,7 +48,7 @@ namespace Oracle.Combat
     public class NoMalfunctionCfg
     {
 
-        internal static ConfigEntry<bool> EnableInfiniteAmmo { get; set; }
+        internal static ConfigEntry<bool> EnableNoMalfunction { get; set; }
 
         /// <summary>
         /// 配置项初始化
@@ -56,11 +56,11 @@ namespace Oracle.Combat
         /// <param name="config">传入配置实例</param>
         public static void Initialize(ConfigFile config)
         {
-            EnableInfiniteAmmo = config.Bind(
+            EnableNoMalfunction = config.Bind(
                 "战斗修改",
-                "无限子弹",
+                "武器无故障",
                 false,
-                "启用后开火将不消耗子弹"
+                "启用后武器将永远不会发生故障"
             );
         }
     }
