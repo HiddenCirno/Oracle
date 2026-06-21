@@ -122,18 +122,18 @@ namespace Oracle.ESP
         public static int GetItemLevel(Item item)
         {
             var template = item.Template;
-            if(template == null ) return 0;
+            if (template == null) return 0;
             if (template is AmmoTemplate ammoTemplate)
             {
                 return GetAmmoLevel(item);
             }
-            if(template is AmmoBoxTemplate ammoBoxTemplate)
+            if (template is AmmoBoxTemplate ammoBoxTemplate)
             {
                 var ammoItem = item.GetAllItems().FirstOrDefault(x => x.Template is AmmoTemplate);
                 if (ammoItem == null) return 1; // 预防万一有空盒子
                 return GetAmmoLevel(ammoItem);
             }
-            if(template is BackpackTemplateClass backpackTemplate)
+            if (template is BackpackTemplateClass backpackTemplate)
             {
                 var size = 0;
                 backpackTemplate.Grids.ExecuteForEach(x => size += (x.GridHeight * x.GridWidth));
@@ -144,7 +144,7 @@ namespace Oracle.ESP
                 if (size >= 12) return 2;
                 if (size >= 0) return 1;
             }
-            if(template is VestTemplateClass vestTemplate)
+            if (template is VestTemplateClass vestTemplate)
             {
                 var size = 0;
                 vestTemplate.Grids.ExecuteForEach(x => size += (x.GridHeight * x.GridWidth));
@@ -154,7 +154,6 @@ namespace Oracle.ESP
                 if (size >= 8) return 2;
                 if (size >= 0) return 1;
             }
-            if (template.QuestItem == true) return 8;
             //坏了, 客户端的ITemTemplate是不完整的
             //if(template.Catr) return 0;
             var price = GetItemPrice(item.TemplateId) ?? 0;
@@ -185,43 +184,58 @@ namespace Oracle.ESP
         public static void DrawLootText(Camera cam, GUIStyle textStyle)
         {
             if (CachedLootList == null || CachedLootList.Count == 0) return;
-                //查找中心
-                Vector2 screenCenter = new Vector2(Screen.width / 2f, Screen.height / 2f);
-                float fovRadius = LootESPCfg.LootESPFovRange.Value;
-                //富文本防御, 避免问题
-                foreach (LootData loot in CachedLootList)
+            //查找中心
+            Vector2 screenCenter = new Vector2(Screen.width / 2f, Screen.height / 2f);
+            float fovRadius = LootESPCfg.LootESPFovRange.Value;
+
+            int fovMinPrice = LootESPCfg.LootESPFovMinPrice.Value;
+            int fovMinLevel = GetLevelByPrice(fovMinPrice);
+            //富文本防御, 避免问题
+            foreach (LootData loot in CachedLootList)
+            {
+                Vector3 screenPos = cam.WorldToScreenPoint(loot.Position);
+                if (screenPos.z > 0.01f)
                 {
-                    Vector3 screenPos = cam.WorldToScreenPoint(loot.Position);
-                    if (screenPos.z > 0.01f)
+                    float screenX = screenPos.x;
+                    //展开容器战利品表
+                    float screenY = Screen.height - screenPos.y + loot.YOffset;
+                    //FOV计算
+                    if (LootESPCfg.EnableLootESPFov.Value)
                     {
-                        float screenX = screenPos.x;
-                        //展开容器战利品表
-                        float screenY = Screen.height - screenPos.y + loot.YOffset;
-                        //FOV计算
-                        if (LootESPCfg.EnableLootESPFov.Value)
+                        if (loot.Price < fovMinPrice && loot.ItemLevel < fovMinLevel)
                         {
-                            //白名单绘制
-                            if (loot.Price < LootESPCfg.LootESPFovMinPrice.Value)
-                            {
-                                Vector2 itemScreenPos = new Vector2(screenX, screenY);
-                                float distToCenter = Vector2.Distance(screenCenter, itemScreenPos);
-                                //脱离范围
-                                if (distToCenter > fovRadius) continue;
-                            }
+                            Vector2 itemScreenPos = new Vector2(screenX, screenY);
+                            float distToCenter = Vector2.Distance(screenCenter, itemScreenPos);
+                            //脱离范围
+                            if (distToCenter > fovRadius) continue;
                         }
-                        string espText = $"{loot.Name}";
-                        //绘制
-                        if (loot.Container != null && LootESPCfg.EnableContainerLootESP.Value)
-                        {
-                            GUI.Label(new Rect(screenX - 100, screenY - 20, 200, 40), espText, textStyle);
-                        }
-                        if (loot.Container == null && LootESPCfg.EnableLooseLootESP.Value)
-                        {
-                            GUI.Label(new Rect(screenX - 100, screenY - 20, 200, 40), espText, textStyle);
-                        }
+                    }
+                    string espText = $"{loot.Name}";
+                    //绘制
+                    if (loot.Container != null && LootESPCfg.EnableContainerLootESP.Value)
+                    {
+                        GUI.Label(new Rect(screenX - 100, screenY - 20, 200, 40), espText, textStyle);
+                    }
+                    if (loot.Container == null && LootESPCfg.EnableLooseLootESP.Value)
+                    {
+                        GUI.Label(new Rect(screenX - 100, screenY - 20, 200, 40), espText, textStyle);
                     }
                 }
             }
+        }
+        /// <summary>
+        /// 检查物品是否在玩家的愿望单中
+        /// </summary>
+        /// <param name="templateId">物品的 TemplateId</param>
+        public static bool IsWishlistItem(string templateId)
+        {
+            // 防御性检查，确保玩家和愿望单管理器不为空
+            var player = PluginsCore.CorrectPlayer;
+            if (player?.Profile?.WishlistManager == null) return false;
+
+            // 使用 out _ 丢弃不需要的 EWishlistGroup 参数（C# 7.0+ 语法）
+            return player.Profile.WishlistManager.IsInWishlist(templateId, true, out _);
+        }
 
         /// <summary>
         /// 扫描协程
@@ -299,7 +313,7 @@ namespace Oracle.ESP
         {
             if (container == null) return "地面";
             string containerName = container.ItemOwner.RootItem.ShortName.Localized();
-            return string.IsNullOrEmpty(containerName) ? "容器": containerName;
+            return string.IsNullOrEmpty(containerName) ? "容器" : containerName;
         }
 
         /// <summary>
@@ -325,7 +339,7 @@ namespace Oracle.ESP
             var price = GetItemPrice(itemKey);
             int itemPrice = price ?? 0;
             //价值过滤
-            int minPriceThreshold = LootESPCfg.LootESPMinPrice.Value; 
+            int minPriceThreshold = LootESPCfg.LootESPMinPrice.Value;
             int filterLevel = GetLevelByPrice(minPriceThreshold);
             //求等级
             ItemLevelCache.TryGetValue(itemKey, out var level);
@@ -335,6 +349,14 @@ namespace Oracle.ESP
                 ItemLevelCache[itemKey] = level;
             }
             int itemLevel = (int)level;
+            if (LootESPCfg.HighlightWishListItem.Value && IsWishlistItem(itemKey))
+            {
+                itemLevel = 9; // 愿望单最高优先级
+            }
+            else if (LootESPCfg.HighlightQuestItem.Value && item.Template.QuestItem == true)
+            {
+                itemLevel = 8; // 其次是任务道具
+            }
             if (itemPrice < minPriceThreshold && itemLevel < filterLevel)
             {
                 return;
@@ -450,6 +472,8 @@ namespace Oracle.ESP
         internal static ConfigEntry<int> LootESPFovRange { get; set; }
         internal static ConfigEntry<int> LootESPFovMinPrice { get; set; }
         internal static ConfigEntry<bool> ShowItemFullName { get; set; }
+        internal static ConfigEntry<bool> HighlightWishListItem { get; set; }
+        internal static ConfigEntry<bool> HighlightQuestItem { get; set; }
         /// <summary>
         /// 配置项初始化
         /// </summary>
@@ -512,6 +536,18 @@ namespace Oracle.ESP
                 "显示物品全名",
                 false,
                 "使用物品全名显示透视"
+            );
+            HighlightWishListItem = config.Bind<bool>(
+                "物资透视",
+                "高亮愿望单物品",
+                false,
+                "启用后愿望单物品将以玫红色和高优先级绘制"
+            );
+            HighlightQuestItem = config.Bind<bool>(
+                "物资透视",
+                "高亮任务物品",
+                false,
+                "启用后任务物品将以灰色和高优先级绘制"
             );
             LootESPFovMinPrice = config.Bind<int>(
                 "物资透视",
