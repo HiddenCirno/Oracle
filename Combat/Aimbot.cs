@@ -66,6 +66,8 @@ namespace Oracle.Combat
         /// <param name="cam">当前摄像机</param>
         public static void UpdateTarget(Camera cam)
         {
+            //你TM为什么没有防御呢?
+            if(PluginsCore.CorrectPlayer==null || PluginsCore.CorrectGameWorld==null) return;
             if (Time.time - lastUpdateTime < targetUpdateRate)
             {
                 return;

@@ -10,7 +10,7 @@ using static Oracle.Data.OracleInterface;
 
 namespace Oracle.ESP
 {
-    public class CrosshairManager: IOracleCrosshair
+    public class CrosshairManager : IOracleCrosshair
     {
 
         private static Texture2D _cachedCrosshairTex;
@@ -72,8 +72,11 @@ namespace Oracle.ESP
         /// </summary>
         public static void DrawCrosshair()
         {
-            if (!CrosshairManagerCfg.EnableCrosshair.Value || _cachedCrosshairTex == null) return;
+            if (PluginsCore.CorrectPlayer == null || !CrosshairManagerCfg.EnableCrosshair.Value || _cachedCrosshairTex == null) return;
+            var pwa = PluginsCore.CorrectPlayer.ProceduralWeaponAnimation;
+            bool isAiming = (pwa != null && pwa.IsAiming);
 
+            if (isAiming) return;
             // 获取图片真实的像素宽高
             float texWidth = _cachedCrosshairTex.width;
             float texHeight = _cachedCrosshairTex.height;
