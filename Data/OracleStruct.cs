@@ -36,6 +36,16 @@ namespace Oracle.Data
         public Vector3 CenterPos;
     }
 
+    /// <summary>
+    /// 尸体透视数据定义
+    /// </summary>
+    public struct CorpseData
+    {
+        public Vector3 Position;      // 尸体三维坐标
+        public string FormattedText;  // 富文本格式化后的显示文本
+        public int Distance;          // 距离
+    }
+
     public readonly struct EntityDisplayInfo
     {
         public readonly string Name;

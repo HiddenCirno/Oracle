@@ -204,7 +204,7 @@ namespace Oracle.ESP
                 }
                 //过滤队友
                 string targetGroupId = player.Profile?.Info?.GroupId ?? "";
-                bool isTeammate = !string.IsNullOrEmpty(PluginsCore.CorrectGroupId) && targetGroupId == PluginsCore.CorrectGroupId;
+                bool isTeammate = OraclePlayerManager.IsTeammate(player.Profile?.Info);
                 //获取头部坐标, 这样信息才能悬浮于头顶
                 Vector3? headPos = OraclePlayerManager.GetBonePos(player.PlayerBones.Head);
                 if (!headPos.HasValue) continue;

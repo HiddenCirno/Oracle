@@ -65,7 +65,7 @@ namespace Oracle
             //绊雷扫描协程
             StartCoroutine(OracleTripwireManager.TripwireScannerCoroutine());
             //尸体扫描协程
-            StartCoroutine(CorpseESP.CorpseScannerCoroutine());
+            StartCoroutine(OracleCorpseManager.CorpseScannerCoroutine());
             InitializeKeyUpdate();
             InitializeEventSubscribe();
             RenderUtils.Initialize();

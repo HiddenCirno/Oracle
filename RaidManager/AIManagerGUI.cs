@@ -109,8 +109,10 @@ namespace Oracle.RaidManager
                 {
                     // 过滤逻辑保持不变...
                     if (player == null || player == PluginsCore.CorrectPlayer || !player.HealthController.IsAlive) continue;
-                    string targetGroupId = player.Profile?.Info?.GroupId ?? "";
-                    bool isTeammate = !string.IsNullOrEmpty(PluginsCore.CorrectGroupId) && targetGroupId == PluginsCore.CorrectGroupId;
+                    var info = player.Profile?.Info;
+                    if (info == null) continue;
+                    string targetGroupId = info?.GroupId ?? "";
+                    bool isTeammate = OraclePlayerManager.IsTeammate(info);
                     if (isTeammate) continue;
 
                     aliveCount++;
