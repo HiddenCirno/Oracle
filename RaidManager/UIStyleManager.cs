@@ -24,6 +24,8 @@ namespace Oracle.RaidManager
         public static GUIStyle ScrollbarStyle { get; private set; }
         // 滚动条滑块
         public static GUIStyle ScrollbarThumbStyle { get; private set; }
+        // ⭐ 顶部选项卡样式
+        public static GUIStyle TabStyle { get; private set; }
 
         private static bool _initialized = false;
 
@@ -99,6 +101,39 @@ namespace Oracle.RaidManager
             ScrollbarThumbStyle.active.background = MakeTex(1, 1, new Color(0.5f, 0.51f, 0.53f, 1f));
             ScrollbarThumbStyle.fixedWidth = 10f;
             ScrollbarThumbStyle.border = new RectOffset(0, 0, 0, 0);
+
+            // ⭐ ----- 9. 选项卡样式 (TabStyle) -----
+            TabStyle = new GUIStyle(GUI.skin.button);
+            TabStyle.fontSize = 13;
+            TabStyle.fontStyle = FontStyle.Bold;
+            TabStyle.alignment = TextAnchor.MiddleCenter;
+
+            // [未选中] 颜色偏暗，字发灰
+            TabStyle.normal.background = MakeTex(1, 1, new Color(0.18f, 0.19f, 0.21f, 1f));
+            TabStyle.normal.textColor = new Color(0.6f, 0.6f, 0.6f, 1f);
+
+            // [未选中悬停] 稍微亮一点
+            TabStyle.hover.background = MakeTex(1, 1, new Color(0.25f, 0.26f, 0.28f, 1f));
+            TabStyle.hover.textColor = Color.white;
+
+            // [选中(onNormal)] 继承你的 BlueButtonStyle 配色
+            TabStyle.onNormal.background = MakeTex(1, 1, new Color(0.2f, 0.3f, 0.5f, 1f));
+            TabStyle.onNormal.textColor = Color.white;
+
+            // [选中悬停(onHover)]
+            TabStyle.onHover.background = MakeTex(1, 1, new Color(0.3f, 0.4f, 0.6f, 1f));
+            TabStyle.onHover.textColor = Color.white;
+            // [按下瞬间(active)] 未选中状态被点击时的反馈，比 normal 更暗
+            TabStyle.active.background = MakeTex(1, 1, new Color(0.12f, 0.13f, 0.15f, 1f));
+            TabStyle.active.textColor = new Color(0.5f, 0.5f, 0.5f, 1f);
+
+            // [选中按下瞬间(onActive)] 已选中状态再次被点击时的反馈，深蓝色
+            TabStyle.onActive.background = MakeTex(1, 1, new Color(0.1f, 0.2f, 0.3f, 1f));
+            TabStyle.onActive.textColor = new Color(0.8f, 0.8f, 0.8f, 1f);
+            // 取消 margin，让 Toolbar 连成一片毫无缝隙的整体
+            TabStyle.margin = new RectOffset(0, 0, 0, 0);
+            TabStyle.padding = new RectOffset(5, 5, 5, 5);
+            TabStyle.border = new RectOffset(0, 0, 0, 0);
 
             _initialized = true;
         }
