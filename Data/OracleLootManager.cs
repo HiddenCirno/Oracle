@@ -20,19 +20,6 @@ namespace Oracle.Data
 
         public static Dictionary<MongoID, int?> ItemLevelCache = new Dictionary<MongoID, int?>();
 
-        public static class PriceColor
-        {
-            //愿望单物品
-            public static readonly Color TierEX = new Color(0.862f, 0.078f, 0.235f);
-            public static readonly Color TierX = Color.gray;
-            public static readonly Color Tier0 = Color.white;
-            public static readonly Color Tier1 = new Color(0f, 0.666f, 0f);
-            public static readonly Color Tier2 = new Color(0f, 0.627f, 1f);
-            public static readonly Color Tier3 = new Color(0.666f, 0f, 0.666f);
-            public static readonly Color Tier4 = new Color(1f, 0.666f, 0f);
-            public static readonly Color Tier5 = new Color(0.666f, 0f, 0f);
-            public static readonly Color Tier6 = new Color(1f, 0.333f, 1f);
-        }
         public static class PriceTier
         {
             public const int Tier1 = 10000;
@@ -185,11 +172,10 @@ namespace Oracle.Data
             string priceStr = itemPrice >= 10000 ? (itemPrice / 10000f).ToString("0.#") + "万" : itemPrice.ToString();
             //string priceStr = itemPrice >= 10000 ? (itemPrice / 10000) + "万" : itemPrice.ToString();
             //颜色转码
-            Color iColor = GetColorByLevel(itemLevel);
-            string hexColor = ColorUtility.ToHtmlStringRGB(iColor);
+            OracleColor iColor = GetColorByLevel(itemLevel);
             //富文本合并
             string fullName = string.IsNullOrEmpty(prefix) ? itemName : $"{prefix} {itemName}";
-            string formattedName = $"<color=#{hexColor}>{fullName}</color> <color=#{hexColor}>{priceStr}</color> <color=#FFFF00>{dist}米</color>";
+            string formattedName = $"<color=#{iColor}>{fullName} {priceStr}</color> <color=#FFFF00>{dist}米</color>";
             int currentYOffset = 0;
 
             // ⭐ 核心优化：只有容器/尸体（StaticLoot）才参与 YOffset 计算
@@ -226,36 +212,20 @@ namespace Oracle.Data
             return string.IsNullOrEmpty(containerName) ? "容器" : containerName;
         }
 
-        /// <summary>
-        /// 定义战利品等级
-        /// </summary>
-        /// <param name="price">价格</param>
-        /// <returns></returns>
-        public static Color GetColorByPrice(int price)
-        {
-            if (price >= PriceTier.Tier6) return PriceColor.Tier6;
-            if (price >= PriceTier.Tier5) return PriceColor.Tier5;
-            if (price >= PriceTier.Tier4) return PriceColor.Tier4;
-            if (price >= PriceTier.Tier3) return PriceColor.Tier3;
-            if (price >= PriceTier.Tier2) return PriceColor.Tier2;
-            if (price >= PriceTier.Tier1) return PriceColor.Tier1;
-
-            return PriceColor.Tier0;
-        }
-        public static Color GetColorByLevel(int level)
+        public static OracleColor GetColorByLevel(int level)
         {
             switch (level)
             {
-                case 9: return PriceColor.TierEX;
-                case 8: return PriceColor.TierX;
-                case 7: return PriceColor.Tier6;
-                case 6: return PriceColor.Tier5;
-                case 5: return PriceColor.Tier4;
-                case 4: return PriceColor.Tier3;
-                case 3: return PriceColor.Tier2;
-                case 2: return PriceColor.Tier1;
-                case 1: return PriceColor.Tier0;
-                default: return PriceColor.Tier0;
+                case 9: return OracleColorManager.LootTierEX;
+                case 8: return OracleColorManager.LootTierX;
+                case 7: return OracleColorManager.LootTier6;
+                case 6: return OracleColorManager.LootTier5;
+                case 5: return OracleColorManager.LootTier4;
+                case 4: return OracleColorManager.LootTier3;
+                case 3: return OracleColorManager.LootTier2;
+                case 2: return OracleColorManager.LootTier1;
+                case 1: return OracleColorManager.LootTier0;
+                default: return OracleColorManager.LootTier0;
             }
         }
 

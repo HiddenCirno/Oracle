@@ -144,7 +144,7 @@ namespace Oracle.Combat
             Vector2 screenCenter = new Vector2(Screen.width / 2f, Screen.height / 2f);
             Vector3 endPos = new Vector3(screenPos.x, screenPos.y, 0);
             //画线
-            RenderUtils.DrawLine(screenCenter, endPos, new Color(1f, 0f, 0f, 0.8f));
+            RenderUtils.DrawLine(screenCenter, endPos, OracleColorManager.AimbotCycle);
         }
         
     }

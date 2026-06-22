@@ -54,4 +54,40 @@ namespace Oracle.Data
         // 格式化输出方便直接给GUI调用
         public string ToEspString() => $"{LevelText} {SideText} <color=#FFFF00>{Distance}米</color>".Trim();
     }
+    public readonly struct OracleColor
+    {
+        public readonly string HexColor;       // 带 # 的富文本颜色 (例: "#FF8C00")
+        public readonly string HexColorNoHash; // 不带 # 的纯代码 (例: "FF8C00")
+        public readonly Color UnityColor;      // Unity 原生 Color 对象
+
+        /// <summary>
+        /// 从十六进制字符串构造颜色 (例如: "#FF0000" 或 "FF0000" 或带透明度 "#FF0000FF")
+        /// </summary>
+        public OracleColor(string hex)
+        {
+            // 防御性容错：自动补全 # 号
+            HexColor = hex.StartsWith("#") ? hex.ToUpper() : $"#{hex}".ToUpper();
+            HexColorNoHash = HexColor.Substring(1);
+
+            // 一次性解析为 Unity 原生 Color，永久缓存
+            if (ColorUtility.TryParseHtmlString(HexColor, out Color parsedColor))
+            {
+                UnityColor = parsedColor;
+            }
+            else
+            {
+                // 解析失败时，给个刺眼的洋红色作为错误提示
+                Debug.LogError($"[OracleColor] 解析颜色失败，无效的代码: {hex}");
+                UnityColor = Color.magenta;
+            }
+        }
+
+        // ⭐ C# 黑魔法 1：隐式转换为 Unity Color
+        // 当方法需要 Color 时，直接传 OracleColor 即可
+        public static implicit operator Color(OracleColor oc) => oc.UnityColor;
+
+        // ⭐ C# 黑魔法 2：隐式转换为 String
+        // 当拼接富文本字符串时，直接传 OracleColor，它会自动变成 "#FFFFFF"
+        public static implicit operator string(OracleColor oc) => oc.HexColor;
+    }
 }
