@@ -4,7 +4,6 @@ using EFT;
 using EFT.Communications;
 using EFT.SynchronizableObjects;
 using Oracle.Data;
-using Oracle.Tools;
 using Oracle.Utils;
 using System;
 using System.Collections.Generic;
@@ -30,13 +29,13 @@ namespace Oracle.ESP
             if (cam == null) return;
 
             // 1. 2D 文本和 UI 直接画
-            DrawPlayerText(cam, RenderUtils.EspTextStyle);
+            DrawPlayerText(cam, OracleRendering.EspTextStyle);
             DrawAllPlayerHealthBars(cam);
 
             // 2. 3D 骨骼线段，必须自己包裹 GL 状态！
             if (Event.current.type == EventType.Repaint)
             {
-                RenderUtils.EspMaterial.SetPass(0);
+                OracleRendering.EspMaterial.SetPass(0);
                 GL.PushMatrix();
                 // GL.LoadPixelMatrix(); (如果有必要的话)
                 GL.Begin(GL.LINES);

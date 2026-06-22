@@ -30,7 +30,7 @@ namespace Oracle.ESP
             Camera cam = Camera.main;
             if (cam == null) return;
 
-            DrawTripwireESP(cam, RenderUtils.EspTextStyle, RenderUtils.EspMaterial);
+            DrawTripwireESP(cam, OracleRendering.EspTextStyle, OracleRendering.EspMaterial);
         }
 
         /// <summary>

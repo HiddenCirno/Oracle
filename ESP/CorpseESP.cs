@@ -3,7 +3,6 @@ using EFT;
 using EFT.Communications;
 using EFT.Interactive;
 using Oracle.Data;
-using Oracle.Tools;
 using Oracle.Utils;
 using System;
 using System.Collections.Generic;
@@ -30,7 +29,7 @@ namespace Oracle.ESP
             Camera cam = Camera.main;
             if (cam == null) return;
 
-            DrawCorpseText(cam, RenderUtils.EspTextStyle);
+            DrawCorpseText(cam, OracleRendering.EspTextStyle);
         }
 
         /// <summary>

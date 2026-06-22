@@ -68,7 +68,7 @@ namespace Oracle
             StartCoroutine(OracleCorpseManager.CorpseScannerCoroutine());
             InitializeKeyUpdate();
             InitializeEventSubscribe();
-            RenderUtils.Initialize();
+            OracleRendering.Initialize();
         }
         public void Update()
         {

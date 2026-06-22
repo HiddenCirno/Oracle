@@ -1,14 +1,13 @@
 ﻿using BepInEx.Configuration;
 using EFT.Communications;
 using Oracle.Combat;
-using Oracle.Data;
 using Oracle.ESP;
 using Oracle.ItemSpawn;
-using Oracle.Tools;
+using Oracle.Utils;
 using UnityEngine;
 using static Oracle.Data.OracleInterface;
 
-namespace Oracle.Utils
+namespace Oracle.Data
 {
     /// <summary>
     /// 快捷键管理器和全局配置定义
@@ -33,7 +32,7 @@ namespace Oracle.Utils
             {
                 UniGUI.Value = !UniGUI.Value;
                 var value = UniGUI.Value;
-                OracleNotify.Message($"全局绘制已{(value ? "启用" : "禁用")}!", value ? ENotificationIconType.Default : ENotificationIconType.Alert, GlobalCfg.MuteNotice.Value);
+                OracleNotify.Message($"全局绘制已{(value ? "启用" : "禁用")}!", value ? ENotificationIconType.Default : ENotificationIconType.Alert, MuteNotice.Value);
             }
             
         }
@@ -43,25 +42,25 @@ namespace Oracle.Utils
         /// <param name="config">传入配置实例</param>
         public void Initialize(ConfigFile config)
         {
-            UniGUIKey = config.Bind<KeyCode>(
+            UniGUIKey = config.Bind(
                 "绘制设置",
                 "切换全局绘制",
                 KeyCode.Insert,
                 "按下切换所有绘制状态"
             );
-            UniGUI = config.Bind<bool>(
+            UniGUI = config.Bind(
                 "绘制设置",
                 "启用绘制",
                 true,
                 "启用绘制"
             );
-            FPSLimit = config.Bind<bool>(
+            FPSLimit = config.Bind(
                 "绘制设置",
                 "开启帧数限制",
                 true,
                 "启用后透视将以50帧为上限绘制而不是每帧绘制，关闭可能造成一定的帧数下降"
             );
-            MuteNotice = config.Bind<bool>(
+            MuteNotice = config.Bind(
                 "绘制设置",
                 "静默提示",
                 false,

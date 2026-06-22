@@ -1,5 +1,5 @@
 ﻿using EFT.UI;
-using Oracle.Tools;
+using Oracle.Utils;
 using UnityEngine;
 
 namespace Oracle.RaidManager

@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-public static class RenderUtils
+public static class OracleRendering
 {
     public static Material EspMaterial { get; private set; }
     public static GUIStyle EspTextStyle { get; private set; }

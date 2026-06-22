@@ -1,10 +1,10 @@
 ﻿using EFT.Communications;
-using Oracle.Utils;
+using Oracle.Data;
 using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace Oracle.Tools
+namespace Oracle.Utils
 {
     internal class OracleNotify
     {

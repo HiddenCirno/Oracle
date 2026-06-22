@@ -5,7 +5,6 @@ using EFT.Hideout;
 using EFT.Interactive;
 using EFT.InventoryLogic;
 using Oracle.Data;
-using Oracle.Tools;
 using Oracle.Utils;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -32,7 +31,7 @@ namespace Oracle.ESP
             if (cam == null) return;
 
             DrawLootFOVCircle();
-            DrawLootText(cam, RenderUtils.EspTextStyle); // 统一使用 RenderUtils 的样式
+            DrawLootText(cam, OracleRendering.EspTextStyle); // 统一使用 RenderUtils 的样式
         }
         /// <summary>
         /// 绘制文本
@@ -92,7 +91,7 @@ namespace Oracle.ESP
             float fovRadius = LootESPCfg.LootESPFovRange.Value;
 
             // ⭐ 3. 直接调用 RenderUtils 里的画圆方法
-            RenderUtils.DrawCircle(screenCenter, fovRadius, OracleColorManager.LootCircle, 64);
+            OracleRendering.DrawCircle(screenCenter, fovRadius, OracleColorManager.LootCircle, 64);
         }
     }
     /// <summary>

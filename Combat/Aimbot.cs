@@ -5,7 +5,6 @@ using EFT.Communications;
 using HarmonyLib;
 using Oracle.Data;
 using Oracle.ESP;
-using Oracle.Tools;
 using Oracle.Utils;
 using UnityEngine;
 using static Oracle.Data.OracleInterface;
@@ -33,7 +32,7 @@ namespace Oracle.Combat
             if (!AimbotCfg.EnableAimbot.Value || !AimbotCfg.DrawAimbotFov.Value) return;
             Vector2 screenCenter = new Vector2(Screen.width / 2f, Screen.height / 2f);
             float fovRadius = AimbotCfg.AimbotFovRadius.Value;
-            RenderUtils.DrawCircle(screenCenter, fovRadius, new Color(1f, 0f, 0f, 0.3f), 64);
+            OracleRendering.DrawCircle(screenCenter, fovRadius, new Color(1f, 0f, 0f, 0.3f), 64);
         }
         
         public void SubscribeEvent()
@@ -144,7 +143,7 @@ namespace Oracle.Combat
             Vector2 screenCenter = new Vector2(Screen.width / 2f, Screen.height / 2f);
             Vector3 endPos = new Vector3(screenPos.x, screenPos.y, 0);
             //画线
-            RenderUtils.DrawLine(screenCenter, endPos, OracleColorManager.AimbotCircle);
+            OracleRendering.DrawLine(screenCenter, endPos, OracleColorManager.AimbotCircle);
         }
         
     }

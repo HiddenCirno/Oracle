@@ -9,7 +9,6 @@ using EFT.UI;
 using EFT.UI.DragAndDrop;
 using HarmonyLib;
 using Oracle.Data;
-using Oracle.Tools;
 using Oracle.Utils;
 using System;
 using System.Collections.Generic;
