@@ -14,7 +14,7 @@ namespace Oracle.RaidManager
         public Rect _windowRect = new Rect(480, 20, 550, 650);
 
         private int _selectedTab = 0;
-        private readonly string[] _tabs = { "物资雷达", "实体管理", "虚空召唤", "技能覆写" };
+        private readonly string[] _tabs = { "物资管理", "Bot管理", "Bot生成", "技能管理" };
 
         // 实例化各子面板，用于维持它们各自的滚动条和内部UI状态
         private readonly LootManagerGUI _lootPanel = new LootManagerGUI();
