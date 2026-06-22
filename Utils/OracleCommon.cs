@@ -8,7 +8,7 @@ using System.Collections.Generic;
 using System.Reflection;
 using UnityEngine;
 
-namespace Oracle.Data
+namespace Oracle.Utils
 {
     
 
@@ -34,7 +34,7 @@ namespace Oracle.Data
             {
                 char c = str[i];
                 // 允许大写 A-Z，小写 a-z，以及空格、连字符、单引号
-                if (!((c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || (c >= '0' && c <= '9') || c == ' '))// && c != '-' && c != '\'')
+                if (!(c >= 'A' && c <= 'Z' || c >= 'a' && c <= 'z' || c >= '0' && c <= '9' || c == ' '))// && c != '-' && c != '\'')
                     return false;
             }
             return true;

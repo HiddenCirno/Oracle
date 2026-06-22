@@ -9,12 +9,12 @@ using static Oracle.Data.OracleInterface;
 
 namespace Oracle.Combat
 {
-    public class InfinityStaminaAndNoFallenDamage
+    public class InfinityStamina
     {
         /// <summary>
         /// 耐力锁定脚本
         /// </summary>
-        public class PlayerStatusEditComponent : MonoBehaviour
+        public class InfinityStaminaComponent : MonoBehaviour
         {
             private Player localPlayer;
             private void Awake()
@@ -29,7 +29,7 @@ namespace Oracle.Combat
                 if (localPlayer.Physical != null)
                 {
                     //定义开关
-                    bool isInfinite = PlayerStatusEditCfg.EnableInfiniteStamina.Value;
+                    bool isInfinite = InfinityStaminaCfg.EnableInfiniteStamina.Value;
                     //赋值
                     if (localPlayer.Physical.Stamina != null)
                     {
@@ -49,58 +49,12 @@ namespace Oracle.Combat
             }
         }
     }
-    //Patch
-    [HarmonyPatch(typeof(Player), "ApplyDamageInfo")]
-    public class AntiFallenDamagePatch
-    {
-        public static bool Prefix(Player __instance, ref DamageInfoStruct damageInfo, EBodyPart bodyPartType, EBodyPartColliderType colliderType, float absorbed)
-        {
-            //不知道是速度太快还是过滤问题，总之都改了
-            //奇怪, 为什么玩家Scav可以而玩家不行
-            //Fika干了什么?
-            //仅自己判断
-            //if (!__instance.IsYourPlayer)
-            //{
-            //    return true;
-            //}
-            //else
-            //{
-            //伤害类型过滤
-            if (__instance == PluginsCore.CorrectPlayer&&PlayerStatusEditCfg.DisableFallenDamage.Value && (damageInfo.DamageType == EDamageType.Fall || damageInfo.DamageType == EDamageType.Impact))
-            {
-                //阻拦
-                damageInfo.Damage = 0;
-                damageInfo.DidBodyDamage = 0;
-                damageInfo.DelayedDamage = false;
-            }
-            return true;
-            //}
-        }
-    }
-    //Patch
-    [HarmonyPatch(typeof(ActiveHealthController), "ApplyDamage")]
-    public class AntiFallenDamagePatch2
-    {
-        public static bool Prefix(ActiveHealthController __instance, EBodyPart bodyPart, ref float damage, ref DamageInfoStruct damageInfo)
-        {
-            if (PlayerStatusEditCfg.DisableFallenDamage.Value && (damageInfo.DamageType == EDamageType.Fall || damageInfo.DamageType == EDamageType.Impact))
-            {
-                //阻拦
-                damage = 0f;
-                damageInfo.Damage = 0;
-                damageInfo.DidBodyDamage = 0;
-                damageInfo.DelayedDamage = false;
-            }
-            return true;
-            //}
-        }
-    }
     [HarmonyPatch(typeof(InventoryEquipment), "smethod_1")]
     public class InfinityWeightPatch
     {
         public static bool Prefix(InventoryEquipment __instance, IEnumerable<Slot> slots, ref float __result)
         {
-            if (PlayerStatusEditCfg.EnableInfiniteWeight.Value)
+            if (InfinityStaminaCfg.EnableInfiniteWeight.Value)
             {
                 __result = 0f;
                 return false;
@@ -112,12 +66,11 @@ namespace Oracle.Combat
     /// <summary>
     /// 配置项定义
     /// </summary>
-    public class PlayerStatusEditCfg : IOracleCfg
+    public class InfinityStaminaCfg : IOracleCfg
     {
 
         internal static ConfigEntry<bool> EnableInfiniteStamina { get; set; }
         internal static ConfigEntry<bool> EnableInfiniteWeight { get; set; }
-        internal static ConfigEntry<bool> DisableFallenDamage { get; set; }
 
         /// <summary>
         /// 配置项初始化
@@ -136,12 +89,6 @@ namespace Oracle.Combat
                 "无限负重",
                 true,
                 "启用时所有物品将不计入重量"
-            );
-            DisableFallenDamage = config.Bind(
-                "玩家属性",
-                "阻止摔落伤害",
-                true,
-                "防止玩家受到跌落伤害"
             );
         }
     }

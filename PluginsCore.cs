@@ -15,7 +15,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using UnityEngine;
-using static Oracle.Combat.InfinityStaminaAndNoFallenDamage;
+using static Oracle.Combat.InfinityStamina;
 using static Oracle.Data.OracleInterface;
 
 namespace Oracle
@@ -274,7 +274,7 @@ namespace Oracle
             PluginsCore.CorrectPlayer = __instance.MainPlayer;
             PluginsCore.CorrectGroupId = __instance.MainPlayer.Profile?.Info?.GroupId ?? "";
             //挂载脚本
-            __instance.MainPlayer.gameObject.AddComponent<PlayerStatusEditComponent>();
+            __instance.MainPlayer.gameObject.AddComponent<InfinityStaminaComponent>();
             //缓存容器
             OracleLootManager.CachedContainers = UnityEngine.Object.FindObjectsOfType<EFT.Interactive.LootableContainer>();
         }

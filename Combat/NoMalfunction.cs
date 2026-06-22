@@ -5,7 +5,6 @@ using EFT.Ballistics;
 using EFT.InventoryLogic;
 using HarmonyLib;
 using Oracle.ItemSpawn;
-using Oracle.Tools;
 using System;
 using System.Reflection;
 using static Oracle.Data.OracleInterface;

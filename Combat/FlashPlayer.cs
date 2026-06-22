@@ -6,7 +6,6 @@ using EFT.InventoryLogic;
 using HarmonyLib;
 using Oracle.Data;
 using Oracle.ItemSpawn;
-using Oracle.Tools;
 using System;
 using System.Reflection;
 using UnityEngine;
