@@ -48,11 +48,11 @@ namespace Oracle.Data
                 }
                 else
                 {
-                    level = $"<color=#7FFF00>{info.Level}级</color>";
-                    string color = info.Side.ToString() == "Usec" ? "#007CFF" : "#FF8C00";
+                    level = $"<color={OracleColorManager.PlayerLevel}>{info.Level}级</color>";
+                    string color = info.Side.ToString() == "Usec" ? OracleColorManager.PMCUSEC : OracleColorManager.PMCBEAR;
                     string displayContent = includeName ? $"{info.Side} {name}" : info.Side.ToString();
                     string baseText = $"<color={color}>{displayContent}</color>";
-                    sideText = isTeammate ? $"<color=#66CCFF>友军 </color>{baseText}" : baseText;
+                    sideText = isTeammate ? $"<color={OracleColorManager.AllyPlayer}>友军 </color>{baseText}" : baseText;
                 }
             }
 
@@ -65,25 +65,25 @@ namespace Oracle.Data
 
             // 使用变量存储核心标识，不再重复拼接颜色标签
             string roleLabel = "Scav";
-            string colorHex = "#FFFF8B";
+            string colorHex = OracleColorManager.Scav;
 
             //这里是不是可以加上多角色适配？
             // 核心优先级逻辑
-            if (role.Contains("boss") || IsSpecialBoss(role)) { roleLabel = "Boss"; colorHex = "#CE0000"; }
-            else if (role == "bossboarsniper" || role == "marksman") { roleLabel = "狙击Scav"; colorHex = "#00FA9A"; }
-            else if (role == "pmcbot" || role == "exusec") { roleLabel = "美军"; colorHex = "#7300A6"; }
-            else if (role.Contains("follower") || role == "tagillahelperagro") { roleLabel = "护卫"; colorHex = "#FF2DE9"; }
-            else if (role.Contains("sectant")) { roleLabel = "邪教徒"; colorHex = "#ADFF2F"; }
-            else if (role == "gifter") { roleLabel = "圣诞老人"; colorHex = "#00FFFF"; }
-            else if (role.Contains("btr")) { roleLabel = "BTR"; colorHex = "#228B22"; }
-            else if (role.Contains("black")) { roleLabel = "黑狐"; colorHex = "#DC143C"; }
+            if (role.Contains("boss") || IsSpecialBoss(role)) { roleLabel = "Boss"; colorHex = OracleColorManager.Boss; }
+            else if (role == "bossboarsniper" || role == "marksman") { roleLabel = "狙击Scav"; colorHex = OracleColorManager.Sniper; }
+            else if (role == "pmcbot" || role == "exusec") { roleLabel = "美军"; colorHex = OracleColorManager.Raider; }
+            else if (role.Contains("follower") || role == "tagillahelperagro") { roleLabel = "护卫"; colorHex = OracleColorManager.Follower; }
+            else if (role.Contains("sectant")) { roleLabel = "邪教徒"; colorHex = OracleColorManager.Sectant; }
+            else if (role == "gifter") { roleLabel = "圣诞老人"; colorHex = OracleColorManager.Santa; }
+            else if (role.Contains("btr")) { roleLabel = "BTR"; colorHex = OracleColorManager.BTR; }
+            else if (role.Contains("black")) { roleLabel = "黑狐"; colorHex = OracleColorManager.BlackDiv; }
 
             // 组合名称部分
             string displayString = includeName ? $"{roleLabel} {name}" : roleLabel;
             string finalRes = $"<color={colorHex}>{displayString}</color>";
 
             // 组合友军部分
-            return isTeammate ? $"<color=#66CCFF>友军 </color>{finalRes}" : finalRes;
+            return isTeammate ? $"<color={OracleColorManager.AllyPlayer}>友军 </color>{finalRes}" : finalRes;
         }
 
         private static bool IsSpecialBoss(string role)

@@ -19,10 +19,6 @@ namespace Oracle.ESP
     /// </summary>
     public class PlayerESP : IOracleESP
     {
-        //颜色定义
-        public static readonly Color ColorSafe = Color.green; //隔墙不可见
-        public static readonly Color ColorWarning = Color.yellow; //你可以看到它, 而它没有看你
-        public static readonly Color ColorDangerous = Color.red; //你看得到它并且它看得到你
         public void SubscribeEvent()
         {
             // 订阅统一的渲染频道
@@ -82,17 +78,17 @@ namespace Oracle.ESP
                 if (canBotSeePlayer)
                 {
                     //AI能看到你并且无遮挡
-                    finalColor = ColorDangerous;
+                    finalColor = OracleColorManager.EnemyDangerous;
                 }
                 else if (canPlayerSeeBot)
                 {
                     //你能看到AI, AI看不到你并且无遮挡
-                    finalColor = ColorWarning;
+                    finalColor = OracleColorManager.EnemyWarning;
                 }
                 else
                 {
                     //双方之间有障碍物
-                    finalColor = ColorSafe;
+                    finalColor = OracleColorManager.EnemySafe;
                 }
                 //决定绘制火柴人的颜色
                 //这里也许需要为后面的血条透视功能做修改
@@ -267,7 +263,10 @@ namespace Oracle.ESP
             OraclePlayerManager.GetPlayerTotalHealth(player, out float curHp, out float maxHp);
             //百分比变色
             if (maxHp <= 0) return;
-            float hpPercent = curHp / maxHp;
+
+            // 加入 Clamp01 确保血量异常时百分比也不会超出 0~1 范围，防止插值颜色越界
+            float hpPercent = Mathf.Clamp01(curHp / maxHp);
+
             //反转Y轴适配坐标
             float screenX = feetScreenPos.x;
             float screenY = Screen.height - feetScreenPos.y;
@@ -276,21 +275,36 @@ namespace Oracle.ESP
             float barHeight = 4f;
             float barX = screenX - (barWidth / 2f);
             float barY = screenY + 5f; // 放在脚底下边缘 5 像素的位置
+
             //绘制
             Color oldGuiColor = GUI.color;
             //暗灰色底槽背景
-            GUI.color = new Color(0.2f, 0.2f, 0.2f, 0.8f);
+            GUI.color = OracleColorManager.HealthBarBG;
             GUI.DrawTexture(new Rect(barX, barY, barWidth, barHeight), Texture2D.whiteTexture);
-            //按百分比动态变化的前景色
-            Color hpColor = Color.green;
-            if (hpPercent < 0.5f) hpColor = Color.yellow;
-            if (hpPercent < 0.25f) hpColor = Color.red;
+
+            // ⭐ 核心修改：按百分比分段平滑插值前景色
+            Color hpColor;
+            if (hpPercent > 0.5f)
+            {
+                // 50% ~ 100% 阶段：从黄(Half) 平滑渐变到 绿(Full)
+                // 原理：(hpPercent - 0.5) 将范围平移到 0~0.5，乘以 2f 缩放为 0~1 的标准 lerp 系数
+                float t = (hpPercent - 0.5f) * 2f;
+                hpColor = Color.Lerp(OracleColorManager.HealthBarHalf, OracleColorManager.HealthBarFull, t);
+            }
+            else
+            {
+                // 0% ~ 50% 阶段：从红(Quarter) 平滑渐变到 黄(Half)
+                // 原理：hpPercent 本身是 0~0.5，乘以 2f 缩放为 0~1 的标准 lerp 系数
+                float t = hpPercent * 2f;
+                hpColor = Color.Lerp(OracleColorManager.HealthBarQuarter, OracleColorManager.HealthBarHalf, t);
+            }
+
             GUI.color = hpColor;
             GUI.DrawTexture(new Rect(barX, barY, barWidth * hpPercent, barHeight), Texture2D.whiteTexture);
             //还原颜色
             GUI.color = oldGuiColor;
         }
-        
+
         /// <summary>
         /// 绘制骨骼连线
         /// </summary>
@@ -330,7 +344,7 @@ namespace Oracle.ESP
             //肢体损毁
             if (bodyPartHealth.Current <= 0.01f)
             {
-                return Color.magenta; // 肢体黑了，强制高亮紫
+                return OracleColorManager.EnemyPartDestroy; // 肢体黑了，强制高亮紫
             }
             //计算
             float max = bodyPartHealth.Maximum;
@@ -344,17 +358,17 @@ namespace Oracle.ESP
             //明天修改下方法定义, 根据骨骼原色传入渐变目标色试试
             //根据传入颜色确定目标颜色
             Color targetColor;
-            if (baseColor == ColorSafe) // 当前是绿色
+            if (baseColor == OracleColorManager.EnemySafe) // 当前是绿色
             {
-                targetColor = Color.blue;
+                targetColor = OracleColorManager.EnemySafeDestroy;
             }
-            else if (baseColor == ColorWarning) // 当前是黄色
+            else if (baseColor == OracleColorManager.EnemyWarning) // 当前是黄色
             {
-                targetColor = Color.red;
+                targetColor = OracleColorManager.EnemyWarningDestroy;
             }
             else // 当前是红色 (ColorDangerous)
             {
-                targetColor = new Color(0.35f, 0f, 0f);
+                targetColor = OracleColorManager.EnemyDangerousDestroy;
             }
             float minLerp = 0.5f;
             float lerpFactor = Mathf.Lerp(minLerp, 1.0f, healthPercent);

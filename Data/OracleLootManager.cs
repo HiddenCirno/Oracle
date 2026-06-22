@@ -175,7 +175,7 @@ namespace Oracle.Data
             OracleColor iColor = GetColorByLevel(itemLevel);
             //富文本合并
             string fullName = string.IsNullOrEmpty(prefix) ? itemName : $"{prefix} {itemName}";
-            string formattedName = $"<color=#{iColor}>{fullName} {priceStr}</color> <color=#FFFF00>{dist}米</color>";
+            string formattedName = $"<color={iColor}>{fullName} {priceStr}</color> <color=#FFFF00>{dist}米</color>";
             int currentYOffset = 0;
 
             // ⭐ 核心优化：只有容器/尸体（StaticLoot）才参与 YOffset 计算

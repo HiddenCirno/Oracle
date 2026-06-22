@@ -22,7 +22,7 @@ namespace Oracle.Data
         public string Name;
         public int Distance;
         public int Price;
-        public Color ItemColor;
+        public OracleColor ItemColor;
         public int YOffset;
         public int StackCount;
     }
@@ -89,5 +89,6 @@ namespace Oracle.Data
         // ⭐ C# 黑魔法 2：隐式转换为 String
         // 当拼接富文本字符串时，直接传 OracleColor，它会自动变成 "#FFFFFF"
         public static implicit operator string(OracleColor oc) => oc.HexColor;
+        public override string ToString() => HexColor;
     }
 }
