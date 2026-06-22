@@ -10,7 +10,7 @@ namespace Oracle.RaidManager
 
         public static void ToggleCursor()
         {
-            var unlock = AIManagerGUI._isMenuOpen || BotGeneratorGUI._isMenuOpen || LootManagerGUI._isMenuOpen || ItemManagerGUI._isMenuOpen;
+            var unlock = RaidManagerGUI._isMenuOpen|| ItemManagerGUI._isMenuOpen;
             if (_inputManager == null)
                 _inputManager = GameObject.Find("___Input");
 

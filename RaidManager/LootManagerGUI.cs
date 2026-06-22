@@ -26,10 +26,10 @@ using static RootMotion.FinalIK.InteractionTrigger.Range;
 
 namespace Oracle.RaidManager
 {
-    public class LootManagerGUI : IOracleManagerGUI
+    public class LootManagerGUI
     {
         public static bool _isMenuOpen = false;
-        public Rect _windowRect = new Rect(480, 20, 500, 600); // 默认位置
+        public Rect _windowRect = new Rect(480, 20, 550, 650); // 默认位置
         public Vector2 _scrollPos;
         public static bool ShowLooseLoot = true;
         public static bool ShowStaticLoot = true;
@@ -54,23 +54,6 @@ namespace Oracle.RaidManager
             }
         }
 
-        public void SubscribeEvent()
-        {
-            OracleEvent.OnDrawManagerGUI += OnGUI;
-            OracleEvent.OnUpdate += Update;
-        }
-        public void Update()
-        {
-            if (PluginsCore.CorrectGameWorld == null || PluginsCore.CorrectPlayer == null || PluginsCore.CorrectGameWorld.AllAlivePlayersList == null) return;
-            // 使用 F8 呼出战利品面板
-            if (Input.GetKeyDown(LootManagerGUICfg.LootManagerKey.Value))
-            {
-                _isMenuOpen = !_isMenuOpen;
-                // 借用你写在 ItemManagerGUI 里的 ToggleCursor 逻辑（或者你可以把它提到 HotKeyManager 里公用）
-                MouseManager.ToggleCursor();
-            }
-        }
-
         public void OnGUI()
         {
             if (!_isMenuOpen) return;
@@ -79,10 +62,10 @@ namespace Oracle.RaidManager
 
             GUI.backgroundColor = Color.white;
 
-            _windowRect = GUI.Window(8850, _windowRect, DrawWindow, "战局全图物资雷达 (按 F8 隐藏)", UIStyleManager.WindowStyle);
+            //_windowRect = GUI.Window(8850, _windowRect, DrawWindow, "战局全图物资雷达 (按 F8 隐藏)", UIStyleManager.WindowStyle);
         }
 
-        public void DrawWindow(int windowID)
+        public void DrawPanel()
         {
             if (GUI.Button(new Rect(_windowRect.width - 90, 4, 40, 20), "地面", ShowLooseLoot ? UIStyleManager.BlueButtonStyle : UIStyleManager.RedButtonStyle))
             {
@@ -91,12 +74,6 @@ namespace Oracle.RaidManager
             if (GUI.Button(new Rect(_windowRect.width - 135, 4, 40, 20), "容器", ShowStaticLoot ? UIStyleManager.BlueButtonStyle : UIStyleManager.RedButtonStyle))
             {
                 ShowStaticLoot = !ShowStaticLoot;
-            }
-            // 关闭按钮
-            if (GUI.Button(new Rect(_windowRect.width - 45, 4, 40, 20), "关闭", UIStyleManager.RedButtonStyle))
-            {
-                _isMenuOpen = false;
-                MouseManager.ToggleCursor();
             }
 
             GUIStyle origScroll = GUI.skin.verticalScrollbar;
@@ -178,8 +155,6 @@ namespace Oracle.RaidManager
 
             GUI.skin.verticalScrollbar = origScroll;
             GUI.skin.verticalScrollbarThumb = origThumb;
-
-            GUI.DragWindow(new Rect(0, 0, _windowRect.width - 50, 25));
         }
 
         public Texture2D GetCachedIcon(Item item)

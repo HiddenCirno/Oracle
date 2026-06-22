@@ -16,7 +16,7 @@ using static Oracle.Data.OracleInterface;
 
 namespace Oracle.RaidManager
 {
-    public class BotGeneratorGUI : IOracleManagerGUI
+    public class BotGeneratorGUI
     {
         // UI 状态
         public static bool _isMenuOpen = false;
@@ -35,21 +35,6 @@ namespace Oracle.RaidManager
 
         // 防止狂点按钮导致游戏崩溃
         private bool _isSpawning = false;
-        public void SubscribeEvent()
-        {
-            OracleEvent.OnDrawManagerGUI += OnGUI;
-            OracleEvent.OnUpdate += Update;
-        }
-        public void Update()
-        {
-            if (PluginsCore.CorrectGameWorld == null || PluginsCore.CorrectPlayer == null || PluginsCore.CorrectGameWorld.AllAlivePlayersList == null) return;
-            // 假设你在 HotKeyManager 里配了一个 BotGeneratorKey，这里暂且用 F7 演示
-            if (Input.GetKeyDown(BotGeneratorGUICfg.BotGeneratorKey.Value)) // 或者 HotKeyManager.BotGeneratorKey.Value
-            {
-                _isMenuOpen = !_isMenuOpen;
-                MouseManager.ToggleCursor();
-            }
-        }
         private void EnsureRolesLoaded()
         {
             if (_allAvailableRoles != null) return;
@@ -70,18 +55,12 @@ namespace Oracle.RaidManager
             UIStyleManager.EnsureInitialized();
             GUI.backgroundColor = Color.white;
 
-            _windowRect = GUI.Window(8851, _windowRect, DrawWindow, "战局实体生成器 (按 F7 隐藏)", UIStyleManager.WindowStyle);
+            //_windowRect = GUI.Window(8851, _windowRect, DrawWindow, "战局实体生成器 (按 F7 隐藏)", UIStyleManager.WindowStyle);
         }
 
-        public void DrawWindow(int windowID)
+        public void DrawPanel()
         {
-            // ---- 右上角关闭按钮 ----
-            if (GUI.Button(new Rect(_windowRect.width - 45, 4, 40, 20), "关闭", UIStyleManager.RedButtonStyle))
-            {
-                _isMenuOpen = false;
-                MouseManager.ToggleCursor();
-            }
-
+            EnsureRolesLoaded();
             GUILayout.Space(10);
             _scrollPos = GUILayout.BeginScrollView(_scrollPos);
 
@@ -109,7 +88,7 @@ namespace Oracle.RaidManager
             GUI.skin.verticalScrollbar = UIStyleManager.ScrollbarStyle;
             GUI.skin.verticalScrollbarThumb = UIStyleManager.ScrollbarThumbStyle;
 
-            _rolesScrollPos = GUILayout.BeginScrollView(_rolesScrollPos, UIStyleManager.BoxStyle, GUILayout.Height(150));
+            _rolesScrollPos = GUILayout.BeginScrollView(_rolesScrollPos, UIStyleManager.BoxStyle);
 
             int count = 0;
             GUILayout.BeginHorizontal();
@@ -156,7 +135,6 @@ namespace Oracle.RaidManager
             GUI.enabled = true; // 恢复 GUI 启用状态
 
             GUILayout.EndScrollView();
-            GUI.DragWindow(new Rect(0, 0, _windowRect.width - 50, 25));
         }
 
         // ==========================================

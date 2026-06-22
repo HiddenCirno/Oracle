@@ -16,36 +16,17 @@ using static Oracle.Data.OracleInterface;
 
 namespace Oracle.RaidManager
 {
-    public class AIManagerGUI : IOracleManagerGUI
+    public class AIManagerGUI
     {
         // UI 状态
         public static bool _isMenuOpen = false;
-        public Rect _windowRect = new Rect(480, 20, 500, 600); // 默认在物品管理器右侧
+        public Rect _windowRect = new Rect(480, 20, 550, 650); // 默认在物品管理器右侧
         public Vector2 _scrollPos;
 
         // --- 头像异步缓存池 ---
         public Dictionary<string, Texture2D> _iconCache = new Dictionary<string, Texture2D>();
         // 用于存储正在后台渲染中的头像请求
         public Dictionary<string, GClass929> _pendingIcons = new Dictionary<string, GClass929>();
-
-        public void SubscribeEvent()
-        {
-            OracleEvent.OnDrawManagerGUI += OnGUI;
-            OracleEvent.OnUpdate += Update;
-        }
-
-        public void Update()
-        {
-            //这玩意是不是可以抽象进工具类
-            //而且一二号顺序TMD是不是反了?
-            if (PluginsCore.CorrectGameWorld == null || PluginsCore.CorrectPlayer == null || PluginsCore.CorrectGameWorld.AllAlivePlayersList == null) return;
-            // 使用 F9 作为 AI 控制台的呼出按键
-            if (Input.GetKeyDown(AIManagerGUICfg.AIManagerKey.Value))
-            {
-                _isMenuOpen = !_isMenuOpen;
-                MouseManager.ToggleCursor();
-            }
-        }
 
         public void OnGUI()
         {
@@ -55,10 +36,10 @@ namespace Oracle.RaidManager
 
             GUI.backgroundColor = Color.white;
 
-            _windowRect = GUI.Window(8849, _windowRect, DrawWindow, "系统指令 - 战局实体管理器 (按 F9 隐藏)", UIStyleManager.WindowStyle);
+            //_windowRect = GUI.Window(8849, _windowRect, DrawWindow, "系统指令 - 战局实体管理器 (按 F9 隐藏)", UIStyleManager.WindowStyle);
         }
 
-        public void DrawWindow(int windowID)
+        public void DrawPanel()
         {
             // ---- 右上角区域 ----
             // 1. 全歼按钮 (放在关闭按钮左侧)
@@ -75,15 +56,10 @@ namespace Oracle.RaidManager
 
                         // 执行处决
                         player.KillMe(EBodyPartColliderType.HeadCommon, 999999999);
+                        //防止无敌
+                        player?.OnDead(EDamageType.Environment);
                     }
                 }
-            }
-
-            // ---- 右上角关闭按钮 ----
-            if (GUI.Button(new Rect(_windowRect.width - 45, 4, 40, 20), "关闭", UIStyleManager.RedButtonStyle))
-            {
-                _isMenuOpen = false;
-                MouseManager.ToggleCursor();
             }
 
             GUIStyle origScroll = GUI.skin.verticalScrollbar;
@@ -202,8 +178,6 @@ namespace Oracle.RaidManager
 
             GUI.skin.verticalScrollbar = origScroll;
             GUI.skin.verticalScrollbarThumb = origThumb;
-
-            GUI.DragWindow(new Rect(0, 0, _windowRect.width - 50, 25));
         }
 
         // ==========================================
