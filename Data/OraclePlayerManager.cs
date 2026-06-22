@@ -40,7 +40,7 @@ namespace Oracle.Data
             {
                 var role = info.Settings?.Role.ToString().ToLower() ?? "assault";
                 //迷宫小弟、玩家和全英文名不经过转换，反向筛选西里尔字母
-                name = ((info.Side == EPlayerSide.Bear || info.Side == EPlayerSide.Usec) || (role == "tagillahelperagro") || IsAllEnglish(info.Nickname)) ? info.Nickname : GStruct21.ConvertToLatinic(info.Nickname);
+                name = ((info.Side == EPlayerSide.Bear || info.Side == EPlayerSide.Usec) || (role == "tagillahelperagro") || OracleCommon.IsAllEnglish(info.Nickname)) ? info.Nickname : GStruct21.ConvertToLatinic(info.Nickname);
 
                 if (info.Side.ToString() == "Savage")
                 {
@@ -114,17 +114,6 @@ namespace Oracle.Data
             return bt.Original.position;
         }
 
-        /// <summary>
-        /// 判断距离, O(1)单步搞定
-        /// </summary>
-        /// <param name="maxDistance">距离限制</param>
-        /// <param name="p1">坐标1</param>
-        /// <param name="p2">坐标2</param>
-        /// <returns></returns>
-        public static bool IsInRange(int maxDistance, Vector3 p1, Vector3 p2)
-        {
-            return (p1 - p2).sqrMagnitude <= maxDistance * maxDistance;
-        }
         /// <summary>
         /// 判断AI是否在玩家可见范围
         /// </summary>
@@ -236,21 +225,5 @@ namespace Oracle.Data
             }
         }
 
-        /// <summary>
-        /// 判断字符串是否全是英文字符
-        /// </summary>
-        /// <param name="str">输入字符</param>
-        /// <returns></returns>
-        public static bool IsAllEnglish(string str)
-        {
-            for (int i = 0; i < str.Length; i++)
-            {
-                char c = str[i];
-                // 允许大写 A-Z，小写 a-z，以及空格、连字符、单引号
-                if (!((c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || (c >= '0' && c <= '9') || c == ' '))// && c != '-' && c != '\'')
-                    return false;
-            }
-            return true;
-        }
     }
 }

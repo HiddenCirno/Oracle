@@ -2,7 +2,7 @@
 using SPT.Common.Http;
 using System.Collections.Generic;
 
-namespace Oracle.Tools
+namespace Oracle.Data
 {
     /// <summary>
     /// 手册工具, 包含路由请求, 类型接口和通讯结果定义

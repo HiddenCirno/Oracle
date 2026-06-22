@@ -22,7 +22,6 @@ namespace Oracle.Data
         private static FieldInfo _tripwireStartField = typeof(TripwireProceduralMesh).GetField("vector3_0", BindingFlags.NonPublic | BindingFlags.Instance);
         private static FieldInfo _tripwireEndField = typeof(TripwireProceduralMesh).GetField("vector3_1", BindingFlags.NonPublic | BindingFlags.Instance);
 
-
         /// <summary>
         /// 绊雷扫描协程
         /// </summary>

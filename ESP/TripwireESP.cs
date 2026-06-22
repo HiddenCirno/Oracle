@@ -55,7 +55,7 @@ namespace Oracle.ESP
                 foreach (TripwireData trap in OracleTripwireManager.CachedTripwires)
                 {
                     // 距离过滤 (用中点计算距离)
-                    if (!OraclePlayerManager.IsInRange(maxDistance, playerPos, trap.CenterPos)) continue;
+                    if (!OracleCommon.IsInRange(maxDistance, playerPos, trap.CenterPos)) continue;
 
                     // 转屏幕坐标
                     Vector3 screenPointA = cam.WorldToScreenPoint(trap.StartPos);
@@ -77,7 +77,7 @@ namespace Oracle.ESP
             textStyle.richText = true;
             foreach (TripwireData trap in OracleTripwireManager.CachedTripwires)
             {
-                if (!OraclePlayerManager.IsInRange(maxDistance, playerPos, trap.CenterPos)) continue;
+                if (!OracleCommon.IsInRange(maxDistance, playerPos, trap.CenterPos)) continue;
 
                 Vector3 screenCenter = cam.WorldToScreenPoint(trap.CenterPos);
 

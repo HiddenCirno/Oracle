@@ -100,7 +100,7 @@ namespace Oracle.Combat
                 string targetGroupId = player.Profile?.Info?.GroupId ?? "";
                 if (!string.IsNullOrEmpty(PluginsCore.CorrectGroupId) && targetGroupId == PluginsCore.CorrectGroupId) continue;
                 //距离过滤
-                if (!OraclePlayerManager.IsInRange(maxDist, myPos, player.Transform.position)) continue;
+                if (!OracleCommon.IsInRange(maxDist, myPos, player.Transform.position)) continue;
                 //找头
                 Vector3? headPos = AimbotCfg.AimbotPartSetting.Value == "头部" ? OraclePlayerManager.GetBonePos(player.PlayerBones.Head) : OraclePlayerManager.GetBonePos(player.PlayerBones.Spine3);
                 if (!headPos.HasValue) continue;

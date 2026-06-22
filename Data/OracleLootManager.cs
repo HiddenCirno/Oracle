@@ -92,7 +92,7 @@ namespace Oracle.Data
                     if (lootItem == null || lootItem.Item == null || lootItem.gameObject == null) continue;
                     if (!lootItem.gameObject.activeSelf) continue;
 
-                    if (!OraclePlayerManager.IsInRange((int)maxLootDistance, playerPos, lootItem.transform.position)) continue;
+                    if (!OracleCommon.IsInRange((int)maxLootDistance, playerPos, lootItem.transform.position)) continue;
 
                     float dist = Vector3.Distance(playerPos, lootItem.transform.position);
 
@@ -108,7 +108,7 @@ namespace Oracle.Data
                     foreach (var container in CachedContainers)
                     {
                         if (container?.ItemOwner?.RootItem == null) continue;
-                        if (!OraclePlayerManager.IsInRange((int)maxLootDistance, playerPos, container.transform.position)) continue;
+                        if (!OracleCommon.IsInRange((int)maxLootDistance, playerPos, container.transform.position)) continue;
 
                         int dist = Mathf.RoundToInt(Vector3.Distance(playerPos, container.transform.position));
                         string containerName = GetContainerName(container);

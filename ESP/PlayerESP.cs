@@ -68,7 +68,7 @@ namespace Oracle.ESP
             {   //过滤非自己和空玩家
                 if (player == null || player == PluginsCore.CorrectPlayer || player.PlayerBones == null) continue;
                 //距离计算, 如果超出透视范围则不绘制, 跳过
-                if (!OraclePlayerManager.IsInRange(PlayerESPCfg.PlayerESPMaxDistance.Value, PluginsCore.CorrectPlayer.Transform.position, player.Transform.position))
+                if (!OracleCommon.IsInRange(PlayerESPCfg.PlayerESPMaxDistance.Value, PluginsCore.CorrectPlayer.Transform.position, player.Transform.position))
                 {
                     continue;
                 }
@@ -202,7 +202,7 @@ namespace Oracle.ESP
             {
                 //照常检查和计算距离, 同DrawPlayerBone
                 if (player == null || player == PluginsCore.CorrectPlayer || player.PlayerBones == null) continue;
-                if (!OraclePlayerManager.IsInRange(PlayerESPCfg.PlayerESPMaxDistance.Value, PluginsCore.CorrectPlayer.Transform.position, player.Transform.position))
+                if (!OracleCommon.IsInRange(PlayerESPCfg.PlayerESPMaxDistance.Value, PluginsCore.CorrectPlayer.Transform.position, player.Transform.position))
                 {
                     continue;
                 }
@@ -241,7 +241,7 @@ namespace Oracle.ESP
             foreach (Player player in PluginsCore.CorrectGameWorld.AllAlivePlayersList)
             {
                 if (player == null || player == PluginsCore.CorrectPlayer) continue;
-                if (!OraclePlayerManager.IsInRange(PlayerESPCfg.PlayerESPMaxDistance.Value, PluginsCore.CorrectPlayer.Transform.position, player.Transform.position))
+                if (!OracleCommon.IsInRange(PlayerESPCfg.PlayerESPMaxDistance.Value, PluginsCore.CorrectPlayer.Transform.position, player.Transform.position))
                 {
                     continue;
                 }
