@@ -4,7 +4,6 @@ using EFT.Ballistics;
 using EFT.Communications;
 using HarmonyLib;
 using Oracle.Data;
-using Oracle.ESP;
 using Oracle.Utils;
 using UnityEngine;
 using static Oracle.Data.OracleInterface;
@@ -16,17 +15,24 @@ namespace Oracle.Combat
     /// </summary>
     public class Aimbot : IOracleAimbot
     {
-
-        private static float targetUpdateRate = 1f / AimbotCfg.AimbotTargetUpdateRate.Value; //加个配置的事
-        private static float lastUpdateTime = 0f;
         /// <summary>
-        /// 内部变量, 当前瞄准的目标
+        /// 自瞄目标的更新Tick
+        /// </summary>
+        private static float targetUpdateRate = 1f / AimbotCfg.AimbotTargetUpdateRate.Value;
+
+        /// <summary>
+        /// 内部变量，记录上次更新时间
+        /// </summary>
+        private static float lastUpdateTime = 0f;
+
+        /// <summary>
+        /// 内部变量，当前瞄准的目标
         /// </summary>
         public static Player LockedTarget { get; private set; }
-        /// <summary>
-        /// 绘制约束范围
-        /// </summary>
 
+        /// <summary>
+        /// 绘制自瞄约束范围
+        /// </summary>
         public static void DrawAimbotFOVCircle()
         {
             if (!AimbotCfg.EnableAimbot.Value || !AimbotCfg.DrawAimbotFov.Value) return;
@@ -37,45 +43,49 @@ namespace Oracle.Combat
         
         public void SubscribeEvent()
         {
-            // ⭐ 逻辑更新归 Update 频道
             OracleEvent.OnUpdate += OnLogicUpdate;
-            // ⭐ 画图归 GUI 频道
             OracleEvent.OnDrawAimbot += OnDrawGUI;
         }
 
+        /// <summary>
+        /// 二次封装的更新自瞄目标方法
+        /// </summary>
         private void OnLogicUpdate()
         {
             Camera cam = Camera.main;
             if (cam != null)
             {
-                UpdateTarget(cam); // 原来被错误地放在 DrawESP 里的逻辑，移回这里！
+                UpdateTarget(cam);
             }
         }
 
+        /// <summary>
+        /// 绘制接口
+        /// </summary>
         private void OnDrawGUI()
         {
             Camera cam = Camera.main;
             if (cam == null) return;
-
-            // 使用统一的 RenderUtils 画图，删掉原来 Aimbot 自己写的那些 material 和画图方法
             DrawAimbotFOVCircle();
             DrawTargetLine(cam);
         }
+
         /// <summary>
-        /// 更新瞄准目标
+        /// 更新自瞄目标
         /// </summary>
-        /// <param name="cam">当前摄像机</param>
+        /// <param name="cam">主摄像机</param>
         public static void UpdateTarget(Camera cam)
         {
             //你TM为什么没有防御呢?
             if(PluginsCore.CorrectPlayer==null || PluginsCore.CorrectGameWorld==null) return;
+            //限制更新Tick
             if (Time.time - lastUpdateTime < targetUpdateRate)
             {
                 return;
             }
 
             lastUpdateTime = Time.time;
-            //关闭自瞄停止运行
+            //关闭自瞄释放目标
             if (!AimbotCfg.EnableAimbot.Value)
             {
                 LockedTarget = null;
@@ -84,7 +94,7 @@ namespace Oracle.Combat
             //中心计算
             Vector2 screenCenter = new Vector2(Screen.width / 2f, Screen.height / 2f);
             float fovRadius = AimbotCfg.AimbotFovRadius.Value;
-            int maxDist = AimbotCfg.AimbotMaxDistance.Value; // 读取 3D 最大距离配置
+            int maxDist = AimbotCfg.AimbotMaxDistance.Value;
             Vector3 myPos = PluginsCore.CorrectPlayer.Transform.position;
             //取值
             Player bestTarget = null;
@@ -125,6 +135,7 @@ namespace Oracle.Combat
             //更新目标
             LockedTarget = bestTarget;
         }
+
         /// <summary>
         /// 绘制目标锁定线
         /// </summary>
@@ -147,6 +158,7 @@ namespace Oracle.Combat
         }
         
     }
+
     //后坐力Patch
     [HarmonyPatch(typeof(ShotEffector), nameof(ShotEffector.Process))]
     public class NoRecoilPatch
@@ -163,6 +175,7 @@ namespace Oracle.Combat
             return !AimbotCfg.NoRecoil.Value;
         }
     }
+
     //魔法子弹Patch
     [HarmonyPatch(typeof(BallisticsCalculator), nameof(BallisticsCalculator.CreateShot))]
     public class MagicBulletPatch
@@ -199,6 +212,7 @@ namespace Oracle.Combat
             }
         }
     }
+
     /// <summary>
     /// 配置项定义
     /// </summary>
@@ -218,6 +232,7 @@ namespace Oracle.Combat
         internal static ConfigEntry<float> LowRecoilMuti { get; set; }
         internal static ConfigEntry<int> AimbotMaxDistance { get; set; }
         internal static ConfigEntry<string> AimbotPartSetting { get; set; }
+        
         /// <summary>
         /// 配置项初始化
         /// </summary>
@@ -290,6 +305,10 @@ namespace Oracle.Combat
         {
             OracleEvent.OnUpdate += KeyUpdate;
         }
+
+        /// <summary>
+        /// 按键监听
+        /// </summary>
         public static void KeyUpdate()
         {
             if (Input.GetKeyDown(AimbotKey.Value))

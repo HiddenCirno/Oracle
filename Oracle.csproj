@@ -67,4 +67,11 @@
 		</None>
 	</ItemGroup>
 
+	<ItemGroup>
+		<None Include="locales\*.json">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</None>
+	</ItemGroup>
+
+
 </Project>

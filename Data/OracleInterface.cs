@@ -17,6 +17,9 @@ namespace Oracle.Data
         /// </summary>
         public interface IOracleKeyUpdate
         {
+            /// <summary>
+            /// 注册按键监听
+            /// </summary>
             void RegisterKeyUpdate();
         }
         /// <summary>
@@ -24,6 +27,9 @@ namespace Oracle.Data
         /// </summary>
         public interface IOracleEventSubscribe
         {
+            /// <summary>
+            /// 订阅事件
+            /// </summary>
             void SubscribeEvent();
         }
         /// <summary>
