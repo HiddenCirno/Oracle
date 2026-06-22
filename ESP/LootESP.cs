@@ -92,7 +92,7 @@ namespace Oracle.ESP
             float fovRadius = LootESPCfg.LootESPFovRange.Value;
 
             // ⭐ 3. 直接调用 RenderUtils 里的画圆方法
-            RenderUtils.DrawCircle(screenCenter, fovRadius, new Color(0.8f, 1f, 1f, 0.4f), 64);
+            RenderUtils.DrawCircle(screenCenter, fovRadius, OracleColorManager.LootCircle, 64);
         }
     }
     /// <summary>

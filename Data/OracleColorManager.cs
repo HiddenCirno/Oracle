@@ -19,7 +19,11 @@ namespace Oracle.Data
         public static readonly OracleColor HealthBarHalf = new OracleColor("#FFFF00");
         public static readonly OracleColor HealthBarQuarter = new OracleColor("#FF0000");
 
-        public static readonly OracleColor AimbotCycle = new OracleColor("#FF0000");
+        public static readonly OracleColor AimbotCircle = new OracleColor("#FF0000");
+
+        public static readonly OracleColor LootCircle = new OracleColor("#FFFFFF");
+
+        public static readonly OracleColor Distance = new OracleColor("#FFFF00");
 
         public static readonly OracleColor LootTier0 = new OracleColor("#FFFFFF");
         public static readonly OracleColor LootTier1 = new OracleColor("#00AA00");
