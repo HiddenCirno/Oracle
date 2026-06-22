@@ -101,4 +101,22 @@ namespace Oracle.Data
         public static implicit operator string(OracleColor oc) => oc.HexColor;
         public override string ToString() => HexColor;
     }
+    public static class ExtendWishlistItem
+    {
+        public static Dictionary<string, string> LabyrinthSpecialItem = new Dictionary<string, string>()
+        {
+            {"679baa2c61f588ae2b062a24", "一号房钥匙"},
+            {"679baa4f59b8961f370dd683", "二号房钥匙"},
+            {"679baa5a59b8961f370dd685", "三号房钥匙"},
+            {"679baa9091966fe40408f149", "四号房钥匙"},
+            {"679baace4e9ca6b3d80586b2", "观察室钥匙"},
+            {"679bab714e9ca6b3d80586b4", "停尸房钥匙"},
+            {"678fa929819ddc4c350c0317", "阀门手轮"},
+            {"67ab3d4b83869afd170fdd3f", "BBQ-S43 喷枪"}
+        }; 
+        public static Dictionary<string, string> StreetsSpecialItem = new Dictionary<string, string>()
+        {
+            {"64d4b23dc1b37504b41ac2b6", "生锈的带血钥匙"}
+        };
+    }
 }

@@ -164,6 +164,16 @@ namespace Oracle.Data
             {
                 itemLevel = 8; // 其次是任务道具
             }
+            ExtendWishlistItem.LabyrinthSpecialItem.TryGetValue(itemKey, out var labyrinthItem);
+            if (LootESPCfg.HighlightLabyrinthSpecialItem.Value && labyrinthItem!=null)
+            {
+                itemLevel = 9;
+            }
+            ExtendWishlistItem.StreetsSpecialItem.TryGetValue(itemKey, out var streetItem);
+            if (LootESPCfg.HighlightBloodyKey.Value && streetItem != null)
+            {
+                itemLevel = 9;
+            }
             if (itemPrice < minPriceThreshold && itemLevel < filterLevel)
             {
                 return;

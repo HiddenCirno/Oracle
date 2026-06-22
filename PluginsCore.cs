@@ -73,8 +73,6 @@ namespace Oracle
         public void Update()
         {
             OracleEvent.Update();
-            //快捷键监听
-            GlobalCfg.KeyUpdate();
             //窗口失焦自动隐藏
             //bool shouldShow = Application.isFocused && HotKeyManager.UniGUI.Value;
             UpdateNativeOverlay();

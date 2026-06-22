@@ -113,6 +113,8 @@ namespace Oracle.ESP
         internal static ConfigEntry<bool> ShowItemFullName { get; set; }
         internal static ConfigEntry<bool> HighlightWishListItem { get; set; }
         internal static ConfigEntry<bool> HighlightQuestItem { get; set; }
+        internal static ConfigEntry<bool> HighlightLabyrinthSpecialItem { get; set; }
+        internal static ConfigEntry<bool> HighlightBloodyKey { get; set; }
         /// <summary>
         /// 配置项初始化
         /// </summary>
@@ -149,6 +151,18 @@ namespace Oracle.ESP
                 "启用约束透视",
                 true,
                 "只透视准星一定半径内的物资"
+            );
+            HighlightLabyrinthSpecialItem = config.Bind<bool>(
+                "物资透视",
+                "透视迷宫道具",
+                true,
+                "透视迷宫的特殊道具，包括机关房钥匙、解密道具和两把房间钥匙"
+            );
+            HighlightBloodyKey = config.Bind<bool>(
+                "物资透视",
+                "透视血色钥匙",
+                true,
+                "透视“生锈的带血钥匙”"
             );
             ShowLootESPFov = config.Bind<bool>(
                 "物资透视",

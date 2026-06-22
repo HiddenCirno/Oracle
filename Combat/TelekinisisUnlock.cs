@@ -18,7 +18,7 @@ namespace Oracle.Combat
         {
             public static void Postfix(GamePlayerOwner owner, GInterface177 interactive, ref ActionsReturnClass __result)
             {
-                if (interactive == null || __result == null) return;
+                if (interactive == null || __result == null || !TelekinisisUnlockCfg.EnableTelekinisisUnlock.Value) return;
 
                 // 1. GInterface177 本质上是挂载在物体上的 Component
                 Component comp = interactive as Component;
