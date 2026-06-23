@@ -22,6 +22,8 @@
 
         public static readonly OracleColor Tripwire = new OracleColor("#FF0000");
 
+        public static readonly OracleColor Corpse = new OracleColor("#800000");
+
         public static readonly OracleColor LootCircle = new OracleColor("#FFFFFF");
 
         public static readonly OracleColor Distance = new OracleColor("#FFFF00");

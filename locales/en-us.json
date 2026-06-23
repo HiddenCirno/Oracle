@@ -152,6 +152,8 @@
 
 
         "text_esp_tripwire": "<color={0}>绊雷</color> <color={1}>{2}米</color>",
-        "text_spawn_item_error": "生成物品失败！"
+        "text_spawn_item_error": "生成物品失败！",
+        "text_esp_corpse_dead_tag": "[已死亡]",
+        "text_esp_corpse_format": "<color={0}>{1}</color> {2}"
     }
 }

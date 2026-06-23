@@ -9,18 +9,29 @@ using UnityEngine;
 
 namespace Oracle.Data
 {
-    
-
     /// <summary>
-    /// 战利品数据引擎：只负责后台扫图和数据缓存，绝对不参与任何UI绘制
+    /// 战利品数据总线
     /// </summary>
-    public static class OracleLootManager
+    public static class OracleLootDataManager
     {
+        /// <summary>
+        /// 全局缓存表
+        /// </summary>
         public static List<LootData> CachedLootList = new List<LootData>();
+
+        /// <summary>
+        /// 容器缓存表
+        /// </summary>
         public static LootableContainer[] CachedContainers;
 
+        /// <summary>
+        /// 物品等级缓存
+        /// </summary>
         public static Dictionary<MongoID, int?> ItemLevelCache = new Dictionary<MongoID, int?>();
 
+        /// <summary>
+        /// 价值界限定义
+        /// </summary>
         public static class PriceTier
         {
             public const int Tier1 = 10000;
@@ -37,21 +48,18 @@ namespace Oracle.Data
         /// <returns></returns>
         public static System.Collections.IEnumerator LootScannerCoroutine()
         {
-            // ⭐ 1. 预分配内存空间（双缓冲技术与字典池）
-            // 假设一局游戏最多 1500 个物资，预分配足够大的容量，避免中途扩容产生 GC
+            //双缓冲分配
             List<LootData> frontBuffer = new List<LootData>(10000);
             List<LootData> backBuffer = new List<LootData>(10000);
             Dictionary<Vector3, int> positionOffsets = new Dictionary<Vector3, int>(2000);
 
-            // 初始指针分配
+            //初始指针
             CachedLootList = frontBuffer;
 
             while (true)
             {
-                // 等待1秒
                 yield return new WaitForSeconds(1f);
 
-                // 空值检查和缓存清理
                 if (PluginsCore.CorrectGameWorld == null || PluginsCore.CorrectPlayer == null)
                 {
                     if (CachedContainers != null)
@@ -66,15 +74,13 @@ namespace Oracle.Data
                     continue;
                 }
 
-                // ⭐ 2. 极速清空后台缓冲区和字典（不产生任何 GC 垃圾！）
+                //清空缓存
                 backBuffer.Clear();
                 positionOffsets.Clear();
 
-                // 读取玩家坐标
                 Vector3 playerPos = PluginsCore.CorrectPlayer.Transform.position;
                 float maxLootDistance = LootESPCfg.LootESPMaxDistance.Value;
 
-                // 遍历战利品
                 foreach (var lootItem in PluginsCore.CorrectGameWorld.LootItems.GetValuesEnumerator())
                 {
                     if (lootItem == null || lootItem.Item == null || lootItem.gameObject == null) continue;
@@ -84,13 +90,13 @@ namespace Oracle.Data
 
                     float dist = Vector3.Distance(playerPos, lootItem.transform.position);
 
-                    // ⭐ 3. 写入后台缓冲区 backBuffer
+                    //写入缓存
                     TryAddLootData(backBuffer, positionOffsets, lootItem.Item, lootItem, null,
                         LootESPCfg.ShowItemFullName.Value ? lootItem.Item.Name.Localized() : lootItem.Item.ShortName.Localized(),
                         lootItem.transform.position, (int)dist);
                 }
 
-                // 容器透视
+                //容器透视
                 if (CachedContainers != null)
                 {
                     foreach (var container in CachedContainers)
@@ -105,21 +111,19 @@ namespace Oracle.Data
                         {
                             if (item == container.ItemOwner.RootItem) continue;
 
-                            // ⭐ 写入后台缓冲区 backBuffer
+                            //写入缓存
                             TryAddLootData(backBuffer, positionOffsets, item, null, container,
                                 LootESPCfg.ShowItemFullName.Value ? item.Name.Localized() : item.ShortName.Localized(),
-                                container.transform.position, dist, $"[{containerName}]");
+                                container.transform.position, dist, string.Format(LocaleManager.Get("text_esp_container_tag"), containerName));
                         }
                     }
                 }
 
-                // ⭐ 4. 指针交换 (Swap)
-                // 瞬间完成，OnGUI 会在下一帧无缝读取新的 frontBuffer
+                //交换指针
                 var temp = frontBuffer;
                 frontBuffer = backBuffer;
                 backBuffer = temp;
 
-                // 刷新公共读取源
                 CachedLootList = frontBuffer;
             }
         }
@@ -180,13 +184,14 @@ namespace Oracle.Data
                 return;
             }
             //价值格式化
-            string priceStr = itemPrice >= 10000 ? (itemPrice / 10000f).ToString("0.#") + "万" : itemPrice.ToString();
-            //string priceStr = itemPrice >= 10000 ? (itemPrice / 10000) + "万" : itemPrice.ToString();
+            string priceStr = itemPrice >= 1000000 ? (itemPrice / 1000000f).ToString("0.##") + "M" :
+            itemPrice >= 10000 ? (itemPrice / 1000f).ToString("0.#") + "K" :
+            itemPrice.ToString();
             //颜色转码
             OracleColor iColor = GetColorByLevel(itemLevel);
             //富文本合并
             string fullName = string.IsNullOrEmpty(prefix) ? itemName : $"{prefix} {itemName}";
-            string formattedName = $"<color={iColor}>{fullName} {priceStr}</color> <color=#FFFF00>{dist}米</color>";
+            string formattedName = string.Format(LocaleManager.Get("text_esp_loot_format"), iColor, fullName, priceStr, OracleColorManager.Distance, dist);
             int currentYOffset = 0;
 
             // ⭐ 核心优化：只有容器/尸体（StaticLoot）才参与 YOffset 计算
@@ -216,6 +221,11 @@ namespace Oracle.Data
             });
         }
 
+        /// <summary>
+        /// 获取容器名称
+        /// </summary>
+        /// <param name="container"></param>
+        /// <returns></returns>
         public static string GetContainerName(LootableContainer container)
         {
             if (container == null) return "地面";
@@ -223,6 +233,11 @@ namespace Oracle.Data
             return string.IsNullOrEmpty(containerName) ? "容器" : containerName;
         }
 
+        /// <summary>
+        /// 从等级返回颜色
+        /// </summary>
+        /// <param name="level"></param>
+        /// <returns></returns>
         public static OracleColor GetColorByLevel(int level)
         {
             switch (level)
@@ -240,11 +255,22 @@ namespace Oracle.Data
             }
         }
 
+        /// <summary>
+        /// 取物品价格
+        /// </summary>
+        /// <param name="itemid"></param>
+        /// <returns></returns>
         public static int? GetItemPrice(MongoID itemid)
         {
             PluginsCore.HandbookDict.TryGetValue(itemid, out int itemPrice);
             return itemPrice;
         }
+
+        /// <summary>
+        /// 从价格返回等级
+        /// </summary>
+        /// <param name="price"></param>
+        /// <returns></returns>
         public static int GetLevelByPrice(int price)
         {
             if (price >= PriceTier.Tier6) return 7; // 50万
@@ -255,6 +281,12 @@ namespace Oracle.Data
             if (price >= PriceTier.Tier1) return 2; // 1万
             return 1; // 垃圾
         }
+
+        /// <summary>
+        /// 求物品等级
+        /// </summary>
+        /// <param name="item"></param>
+        /// <returns></returns>
         public static int GetItemLevel(Item item)
         {
             var template = item.Template;
@@ -296,6 +328,11 @@ namespace Oracle.Data
             return GetLevelByPrice(price);
         }
 
+        /// <summary>
+        /// 子方法, 求弹药等级
+        /// </summary>
+        /// <param name="item"></param>
+        /// <returns></returns>
         public static int GetAmmoLevel(Item item)
         {
             if (item.Template is AmmoTemplate ammoTemplate)
@@ -316,11 +353,12 @@ namespace Oracle.Data
         /// <param name="templateId">物品的 TemplateId</param>
         public static bool IsWishlistItem(string templateId)
         {
-            // 防御性检查，确保玩家和愿望单管理器不为空
             var player = PluginsCore.CorrectPlayer;
             if (player?.Profile?.WishlistManager == null) return false;
 
-            // 使用 out _ 丢弃不需要的 EWishlistGroup 参数（C# 7.0+ 语法）
+            //丢弃out
+            //out out!
+            //莫名其妙的笑点....
             return player.Profile.WishlistManager.IsInWishlist(templateId, true, out _);
         }
     }

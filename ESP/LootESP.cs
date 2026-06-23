@@ -36,15 +36,15 @@ namespace Oracle.ESP
         /// <param name="textStyle">样式</param>
         public static void DrawLootText(Camera cam, GUIStyle textStyle)
         {
-            if (OracleLootManager.CachedLootList == null || OracleLootManager.CachedLootList.Count == 0) return;
+            if (OracleLootDataManager.CachedLootList == null || OracleLootDataManager.CachedLootList.Count == 0) return;
             //查找中心
             Vector2 screenCenter = new Vector2(Screen.width / 2f, Screen.height / 2f);
             float fovRadius = LootESPCfg.LootESPFovRange.Value;
 
             int fovMinPrice = LootESPCfg.LootESPFovMinPrice.Value;
-            int fovMinLevel = OracleLootManager.GetLevelByPrice(fovMinPrice);
+            int fovMinLevel = OracleLootDataManager.GetLevelByPrice(fovMinPrice);
             //富文本防御, 避免问题
-            foreach (LootData loot in OracleLootManager.CachedLootList)
+            foreach (LootData loot in OracleLootDataManager.CachedLootList)
             {
                 Vector3 screenPos = cam.WorldToScreenPoint(loot.Position);
                 if (screenPos.z > 0.01f)

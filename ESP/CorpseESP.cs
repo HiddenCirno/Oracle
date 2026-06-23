@@ -37,13 +37,13 @@ namespace Oracle.ESP
         {
             //开关&防空
             if (!CorpseESPCfg.EnableCorpseESP.Value) return;
-            if (OracleCorpseManager.CachedCorpseList == null || OracleCorpseManager.CachedCorpseList.Count == 0) return;
+            if (OracleCorpseDataManager.CachedCorpseList == null || OracleCorpseDataManager.CachedCorpseList.Count == 0) return;
 
             //样式保护
             textStyle.richText = true;
             textStyle.normal.textColor = Color.white;
 
-            foreach (CorpseData corpse in OracleCorpseManager.CachedCorpseList)
+            foreach (CorpseData corpse in OracleCorpseDataManager.CachedCorpseList)
             {
                 Vector3 screenPos = cam.WorldToScreenPoint(corpse.Position);
 

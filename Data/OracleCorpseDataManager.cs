@@ -1,15 +1,16 @@
 ﻿using EFT;
 using EFT.Interactive;
 using Oracle.ESP;
+using Oracle.Utils;
 using System.Collections.Generic;
 using UnityEngine;
 
 namespace Oracle.Data
 {
     /// <summary>
-    /// 玩家/实体数据引擎：处理所有的状态读取、射线检测、位置换算
+    /// 尸体数据总线
     /// </summary>
-    public static class OracleCorpseManager
+    public static class OracleCorpseDataManager
     {
         /// <summary>
         /// 唯一的全局尸体缓存表
@@ -18,15 +19,16 @@ namespace Oracle.Data
 
 
         /// <summary>
-        /// 独立的尸体扫描协程
+        /// 扫描协程
         /// </summary>
         public static System.Collections.IEnumerator CorpseScannerCoroutine()
         {
-            // ⭐ 双缓冲预分配，给 200 的容量对于尸体来说已经管够了
+            //双缓存预分配地址
             List<CorpseData> frontBuffer = new List<CorpseData>(200);
             List<CorpseData> backBuffer = new List<CorpseData>(200);
             CachedCorpseList = frontBuffer;
 
+            //两秒一循环
             while (true)
             {
                 yield return new WaitForSeconds(2f);
@@ -41,7 +43,7 @@ namespace Oracle.Data
                     continue;
                 }
 
-                // ⭐ 极速清空后台缓冲区
+                //清空后台缓存
                 backBuffer.Clear();
 
                 Vector3 myPos = PluginsCore.CorrectPlayer.Transform.position;
@@ -60,21 +62,22 @@ namespace Oracle.Data
                         }
                         else
                         {
-                            corpsePos = corpse.transform.position; // 极少数情况下的保底 fallback
+                            corpsePos = corpse.transform.position;
                         }
 
-                        // 距离过滤
+                        //过滤距离
                         float rawDist = Vector3.Distance(myPos, corpsePos);
                         if (rawDist > maxDistance) continue;
                         int dist = Mathf.RoundToInt(rawDist);
 
-                        // 从尸体对象上直接拿它自带的底层数据
+                        //拿到玩家uuid
                         string profileId = corpse.PlayerProfileID;
                         EPlayerSide corpseSide = corpse.Side;
 
+                        //保底字符串
                         var result = "Scav Nikita Buyanov";
 
-                        // 尝试通过 ID 查户口本拿真名
+                        //非空&查找缓存引用
                         if (!string.IsNullOrEmpty(profileId))
                         {
                             Player deadPlayer = PluginsCore.CorrectGameWorld.GetEverExistedPlayerByID(profileId);
@@ -85,7 +88,7 @@ namespace Oracle.Data
                                 {
                                     OraclePlayerManager.DeterminePlayerText(info,OraclePlayerManager.GetPlayerName(info),OraclePlayerManager.IsTeammate(info),true,out result,out string levelText);
 
-                                    // 如果你想在尸体上也显示 PMC 的等级，可以把 levelText 拼进去：
+                                    //拼接
                                     if (!string.IsNullOrEmpty(levelText))
                                     {
                                         result = $"{levelText} {result}";
@@ -93,10 +96,10 @@ namespace Oracle.Data
                                 }
                             }
                         }
+                        
+                        string formattedText = string.Format(LocaleManager.Get("text_esp_corpse_format"), OracleColorManager.Corpse, LocaleManager.Get("text_esp_corpse_dead_tag"), result);
 
-                        string formattedText = $"<color={OracleColorManager.EnemyDangerous}>[已死亡]</color> {result}";// <color=#FFFF00>{dist}米</color>";
-
-                        // ⭐ 写入后台缓冲区
+                        //写入后台缓存
                         backBuffer.Add(new CorpseData
                         {
                             Position = corpsePos,
@@ -106,7 +109,7 @@ namespace Oracle.Data
                     }
                 }
 
-                // ⭐ 瞬间交换指针
+                //交换前后台
                 var temp = frontBuffer;
                 frontBuffer = backBuffer;
                 backBuffer = temp;

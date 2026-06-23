@@ -62,11 +62,11 @@ namespace Oracle
             //启动覆盖层
             NativeOverlay.Initialize(Screen.width, Screen.height);
             //战利品扫描协程
-            StartCoroutine(OracleLootManager.LootScannerCoroutine());
+            StartCoroutine(OracleLootDataManager.LootScannerCoroutine());
             //绊雷扫描协程
             StartCoroutine(OracleTripwireManager.TripwireScannerCoroutine());
             //尸体扫描协程
-            StartCoroutine(OracleCorpseManager.CorpseScannerCoroutine());
+            StartCoroutine(OracleCorpseDataManager.CorpseScannerCoroutine());
             InitializeKeyUpdate();
             InitializeEventSubscribe();
             OracleRendering.Initialize();
@@ -279,7 +279,7 @@ namespace Oracle
             //挂载脚本
             __instance.MainPlayer.gameObject.AddComponent<InfinityStaminaComponent>();
             //缓存容器
-            OracleLootManager.CachedContainers = UnityEngine.Object.FindObjectsOfType<EFT.Interactive.LootableContainer>();
+            OracleLootDataManager.CachedContainers = UnityEngine.Object.FindObjectsOfType<EFT.Interactive.LootableContainer>();
         }
     }
 }
