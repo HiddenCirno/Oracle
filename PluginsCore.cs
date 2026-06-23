@@ -3,7 +3,6 @@ using BepInEx.Configuration;
 using EFT;
 using HarmonyLib;
 using Newtonsoft.Json;
-using Oracle.Combat;
 using Oracle.Data;
 using Oracle.ESP;
 using Oracle.ItemSpawn;
@@ -16,7 +15,7 @@ using System.Linq;
 using System.Reflection;
 using UnityEngine;
 using static GClass2175;
-using static Oracle.Combat.InfinityStamina;
+using static Oracle.Ability.InfinityStamina;
 using static Oracle.Data.OracleInterface;
 
 namespace Oracle

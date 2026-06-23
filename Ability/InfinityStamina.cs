@@ -1,14 +1,18 @@
 ﻿using BepInEx.Configuration;
 using EFT;
-using EFT.HealthSystem;
 using EFT.InventoryLogic;
 using HarmonyLib;
+using Oracle.Data;
+using Oracle.Utils;
 using System.Collections.Generic;
 using UnityEngine;
 using static Oracle.Data.OracleInterface;
 
-namespace Oracle.Combat
+namespace Oracle.Ability
 {
+    /// <summary>
+    /// 无限耐力/无限负重
+    /// </summary>
     public class InfinityStamina
     {
         /// <summary>
@@ -49,6 +53,8 @@ namespace Oracle.Combat
             }
         }
     }
+
+    //无限负重Patch
     [HarmonyPatch(typeof(InventoryEquipment), "smethod_1")]
     public class InfinityWeightPatch
     {
@@ -56,16 +62,18 @@ namespace Oracle.Combat
         {
             if (InfinityStaminaCfg.EnableInfiniteWeight.Value)
             {
+                //直接不计重量
                 __result = 0f;
                 return false;
             }
             return true;
-            //}
         }
     }
+
     /// <summary>
     /// 配置项定义
     /// </summary>
+    [OracleCfgOrder(2)]
     public class InfinityStaminaCfg : IOracleCfg
     {
 
@@ -79,16 +87,34 @@ namespace Oracle.Combat
         public void Initialize(ConfigFile config)
         {
             EnableInfiniteStamina = config.Bind(
-                "玩家属性",
+                "2. 生命之树 / Ability Module",
                 "无限体力",
                 true,
-                "锁定跑步、举枪体力和屏息氧气为全满状态"
+                new ConfigDescription(
+                    LocaleManager.Get("cfg_ability_module_infinity_stamina_desc"),
+                    null,
+                    new ConfigurationManagerAttributes
+                    {
+                        DispName = LocaleManager.Get("cfg_ability_module_infinity_stamina_name"),
+                        IsAdvanced = false,
+                        Order = 210
+                    }
+                )
             );
             EnableInfiniteWeight = config.Bind(
-                "玩家属性",
+                "2. 生命之树 / Ability Module",
                 "无限负重",
                 true,
-                "启用时所有物品将不计入重量"
+                new ConfigDescription(
+                    LocaleManager.Get("cfg_ability_module_infinity_weight_desc"),
+                    null,
+                    new ConfigurationManagerAttributes
+                    {
+                        DispName = LocaleManager.Get("cfg_ability_module_infinity_weight_name"),
+                        IsAdvanced = false,
+                        Order = 209
+                    }
+                )
             );
         }
     }

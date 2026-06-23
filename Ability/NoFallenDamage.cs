@@ -1,14 +1,16 @@
 ﻿using BepInEx.Configuration;
 using EFT;
 using EFT.HealthSystem;
-using EFT.InventoryLogic;
 using HarmonyLib;
-using System.Collections.Generic;
-using UnityEngine;
+using Oracle.Data;
+using Oracle.Utils;
 using static Oracle.Data.OracleInterface;
 
-namespace Oracle.Combat
+namespace Oracle.Ability
 {
+    /// <summary>
+    /// 无摔落伤害
+    /// </summary>
     public class NoFallenDamage
     {
     }
@@ -40,6 +42,7 @@ namespace Oracle.Combat
             //}
         }
     }
+
     //Patch
     [HarmonyPatch(typeof(ActiveHealthController), "ApplyDamage")]
     public class AntiFallenDamagePatch2
@@ -58,9 +61,11 @@ namespace Oracle.Combat
             //}
         }
     }
+
     /// <summary>
     /// 配置项定义
     /// </summary>
+    [OracleCfgOrder(2)]
     public class NoFallenDamageCfg : IOracleCfg
     {
 
@@ -73,10 +78,19 @@ namespace Oracle.Combat
         public void Initialize(ConfigFile config)
         {
             DisableFallenDamage = config.Bind(
-                "玩家属性",
+                "2. 生命之树 / Ability Module",
                 "阻止摔落伤害",
                 true,
-                "防止玩家受到跌落伤害"
+                new ConfigDescription(
+                    LocaleManager.Get("cfg_ability_module_feather_fall_desc"),
+                    null,
+                    new ConfigurationManagerAttributes
+                    {
+                        DispName = LocaleManager.Get("cfg_ability_module_feather_fall_name"),
+                        IsAdvanced = false,
+                        Order = 200
+                    }
+                )
             );
         }
     }

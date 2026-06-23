@@ -58,6 +58,26 @@
         "cfg_combat_module_ghost_mode_enable_desc": "开启后，敌人将无法探测到玩家，角色进入完全隐身状态。",
         "cfg_combat_module_ghost_mode_enable_key_name": "隐身快捷键",
         "cfg_combat_module_ghost_mode_enable_key_desc": "设置用于切换隐身模式的快捷键。",
-        "message_ghost_mode_enable": "隐身已{0}"
+        "message_ghost_mode_enable": "隐身已{0}",
+        "cfg_combat_module_infinity_ammo_name": "无限子弹",
+        "cfg_combat_module_infinity_ammo_desc": "开启后武器射击时将不再消耗弹药。",
+        "cfg_combat_module_infinity_durability_name": "无限耐久",
+        "cfg_combat_module_infinity_durability_desc": "开启后，武器在射击过程中将不会产生耐久度损耗。",
+        "cfg_combat_module_no_malfunction_name": "武器无故障",
+        "cfg_combat_module_no_malfunction_desc": "开启后，武器将不再发生任何故障。",
+        "cfg_ability_module_gode_mode_name": "无敌",
+        "cfg_ability_module_gode_mode_desc": "开启后，玩家将免受任何伤害，处于无敌状态。",
+        "cfg_ability_module_health_lock_name": "锁血",
+        "cfg_ability_module_health_lock_desc": "将玩家的血量强制锁定在当前最大值，防止健康状况下降。",
+        "cfg_ability_module_undead_name": "不死",
+        "cfg_ability_module_undead_desc": "开启后，即使血量归零也不会死亡，始终保持存活状态。",
+        "cfg_ability_module_infinity_stamina_name": "无限体力",
+        "cfg_ability_module_infinity_stamina_desc": "开启后，奔跑、跳跃及其他体力消耗行为将不再消耗体力值。",
+        "cfg_ability_module_infinity_weight_name": "无限负重",
+        "cfg_ability_module_infinity_weight_desc": "开启后，角色可以携带任意重量的物品而不受超重带来的负面影响。",
+        "cfg_ability_module_feather_fall_name": "阻止摔落伤害",
+        "cfg_ability_module_feather_fall_desc": "开启后，角色从高处坠落时将不会受到任何伤害。",
+        "cfg_ability_module_telekinisis_unlock_name": "念力解锁",
+        "cfg_ability_module_telekinisis_unlock_desc": "开启后，无需靠近物体即可使用念力进行交互或拾取。"
     }
 }

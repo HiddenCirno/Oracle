@@ -2,12 +2,18 @@
 using EFT;
 using EFT.HealthSystem;
 using HarmonyLib;
+using Oracle.Data;
+using Oracle.Utils;
 using static Oracle.Data.OracleInterface;
 
-namespace Oracle.Combat
+namespace Oracle.Ability
 {
+    /// <summary>
+    /// 无敌/锁血/不死
+    /// </summary>
     public static class GodMode
     {
+        //无敌Patch
         [HarmonyPatch(typeof(Player), "ApplyDamageInfo")]
         public class GodMode_ApplyDamageInfoPatch
         {
@@ -15,32 +21,34 @@ namespace Oracle.Combat
             {
                 if (!__instance.IsYourPlayer) return true;
 
-                // 优先级最高：无敌模式，直接吃掉伤害
+                //无敌优先级最高
                 if (GodModeCfg.Invincible.Value)
                 {
                     return false;
                 }
 
-                // 如果没开无敌，无论是锁血还是不死，都放行原承伤逻辑
+                //正常受伤
                 return true;
             }
 
             public static void Postfix(Player __instance)
             {
                 if (!__instance.IsYourPlayer) return;
-
-                // 优先级次之：没开无敌，但开了锁血，在承伤后瞬间奶满
+                
+                //没开无敌但是开了锁血
                 if (!GodModeCfg.Invincible.Value && GodModeCfg.HealthLock.Value)
                 {
                     var hc = __instance.ActiveHealthController;
                     if (hc != null)
                     {
+                        //回满血(这个居然还会治疗流血
                         hc.RestoreFullHealth();
-                        // 如果需要顺便解流血骨折，可以加 hc.RemoveNegativeEffects(EBodyPart.Common);
                     }
                 }
             }
         }
+
+        //阻止死亡Patch
         [HarmonyPatch(typeof(ActiveHealthController), "Kill")]
         public static class GodMode_AHCKillPatch
         {
@@ -48,7 +56,7 @@ namespace Oracle.Combat
             {
                 if (!__instance.Player.IsYourPlayer) return true;
 
-                // 只要开了这仨其中一个，统统拒绝死亡
+                //开启任意一个则阻止死亡
                 if (GodModeCfg.Invincible.Value || GodModeCfg.HealthLock.Value || GodModeCfg.Undying.Value)
                 {
                     return false;
@@ -57,6 +65,8 @@ namespace Oracle.Combat
                 return true;
             }
         }
+
+        //阻止部位损毁
         [HarmonyPatch(typeof(ActiveHealthController), "DestroyBodyPart")]
         public static class GodMode_AHCDestroyBodyPartPatch
         {
@@ -64,7 +74,6 @@ namespace Oracle.Combat
             {
                 if (!__instance.Player.IsYourPlayer) return true;
 
-                // 只要开启任意模式，保护肢体不变黑
                 if (GodModeCfg.Invincible.Value || GodModeCfg.HealthLock.Value || GodModeCfg.Undying.Value)
                 {
                     return false;
@@ -74,6 +83,12 @@ namespace Oracle.Combat
             }
         }
     }
+
+    /// <summary>
+    /// 配置项定义
+    /// </summary>
+    /// 
+    [OracleCfgOrder(2)]
     public class GodModeCfg : IOracleCfg
     {
         public static ConfigEntry<bool> Invincible { get; set; }
@@ -82,9 +97,51 @@ namespace Oracle.Combat
 
         public void Initialize(ConfigFile config)
         {
-            Invincible = config.Bind("上帝模式", "1. 无敌模式", false, "开启后完全不受伤害，免疫一切负面状态（优先级最高）。");
-            HealthLock = config.Bind("上帝模式", "2. 锁血模式", false, "开启后正常受击（可练受击技能），但瞬间回满血，且不会死亡。");
-            Undying = config.Bind("上帝模式", "3. 不死模式", false, "开启后正常受伤流血，但血量归零时不会死亡，部位不会损坏。");
+            Invincible = config.Bind(
+                "2. 生命之树 / Ability Module", 
+                "无敌", 
+                false,
+                new ConfigDescription(
+                    LocaleManager.Get("cfg_ability_module_gode_mode_desc"),
+                    null,
+                    new ConfigurationManagerAttributes
+                    {
+                        DispName = LocaleManager.Get("cfg_ability_module_gode_mode_name"),
+                        IsAdvanced = false,
+                        Order = 220
+                    }
+                )
+            );
+            HealthLock = config.Bind(
+                "2. 生命之树 / Ability Module", 
+                "锁血", 
+                false,
+                new ConfigDescription(
+                    LocaleManager.Get("cfg_ability_module_health_lock_desc"),
+                    null,
+                    new ConfigurationManagerAttributes
+                    {
+                        DispName = LocaleManager.Get("cfg_ability_module_health_lock_name"),
+                        IsAdvanced = false,
+                        Order = 219
+                    }
+                )
+            );
+            Undying = config.Bind(
+                "2. 生命之树 / Ability Module", 
+                "不死", 
+                false,
+                new ConfigDescription(
+                    LocaleManager.Get("cfg_ability_module_undead_desc"),
+                    null,
+                    new ConfigurationManagerAttributes
+                    {
+                        DispName = LocaleManager.Get("cfg_ability_module_undead_name"),
+                        IsAdvanced = false,
+                        Order = 218
+                    }
+                )
+            );
         }
     }
 }

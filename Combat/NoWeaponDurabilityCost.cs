@@ -1,28 +1,28 @@
 ﻿using BepInEx.Configuration;
-using Comfort.Common;
-using EFT;
-using EFT.Ballistics;
 using EFT.InventoryLogic;
 using HarmonyLib;
-using Oracle.ItemSpawn;
-using System;
-using System.Reflection;
+using Oracle.Data;
+using Oracle.Utils;
 using static Oracle.Data.OracleInterface;
 
 namespace Oracle.Combat
 {
+    /// <summary>
+    /// 无限耐久
+    /// </summary>
     public static class NoWeaponDurabilityCost
     {
-        // 使用纯原生 Harmony 注解，直接绑定目标方法
+        //Patch
         [HarmonyPatch(typeof(Weapon), nameof(Weapon.GetDurabilityLossOnShot))]
         public class PlayerWeaponNeverJamPatch
         {
-            // 注意：原方法有 out 参数，在 Harmony Prefix 中需要用 ref 关键字接收
             static bool Prefix(Weapon __instance, float ammoBurnRatio, float overheatFactor, float skillWeaponTreatmentFactor, out float modsBurnRatio, ref float __result)
             {
+                //正常发热动画
                 modsBurnRatio = 1f;
                 if (NoWeaponDurabilityCostCfg.EnableInfinityDurability.Value)
                 {
+                    //不掉耐久
                     __result = 0f;
                     return false;
                 }
@@ -30,9 +30,11 @@ namespace Oracle.Combat
             }
         }
     }
+
     /// <summary>
     /// 配置项定义
     /// </summary>
+    [OracleCfgOrder(1)]
     public class NoWeaponDurabilityCostCfg : IOracleCfg
     {
 
@@ -45,10 +47,19 @@ namespace Oracle.Combat
         public void Initialize(ConfigFile config)
         {
             EnableInfinityDurability = config.Bind(
-                "战斗修改",
+                "1. 天堂支点 / Combat Module",
                 "无限耐久",
                 false,
-                "启用后开火将不消耗武器耐久"
+                new ConfigDescription(
+                    LocaleManager.Get("cfg_combat_module_infinity_durability_desc"),
+                    null,
+                    new ConfigurationManagerAttributes
+                    {
+                        DispName = LocaleManager.Get("cfg_combat_module_infinity_durability_name"),
+                        IsAdvanced = false,
+                        Order = 250
+                    }
+                )
             );
         }
     }

@@ -3,16 +3,21 @@ using EFT;
 using EFT.Communications;
 using EFT.Interactive;
 using HarmonyLib;
+using Oracle.Data;
+using Oracle.Utils;
 using System;
 using System.Linq;
 using UnityEngine;
 using static Oracle.Data.OracleInterface;
 
-namespace Oracle.Combat
+namespace Oracle.Ability
 {
+    /// <summary>
+    /// 念力开锁
+    /// </summary>
     public static class TelekinisisUnlock
     {
-        // 拦截实体门生成 F 键菜单的方法
+        //拦截互动菜单
         [HarmonyPatch(typeof(GetActionsClass), "GetAvailableActions", new Type[] { typeof(GamePlayerOwner), typeof(GInterface177) })]
         public class GetActionsClassPatch
         {
@@ -20,35 +25,36 @@ namespace Oracle.Combat
             {
                 if (interactive == null || __result == null || !TelekinisisUnlockCfg.EnableTelekinisisUnlock.Value) return;
 
-                // 1. GInterface177 本质上是挂载在物体上的 Component
+                //查找Component
                 Component comp = interactive as Component;
                 if (comp == null) return;
 
-                // 2. 顺藤摸瓜，不管你当前触发的是 Door、KeycardDoor 还是 NoPowerTip，
-                // 只要同物体或父物体上有 WorldInteractiveObject (WIO)，我们就能掌控它！
+                //可交互物体
                 WorldInteractiveObject wio = comp.GetComponent<WorldInteractiveObject>() ?? comp.GetComponentInParent<WorldInteractiveObject>();
                 if (wio == null) return;
 
-                // ⭐ 场景 A：门还锁着（不管因为啥锁的）
+                //门(只针对门)
                 if (wio.DoorState == EDoorState.Locked)
                 {
-                    // 如果菜单里没有解锁选项，我们就造一个
+                    //如果没有解锁选项, 就加一个
                     bool hasUnlock = __result.Actions.Any(x => x.Name == "Unlock" || x.Name.Contains("Unlock"));
                     if (!hasUnlock)
                     {
+                        //通过Insert让它变为首选项
                         __result.Actions.Insert(0, new ActionsTypesClass
                         {
                             Name = "Unlock",
                             Action = new Action(() =>
                             {
+                                //防止Sain空指针
+                                wio.SetUser(owner.Player);
                                 wio.DoorState = EDoorState.Shut;
-                                NotificationManagerClass.DisplayMessageNotification("系统破解成功，锁芯已解除！", ENotificationDurationType.Default, ENotificationIconType.Quest);
                             }),
                             Disabled = false
                         });
                     }
                 }
-                /*
+                /* 归档代码
                 // ⭐ 场景 B：门已解锁，但因为 NoPowerTip 导致没有推开选项！
                 else if (wio.DoorState == EDoorState.Shut)
                 {
@@ -76,6 +82,8 @@ namespace Oracle.Combat
                 */
             }
         }
+
+        /* 归档Patch
         [HarmonyPatch(typeof(WorldInteractiveObject), "OnEnable")]
         public class VulcanCore_WIO_OnEnable_Patch
         {
@@ -98,13 +106,33 @@ namespace Oracle.Combat
                 }
             }
         }
+        */
     }
+
+    /// <summary>
+    /// 配置定义
+    /// </summary>
+    [OracleCfgOrder(2)]
     public class TelekinisisUnlockCfg : IOracleCfg
     {
         public static ConfigEntry<bool> EnableTelekinisisUnlock { get; set; }
         public void Initialize(ConfigFile config)
         {
-            EnableTelekinisisUnlock = config.Bind("念力解锁", "启用念力解锁", false, "开启后可以无条件解锁任意上锁物体");
+            EnableTelekinisisUnlock = config.Bind(
+                "2. 生命之树 / Ability Module", 
+                "念力解锁", 
+                false,
+                new ConfigDescription(
+                    LocaleManager.Get("cfg_ability_module_telekinisis_unlock_desc"),
+                    null,
+                    new ConfigurationManagerAttributes
+                    {
+                        DispName = LocaleManager.Get("cfg_ability_module_telekinisis_unlock_name"),
+                        IsAdvanced = false,
+                        Order = 190
+                    }
+                )
+            );
         }
     }
 }

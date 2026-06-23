@@ -34,6 +34,7 @@ namespace Oracle.Combat
     /// <summary>
     /// 配置项定义
     /// </summary>
+    [OracleCfgOrder(1)]
     public class GhostModeCfg : IOracleCfg, IOracleKeyUpdate
     {
         internal static ConfigEntry<KeyCode> GhostModeKey { get; set; }
