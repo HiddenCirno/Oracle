@@ -1,46 +1,44 @@
 ﻿using BepInEx.Configuration;
-using CommonAssets.Scripts.Game.LabyrinthEvent;
 using EFT;
 using EFT.Communications;
-using EFT.SynchronizableObjects;
 using Oracle.Data;
 using Oracle.Utils;
-using System;
-using System.Collections.Generic;
-using System.Reflection;
 using UnityEngine;
 using static Oracle.Data.OracleInterface;
 
 namespace Oracle.ESP
 {
     /// <summary>
-    /// 玩家透视部分
+    /// 玩家透视
     /// </summary>
     public class PlayerESP : IOracleESP
     {
         public void SubscribeEvent()
         {
-            // 订阅统一的渲染频道
             OracleEvent.OnDrawESP += OnDrawESP;
         }
+
+        /// <summary>
+        /// 绘制部分
+        /// </summary>
         private void OnDrawESP()
         {
             Camera cam = Camera.main;
             if (cam == null) return;
 
-            // 1. 2D 文本和 UI 直接画
+            //文本和血条
             DrawPlayerText(cam, OracleRendering.EspTextStyle);
             DrawAllPlayerHealthBars(cam);
 
-            // 2. 3D 骨骼线段，必须自己包裹 GL 状态！
+            //火柴人
             if (Event.current.type == EventType.Repaint)
             {
                 OracleRendering.EspMaterial.SetPass(0);
                 GL.PushMatrix();
-                // GL.LoadPixelMatrix(); (如果有必要的话)
+                //GL.LoadPixelMatrix();
                 GL.Begin(GL.LINES);
 
-                // 画骨骼
+                //骨骼
                 DrawPlayerBone(cam);
 
                 GL.End();
@@ -181,6 +179,7 @@ namespace Oracle.ESP
                 DrawBoneLine(cam, rCalf, rFoot);
             }
         }
+
         /// <summary>
         /// 绘制玩家信息
         /// </summary>
@@ -223,6 +222,7 @@ namespace Oracle.ESP
                 }
             }
         }
+
         /// <summary>
         /// 绘制玩家血条
         /// </summary>
@@ -244,6 +244,7 @@ namespace Oracle.ESP
                 DrawPlayerHealthBar(cam, player);
             }
         }
+
         /// <summary>
         /// 绘制血条
         /// </summary>
@@ -263,7 +264,7 @@ namespace Oracle.ESP
             //百分比变色
             if (maxHp <= 0) return;
 
-            // 加入 Clamp01 确保血量异常时百分比也不会超出 0~1 范围，防止插值颜色越界
+            //血量百分比
             float hpPercent = Mathf.Clamp01(curHp / maxHp);
 
             //反转Y轴适配坐标
@@ -273,7 +274,7 @@ namespace Oracle.ESP
             float barWidth = 60f;
             float barHeight = 4f;
             float barX = screenX - (barWidth / 2f);
-            float barY = screenY + 5f; // 放在脚底下边缘 5 像素的位置
+            float barY = screenY + 5f;
 
             //绘制
             Color oldGuiColor = GUI.color;
@@ -281,25 +282,22 @@ namespace Oracle.ESP
             GUI.color = OracleColorManager.HealthBarBG;
             GUI.DrawTexture(new Rect(barX, barY, barWidth, barHeight), Texture2D.whiteTexture);
 
-            // ⭐ 核心修改：按百分比分段平滑插值前景色
+            //平滑差值渐变求解
             Color hpColor;
             if (hpPercent > 0.5f)
             {
-                // 50% ~ 100% 阶段：从黄(Half) 平滑渐变到 绿(Full)
-                // 原理：(hpPercent - 0.5) 将范围平移到 0~0.5，乘以 2f 缩放为 0~1 的标准 lerp 系数
                 float t = (hpPercent - 0.5f) * 2f;
                 hpColor = Color.Lerp(OracleColorManager.HealthBarHalf, OracleColorManager.HealthBarFull, t);
             }
             else
             {
-                // 0% ~ 50% 阶段：从红(Quarter) 平滑渐变到 黄(Half)
-                // 原理：hpPercent 本身是 0~0.5，乘以 2f 缩放为 0~1 的标准 lerp 系数
                 float t = hpPercent * 2f;
                 hpColor = Color.Lerp(OracleColorManager.HealthBarQuarter, OracleColorManager.HealthBarHalf, t);
             }
 
             GUI.color = hpColor;
             GUI.DrawTexture(new Rect(barX, barY, barWidth * hpPercent, barHeight), Texture2D.whiteTexture);
+
             //还原颜色
             GUI.color = oldGuiColor;
         }
@@ -357,11 +355,11 @@ namespace Oracle.ESP
             //明天修改下方法定义, 根据骨骼原色传入渐变目标色试试
             //根据传入颜色确定目标颜色
             Color targetColor;
-            if (baseColor == OracleColorManager.EnemySafe) // 当前是绿色
+            if (baseColor == OracleColorManager.EnemySafe)
             {
                 targetColor = OracleColorManager.EnemySafeDestroy;
             }
-            else if (baseColor == OracleColorManager.EnemyWarning) // 当前是黄色
+            else if (baseColor == OracleColorManager.EnemyWarning)
             {
                 targetColor = OracleColorManager.EnemyWarningDestroy;
             }
@@ -374,6 +372,7 @@ namespace Oracle.ESP
             return Color.Lerp(targetColor, baseColor, lerpFactor);
         }
     }
+
     /// <summary>
     /// 配置项定义
     /// </summary>
@@ -386,69 +385,139 @@ namespace Oracle.ESP
         internal static ConfigEntry<bool> EnablePlayerBoneESPHealthMode { get; set; }
         internal static ConfigEntry<int> PlayerESPMaxDistance { get; set; }
         internal static ConfigEntry<KeyCode> PlayerESPKey { get; set; }
+
         /// <summary>
         /// 配置项初始化
         /// </summary>
         /// <param name="config">传入配置实例</param>
         public void Initialize(ConfigFile config)
         {
-            PlayerESPKey = config.Bind<KeyCode>(
-                "玩家透视",
-                "玩家透视快捷键",
-                KeyCode.F2,
-                "按下切换玩家透视"
-            );
             EnablePlayerESP = config.Bind<bool>(
-                "玩家透视",
+                "3. 巡天星轨 / ESP Module",
                 "启用玩家透视",
                 true,
-                "玩家透视总开关，包括骨骼，玩家信息等"
+                new ConfigDescription(
+                    LocaleManager.Get("cfg_esp_module_player_esp_enable_desc"),
+                    null,
+                    new ConfigurationManagerAttributes
+                    {
+                        DispName = LocaleManager.Get("cfg_esp_module_player_esp_enable_name"),
+                        IsAdvanced = false,
+                        Order = 160
+                    }
+                )
             );
-            EnablePlayerInfoESP = config.Bind<bool>(
-                "玩家透视",
-                "启用玩家信息透视",
-                true,
-                "可以透视玩家的信息，包括等级，阵营，名字等"
-            );
-            EnablePlayerHealthBarESP = config.Bind<bool>(
-                "玩家透视",
-                "启用玩家血条透视",
-                true,
-                "可以透视玩家的血条"
-            );
-            EnablePlayerBoneESPHealthMode = config.Bind<bool>(
-                "玩家透视",
-                "启用玩家骨骼透视血量叠加",
-                true,
-                "启用后透视骨骼会根据肢体的血量损耗向蓝色发生渐变，损毁的部位会变成紫色"
-            );
-            EnablePlayerBoneESP = config.Bind<bool>(
-                "玩家透视",
-                "启用玩家骨骼透视",
-                true,
-                "可以透视玩家骨骼，也就是经典的火柴人透视（真的有人会关掉它只启用别的功能吗……）"
+            PlayerESPKey = config.Bind<KeyCode>(
+                "3. 巡天星轨 / ESP Module",
+                "玩家透视快捷键",
+                KeyCode.F2,
+                new ConfigDescription(
+                    LocaleManager.Get("cfg_esp_module_player_esp_enable_key_desc"),
+                    null,
+                    new ConfigurationManagerAttributes
+                    {
+                        DispName = LocaleManager.Get("cfg_esp_module_player_esp_enable_key_name"),
+                        IsAdvanced = false,
+                        Order = 159
+                    }
+                )
             );
             PlayerESPMaxDistance = config.Bind<int>(
-                "玩家透视",
+                "3. 巡天星轨 / ESP Module",
                 "透视范围",
                 200,
                 new ConfigDescription(
-                    "透视可见的范围",
-                    new AcceptableValueRange<int>(50, 2000)
+                    LocaleManager.Get("cfg_esp_module_player_esp_max_distance_desc"),
+                    new AcceptableValueRange<int>(50, 2000),
+                    new ConfigurationManagerAttributes
+                    {
+                        DispName = LocaleManager.Get("cfg_esp_module_player_esp_max_distance_name"),
+                        IsAdvanced = false,
+                        Order = 158
+                    }
+                )
+            );
+            EnablePlayerInfoESP = config.Bind<bool>(
+                "3. 巡天星轨 / ESP Module",
+                "启用玩家信息透视",
+                true,
+                new ConfigDescription(
+                    LocaleManager.Get("cfg_esp_module_player_esp_show_info_desc"),
+                    null,
+                    new ConfigurationManagerAttributes
+                    {
+                        DispName = LocaleManager.Get("cfg_esp_module_player_esp_show_info_name"),
+                        IsAdvanced = false,
+                        Order = 157
+                    }
+                )
+            );
+            EnablePlayerHealthBarESP = config.Bind<bool>(
+                "3. 巡天星轨 / ESP Module",
+                "启用玩家血条透视",
+                true,
+                new ConfigDescription(
+                    LocaleManager.Get("cfg_esp_module_player_esp_show_health_bar_desc"),
+                    null,
+                    new ConfigurationManagerAttributes
+                    {
+                        DispName = LocaleManager.Get("cfg_esp_module_player_esp_show_health_bar_name"),
+                        IsAdvanced = false,
+                        Order = 156
+                    }
+                )
+            );
+            EnablePlayerBoneESP = config.Bind<bool>(
+                "3. 巡天星轨 / ESP Module",
+                "启用玩家骨骼透视",
+                true,
+                new ConfigDescription(
+                    LocaleManager.Get("cfg_esp_module_player_esp_show_bone_desc"),
+                    null,
+                    new ConfigurationManagerAttributes
+                    {
+                        DispName = LocaleManager.Get("cfg_esp_module_player_esp_show_bone_name"),
+                        IsAdvanced = false,
+                        Order = 155
+                    }
+                )
+            );
+            EnablePlayerBoneESPHealthMode = config.Bind<bool>(
+                "3. 巡天星轨 / ESP Module",
+                "启用玩家骨骼透视血量叠加",
+                true,
+                new ConfigDescription(
+                    LocaleManager.Get("cfg_esp_module_player_esp_show_bone_color_overlay_desc"),
+                    null,
+                    new ConfigurationManagerAttributes
+                    {
+                        DispName = LocaleManager.Get("cfg_esp_module_player_esp_show_bone_color_overlay_name"),
+                        IsAdvanced = false,
+                        Order = 154
+                    }
                 )
             );
         }
+        
         public void RegisterKeyUpdate()
         {
             OracleEvent.OnUpdate += KeyUpdate;
         }
+
         public static void KeyUpdate()
         {
             if (Input.GetKeyDown(PlayerESPKey.Value))
             {
                 EnablePlayerESP.Value = !EnablePlayerESP.Value;
                 var value = EnablePlayerESP.Value;
-                OracleNotify.Message($"玩家透视已{(value ? "启用" : "禁用")}!", value ? ENotificationIconType.Default : ENotificationIconType.Alert, GlobalCfg.MuteNotice.Value);
+                OracleNotify.Message(
+                    string.Format(
+                        LocaleManager.Get("message_player_esp_enable"),
+                        value ? LocaleManager.Get("text_enable") : LocaleManager.Get("text_disable")
+                    ),
+                    value ? ENotificationIconType.Default : ENotificationIconType.Alert,
+                    GlobalCfg.MuteNotice.Value
+                );
             }
         }
     }

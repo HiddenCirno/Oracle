@@ -1,21 +1,14 @@
 ﻿using BepInEx.Configuration;
-using EFT;
 using EFT.Communications;
-using EFT.Hideout;
-using EFT.Interactive;
-using EFT.InventoryLogic;
 using Oracle.Data;
 using Oracle.Utils;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
 using UnityEngine;
 using static Oracle.Data.OracleInterface;
 
 namespace Oracle.ESP
 {
     /// <summary>
-    /// 物资透视部分
+    /// 物资透视
     /// </summary>
     public class LootESP : IOracleESP
     {
@@ -24,15 +17,18 @@ namespace Oracle.ESP
             OracleEvent.OnDrawESP += OnDrawESP;
         }
 
-        // ⭐ 2. 独立的绘制入口
+        /// <summary>
+        /// 绘制方法
+        /// </summary>
         private void OnDrawESP()
         {
             Camera cam = Camera.main;
             if (cam == null) return;
 
             DrawLootFOVCircle();
-            DrawLootText(cam, OracleRendering.EspTextStyle); // 统一使用 RenderUtils 的样式
+            DrawLootText(cam, OracleRendering.EspTextStyle);
         }
+
         /// <summary>
         /// 绘制文本
         /// </summary>
@@ -90,13 +86,14 @@ namespace Oracle.ESP
             Vector2 screenCenter = new Vector2(Screen.width / 2f, Screen.height / 2f);
             float fovRadius = LootESPCfg.LootESPFovRange.Value;
 
-            // ⭐ 3. 直接调用 RenderUtils 里的画圆方法
             OracleRendering.DrawCircle(screenCenter, fovRadius, OracleColorManager.LootCircle, 64);
         }
     }
+
     /// <summary>
     /// 配置项定义
     /// </summary>
+    [OracleCfgOrder(3)]
     public class LootESPCfg : IOracleCfg, IOracleKeyUpdate
     {
         internal static ConfigEntry<KeyCode> LooseLootESPKey { get; set; }
@@ -114,113 +111,236 @@ namespace Oracle.ESP
         internal static ConfigEntry<bool> HighlightQuestItem { get; set; }
         internal static ConfigEntry<bool> HighlightLabyrinthSpecialItem { get; set; }
         internal static ConfigEntry<bool> HighlightBloodyKey { get; set; }
+
         /// <summary>
         /// 配置项初始化
         /// </summary>
         /// <param name="config">传入配置实例</param>
         public void Initialize(ConfigFile config)
         {
-            LooseLootESPKey = config.Bind<KeyCode>(
-                "物资透视",
-                "散落物资透视快捷键",
-                KeyCode.F3,
-                "按下切换地上的散落物资透视"
-            );
-
-            ContainerLootESPKey = config.Bind<KeyCode>(
-                "物资透视",
-                "容器物资透视快捷键",
-                KeyCode.F4,
-                "按下切换容器(如箱子/衣服/包)物资透视"
-            );
             EnableLooseLootESP = config.Bind<bool>(
-                "物资透视",
+                "3. 巡天星轨 / ESP Module",
                 "启用松散物资透视",
                 true,
-                "透视地面上的物资"
+                new ConfigDescription(
+                    LocaleManager.Get("cfg_esp_module_looseloot_esp_enable_desc"),
+                    null,
+                    new ConfigurationManagerAttributes
+                    {
+                        DispName = LocaleManager.Get("cfg_esp_module_looseloot_esp_enable_name"),
+                        IsAdvanced = false,
+                        Order = 180
+                    }
+                )
+            );
+            LooseLootESPKey = config.Bind<KeyCode>(
+                "3. 巡天星轨 / ESP Module",
+                "散落物资透视快捷键",
+                KeyCode.F3,
+                new ConfigDescription(
+                    LocaleManager.Get("cfg_esp_module_looseloot_esp_enable_key_desc"),
+                    null,
+                    new ConfigurationManagerAttributes
+                    {
+                        DispName = LocaleManager.Get("cfg_esp_module_looseloot_esp_enable_key_name"),
+                        IsAdvanced = false,
+                        Order = 179
+                    }
+                )
             );
             EnableContainerLootESP = config.Bind<bool>(
-                "物资透视",
+                "3. 巡天星轨 / ESP Module",
                 "启用容器物资透视",
                 true,
-                "透视容器里的物资"
-            );
-            EnableLootESPFov = config.Bind<bool>(
-                "物资透视",
-                "启用约束透视",
-                true,
-                "只透视准星一定半径内的物资"
-            );
-            HighlightLabyrinthSpecialItem = config.Bind<bool>(
-                "物资透视",
-                "透视迷宫道具",
-                true,
-                "透视迷宫的特殊道具，包括机关房钥匙、解密道具和两把房间钥匙"
-            );
-            HighlightBloodyKey = config.Bind<bool>(
-                "物资透视",
-                "透视血色钥匙",
-                true,
-                "透视“生锈的带血钥匙”"
-            );
-            ShowLootESPFov = config.Bind<bool>(
-                "物资透视",
-                "显示约束透视范围",
-                true,
-                "显示约束透视范围"
-            );
-            LootESPMaxDistance = config.Bind<int>(
-                "物资透视",
-                "透视范围",
-                200,
                 new ConfigDescription(
-                    "透视可见的范围",
-                    new AcceptableValueRange<int>(50, 1000)
+                    LocaleManager.Get("cfg_esp_module_staticloot_esp_enable_desc"),
+                    null,
+                    new ConfigurationManagerAttributes
+                    {
+                        DispName = LocaleManager.Get("cfg_esp_module_staticloot_esp_enable_name"),
+                        IsAdvanced = false,
+                        Order = 178
+                    }
                 )
             );
-            LootESPMinPrice = config.Bind<int>(
-                "物资透视",
-                "价格过滤",
-                15000,
-                new ConfigDescription(
-                    "透视物资可见的最低价格",
-                    new AcceptableValueRange<int>(1000, 1000000)
-                )
-            );
-            LootESPFovRange = config.Bind<int>(
-                "物资透视",
-                "约束透视范围",
-                100,
-                new ConfigDescription(
-                    "约束透视的半径",
-                    new AcceptableValueRange<int>(0, 1000)
+            ContainerLootESPKey = config.Bind<KeyCode>(
+                "3. 巡天星轨 / ESP Module",
+                "容器物资透视快捷键",
+                KeyCode.F4,
+               new ConfigDescription(
+                    LocaleManager.Get("cfg_esp_module_staticloot_esp_enable_key_desc"),
+                    null,
+                    new ConfigurationManagerAttributes
+                    {
+                        DispName = LocaleManager.Get("cfg_esp_module_staticloot_esp_enable_key_name"),
+                        IsAdvanced = false,
+                        Order = 177
+                    }
                 )
             );
             ShowItemFullName = config.Bind<bool>(
-                "物资透视",
+                "3. 巡天星轨 / ESP Module",
                 "显示物品全名",
                 false,
-                "使用物品全名显示透视"
+                new ConfigDescription(
+                    LocaleManager.Get("cfg_esp_module_loot_esp_show_full_name_desc"),
+                    null,
+                    new ConfigurationManagerAttributes
+                    {
+                        DispName = LocaleManager.Get("cfg_esp_module_loot_esp_show_full_name_name"),
+                        IsAdvanced = false,
+                        Order = 176
+                    }
+                )
             );
-            HighlightWishListItem = config.Bind<bool>(
-                "物资透视",
-                "高亮愿望单物品",
-                false,
-                "启用后愿望单物品将以玫红色和高优先级绘制"
+            LootESPMaxDistance = config.Bind<int>(
+                "3. 巡天星轨 / ESP Module",
+                "透视范围",
+                200,
+                new ConfigDescription(
+                    LocaleManager.Get("cfg_esp_module_loot_esp_max_distance_desc"),
+                    new AcceptableValueRange<int>(50, 1000),
+                    new ConfigurationManagerAttributes
+                    {
+                        DispName = LocaleManager.Get("cfg_esp_module_loot_esp_max_distance_name"),
+                        IsAdvanced = false,
+                        Order = 175
+                    }
+                )
             );
-            HighlightQuestItem = config.Bind<bool>(
-                "物资透视",
-                "高亮任务物品",
-                false,
-                "启用后任务物品将以灰色和高优先级绘制"
+            LootESPMinPrice = config.Bind<int>(
+                "3. 巡天星轨 / ESP Module",
+                "价格过滤",
+                15000,
+                new ConfigDescription(
+                    LocaleManager.Get("cfg_esp_module_loot_esp_min_price_desc"),
+                    new AcceptableValueRange<int>(1, 1000000),
+                    new ConfigurationManagerAttributes
+                    {
+                        DispName = LocaleManager.Get("cfg_esp_module_loot_esp_min_price_name"),
+                        IsAdvanced = false,
+                        Order = 174
+                    }
+                )
+            );
+            EnableLootESPFov = config.Bind<bool>(
+                "3. 巡天星轨 / ESP Module",
+                "启用约束透视",
+                true,
+                new ConfigDescription(
+                    LocaleManager.Get("cfg_esp_module_loot_esp_fov_enable_desc"),
+                    null,
+                    new ConfigurationManagerAttributes
+                    {
+                        DispName = LocaleManager.Get("cfg_esp_module_loot_esp_fov_enable_name"),
+                        IsAdvanced = false,
+                        Order = 173
+                    }
+                )
+            );
+            ShowLootESPFov = config.Bind<bool>(
+                "3. 巡天星轨 / ESP Module",
+                "显示约束透视范围",
+                true,
+                new ConfigDescription(
+                    LocaleManager.Get("cfg_esp_module_loot_esp_show_fov_enable_desc"),
+                    null,
+                    new ConfigurationManagerAttributes
+                    {
+                        DispName = LocaleManager.Get("cfg_esp_module_loot_esp_show_fov_enable_name"),
+                        IsAdvanced = false,
+                        Order = 172
+                    }
+                )
+            );
+            LootESPFovRange = config.Bind<int>(
+                "3. 巡天星轨 / ESP Module",
+                "约束透视范围",
+                100,
+                new ConfigDescription(
+                    LocaleManager.Get("cfg_esp_module_loot_esp_fov_radius_desc"),
+                    new AcceptableValueRange<int>(0, 1000),
+                    new ConfigurationManagerAttributes
+                    {
+                        DispName = LocaleManager.Get("cfg_esp_module_loot_esp_fov_radius_name"),
+                        IsAdvanced = false,
+                        Order = 171
+                    }
+                )
             );
             LootESPFovMinPrice = config.Bind<int>(
-                "物资透视",
+                "3. 巡天星轨 / ESP Module",
                 "约束透视白名单价格",
                 150000,
                 new ConfigDescription(
-                    "显示在约束范围外的物品最低价格",
-                    new AcceptableValueRange<int>(1000, 10000000)
+                    LocaleManager.Get("cfg_esp_module_loot_esp_fov_min_price_desc"),
+                    new AcceptableValueRange<int>(1000, 10000000),
+                    new ConfigurationManagerAttributes
+                    {
+                        DispName = LocaleManager.Get("cfg_esp_module_loot_esp_fov_min_price_name"),
+                        IsAdvanced = false,
+                        Order = 170
+                    }
+                )
+            );
+            HighlightWishListItem = config.Bind<bool>(
+                "3. 巡天星轨 / ESP Module",
+                "高亮愿望单物品",
+                true,
+                new ConfigDescription(
+                    LocaleManager.Get("cfg_esp_module_loot_esp_highlight_wishlist_item_desc"),
+                    null,
+                    new ConfigurationManagerAttributes
+                    {
+                        DispName = LocaleManager.Get("cfg_esp_module_loot_esp_highlight_wishlist_item_name"),
+                        IsAdvanced = false,
+                        Order = 169
+                    }
+                )
+            );
+            HighlightQuestItem = config.Bind<bool>(
+                "3. 巡天星轨 / ESP Module",
+                "高亮任务物品",
+                true,
+                new ConfigDescription(
+                    LocaleManager.Get("cfg_esp_module_loot_esp_highlight_quest_item_desc"),
+                    null,
+                    new ConfigurationManagerAttributes
+                    {
+                        DispName = LocaleManager.Get("cfg_esp_module_loot_esp_highlight_quest_item_name"),
+                        IsAdvanced = false,
+                        Order = 168
+                    }
+                )
+            );
+            HighlightLabyrinthSpecialItem = config.Bind<bool>(
+                "3. 巡天星轨 / ESP Module",
+                "透视迷宫道具",
+                true,
+                new ConfigDescription(
+                    LocaleManager.Get("cfg_esp_module_loot_esp_highlight_labyrinth_item_desc"),
+                    null,
+                    new ConfigurationManagerAttributes
+                    {
+                        DispName = LocaleManager.Get("cfg_esp_module_loot_esp_highlight_labyrinth_item_name"),
+                        IsAdvanced = false,
+                        Order = 167
+                    }
+                )
+            );
+            HighlightBloodyKey = config.Bind<bool>(
+                "3. 巡天星轨 / ESP Module",
+                "透视血色钥匙",
+                true,
+                new ConfigDescription(
+                    LocaleManager.Get("cfg_esp_module_loot_esp_highlight_bloody_key_desc"),
+                    null,
+                    new ConfigurationManagerAttributes
+                    {
+                        DispName = LocaleManager.Get("cfg_esp_module_loot_esp_highlight_bloody_key_name"),
+                        IsAdvanced = false,
+                        Order = 166
+                    }
                 )
             );
         }
@@ -234,13 +354,27 @@ namespace Oracle.ESP
             {
                 EnableLooseLootESP.Value = !EnableLooseLootESP.Value;
                 var value = EnableLooseLootESP.Value;
-                OracleNotify.Message($"松散物资透视已{(value ? "启用" : "禁用")}!", value ? ENotificationIconType.Default : ENotificationIconType.Alert, GlobalCfg.MuteNotice.Value);
+                OracleNotify.Message(
+                    string.Format(
+                        LocaleManager.Get("message_loot_esp_looseloot_enable"),
+                        value ? LocaleManager.Get("text_enable") : LocaleManager.Get("text_disable")
+                    ),
+                    value ? ENotificationIconType.Default : ENotificationIconType.Alert,
+                    GlobalCfg.MuteNotice.Value
+                );
             }
             if (Input.GetKeyDown(ContainerLootESPKey.Value))
             {
                 EnableContainerLootESP.Value = !EnableContainerLootESP.Value;
                 var value = EnableContainerLootESP.Value;
-                OracleNotify.Message($"容器物资透视已{(value ? "启用" : "禁用")}!", value ? ENotificationIconType.Default : ENotificationIconType.Alert, GlobalCfg.MuteNotice.Value);
+                OracleNotify.Message(
+                    string.Format(
+                        LocaleManager.Get("message_loot_esp_staticloot_enable"),
+                        value ? LocaleManager.Get("text_enable") : LocaleManager.Get("text_disable")
+                    ),
+                    value ? ENotificationIconType.Default : ENotificationIconType.Alert,
+                    GlobalCfg.MuteNotice.Value
+                );
             }
         }
     }

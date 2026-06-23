@@ -1,11 +1,7 @@
 ﻿using BepInEx.Configuration;
-using EFT;
 using EFT.Communications;
-using EFT.Interactive;
 using Oracle.Data;
 using Oracle.Utils;
-using System;
-using System.Collections.Generic;
 using UnityEngine;
 using static Oracle.Data.OracleInterface;
 
@@ -13,7 +9,7 @@ namespace Oracle.ESP
 {
 
     /// <summary>
-    /// 独立的尸体透视部分
+    /// 尸体透视
     /// </summary>
     public class CorpseESP : IOracleESP
     {
@@ -23,7 +19,9 @@ namespace Oracle.ESP
             OracleEvent.OnDrawESP += OnDrawESP;
         }
 
-        // ⭐ 2. 独立的绘制入口
+        /// <summary>
+        /// 绘制方法
+        /// </summary>
         private void OnDrawESP()
         {
             Camera cam = Camera.main;
@@ -33,31 +31,29 @@ namespace Oracle.ESP
         }
 
         /// <summary>
-        /// 独立的尸体文本绘制方法（无约束范围，全局绘制）
+        /// 绘制文本
         /// </summary>
         public static void DrawCorpseText(Camera cam, GUIStyle textStyle)
         {
-            // 总开关
+            //开关&防空
             if (!CorpseESPCfg.EnableCorpseESP.Value) return;
             if (OracleCorpseManager.CachedCorpseList == null || OracleCorpseManager.CachedCorpseList.Count == 0) return;
 
-            // 样式状态保护
+            //样式保护
             textStyle.richText = true;
             textStyle.normal.textColor = Color.white;
 
             foreach (CorpseData corpse in OracleCorpseManager.CachedCorpseList)
             {
-                // 世界坐标转屏幕坐标
                 Vector3 screenPos = cam.WorldToScreenPoint(corpse.Position);
 
-                // 确保在相机前方
+                //深度检查
                 if (screenPos.z > 0.01f)
                 {
                     float screenX = screenPos.x;
-                    // 统一转换 Unity 坐标系并给予微小的固定的 Y 轴偏移（避免完全贴地被地面模型盖住字）
                     float screenY = Screen.height - screenPos.y - 10f;
 
-                    // 每个人只有一行名字，无需进行堆叠偏移算法
+                    //绘制
                     GUI.Label(new Rect(screenX - 100, screenY - 20, 200, 40), corpse.FormattedText, textStyle);
                 }
             }
@@ -65,8 +61,10 @@ namespace Oracle.ESP
     }
 
     /// <summary>
-    /// 尸体透视配置项
+    /// 配置项
     /// </summary>
+    /// 
+    [OracleCfgOrder(3)]
     public class CorpseESPCfg : IOracleCfg, IOracleKeyUpdate
     {
         internal static ConfigEntry<KeyCode> CorpseESPKey { get; set; }
@@ -75,26 +73,49 @@ namespace Oracle.ESP
 
         public void Initialize(ConfigFile config)
         {
-            CorpseESPKey = config.Bind<KeyCode>(
-                "尸体透视",
-                "尸体透视快捷键",
-                KeyCode.F5,
-                "切换尸体透视"
-            );
             EnableCorpseESP = config.Bind<bool>(
-                "尸体透视",
+                "3. 巡天星轨 / ESP Module",
                 "启用尸体透视",
                 true,
-                "是否在屏幕上显示死去的玩家/AI"
+                new ConfigDescription(
+                    LocaleManager.Get("cfg_esp_module_corpse_esp_enable_desc"),
+                    null,
+                    new ConfigurationManagerAttributes
+                    {
+                        DispName = LocaleManager.Get("cfg_esp_module_corpse_esp_enable_name"),
+                        IsAdvanced = false,
+                        Order = 150
+                    }
+                )
             );
-
+            CorpseESPKey = config.Bind<KeyCode>(
+                "3. 巡天星轨 / ESP Module",
+                "尸体透视快捷键",
+                KeyCode.F5,
+                new ConfigDescription(
+                    LocaleManager.Get("cfg_esp_module_corpse_esp_enable_key_desc"),
+                    null,
+                    new ConfigurationManagerAttributes
+                    {
+                        DispName = LocaleManager.Get("cfg_esp_module_corpse_esp_enable_key_name"),
+                        IsAdvanced = false,
+                        Order = 149
+                    }
+                )
+            );
             CorpseESPMaxDistance = config.Bind<int>(
-                "尸体透视",
+                "3. 巡天星轨 / ESP Module",
                 "尸体透视最大距离",
                 300,
                 new ConfigDescription(
-                    "透视死者的最远范围",
-                    new AcceptableValueRange<int>(50, 1000)
+                    LocaleManager.Get("cfg_esp_module_corpse_esp_max_distance_desc"),
+                    new AcceptableValueRange<int>(50, 1000),
+                    new ConfigurationManagerAttributes
+                    {
+                        DispName = LocaleManager.Get("cfg_esp_module_corpse_esp_max_distance_name"),
+                        IsAdvanced = false,
+                        Order = 148
+                    }
                 )
             );
         }
@@ -108,7 +129,14 @@ namespace Oracle.ESP
             {
                 EnableCorpseESP.Value = !EnableCorpseESP.Value;
                 var value = EnableCorpseESP.Value;
-                OracleNotify.Message($"尸体透视已{(value ? "启用" : "禁用")}!", value ? ENotificationIconType.Default : ENotificationIconType.Alert, GlobalCfg.MuteNotice.Value);
+                OracleNotify.Message(
+                    string.Format(
+                        LocaleManager.Get("message_esp_corpse_enable"),
+                        value ? LocaleManager.Get("text_enable") : LocaleManager.Get("text_disable")
+                    ),
+                    value ? ENotificationIconType.Default : ENotificationIconType.Alert,
+                    GlobalCfg.MuteNotice.Value
+                );
             }
         }
     }
