@@ -197,6 +197,7 @@ namespace Oracle.RaidManager
     public class ItemManagerGUICfg : IOracleCfg
     {
         internal static ConfigEntry<KeyCode> ItemManagerKey { get; set; }
+
         /// <summary>
         /// 配置项初始化
         /// </summary>
@@ -208,11 +209,11 @@ namespace Oracle.RaidManager
                 "打开物品管理器",
                 KeyCode.F10,
                 new ConfigDescription(
-                    LocaleManager.Get("cfg_creation_module_item_open_manager_desc"),
+                    LocaleManager.Get("cfg_creation_module_item_open_manager_key_desc"),
                     null,
                     new ConfigurationManagerAttributes
                     {
-                        DispName = LocaleManager.Get("cfg_creation_module_item_open_manager_name"),
+                        DispName = LocaleManager.Get("cfg_creation_module_item_open_manager_key_name"),
                         IsAdvanced = false,
                         Order = 130
                     }

@@ -94,6 +94,9 @@ namespace Oracle.RaidManager
         }
     }
 
+    /// <summary>
+    /// 配置项定义
+    /// </summary>
     public class RaidManagerGUICfg : IOracleCfg
     {
         internal static ConfigEntry<KeyCode> RaidManagerKey { get; set; }
@@ -101,10 +104,19 @@ namespace Oracle.RaidManager
         public void Initialize(ConfigFile config)
         {
             RaidManagerKey = config.Bind(
-                "快捷键设置",
+                "5. 创世引擎 / Raid Manage Module",
                 "打开战局综合控制台",
                 KeyCode.F8,
-                "一键呼出包含物资、AI、生成、技能的控制中心"
+                new ConfigDescription(
+                    LocaleManager.Get("cfg_raid_manage_module_open_manager_key_desc"),
+                    null,
+                    new ConfigurationManagerAttributes
+                    {
+                        DispName = LocaleManager.Get("cfg_raid_manage_module_open_manager_key_name"),
+                        IsAdvanced = false,
+                        Order = 120
+                    }
+                )
             );
         }
     }
