@@ -9,6 +9,7 @@ namespace Oracle.Data
     /// <summary>
     /// 全局配置定义, 其实现在只剩绘制部分了
     /// </summary>
+    [OracleCfgOrder(0)]
     internal class GlobalCfg : IOracleCfg, IOracleKeyUpdate
     {
         //配置定义

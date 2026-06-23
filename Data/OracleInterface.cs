@@ -1,7 +1,20 @@
 ﻿using BepInEx.Configuration;
+using System;
 
 namespace Oracle.Data
 {
+    /// <summary>
+    /// 配置项排序
+    /// </summary>
+    public class OracleCfgOrderAttribute : Attribute
+    {
+        public int Order { get; }
+
+        public OracleCfgOrderAttribute(int order)
+        {
+            Order = order;
+        }
+    }
     internal class OracleInterface
     {
         /// <summary>

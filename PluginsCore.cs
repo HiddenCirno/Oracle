@@ -15,6 +15,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using UnityEngine;
+using static GClass2175;
 using static Oracle.Combat.InfinityStamina;
 using static Oracle.Data.OracleInterface;
 
@@ -181,25 +182,27 @@ namespace Oracle
             // 获取当前运行的 DLL 中的所有类型
             Type[] allTypes = Assembly.GetExecutingAssembly().GetTypes();
 
-            foreach (Type type in allTypes)
+            var ordered = allTypes
+                .Where(t => typeof(IOracleCfg).IsAssignableFrom(t) && !t.IsAbstract && !t.IsInterface)
+                .Select(t => new
+                    {
+                        Type = t,
+                        Order = t.GetCustomAttribute<OracleCfgOrderAttribute>()?.Order ?? 100
+                    }
+                )
+                .OrderBy(x => x.Order)
+                .Select(x => (IOracleCfg)Activator.CreateInstance(x.Type));
+
+            foreach (var cfg in ordered)
             {
-                // ⭐ 核心判断：如果这个类型继承了 IOracleConfig，且它本身是个能被实例化的类（不是抽象类或接口本身）
-                if (targetInterface.IsAssignableFrom(type) && !type.IsInterface && !type.IsAbstract)
+                try
                 {
-                    try
-                    {
-                        // 实例化它
-                        IOracleCfg configInstance = (IOracleCfg)Activator.CreateInstance(type);
-
-                        // 调用初始化方法
-                        configInstance.Initialize(config);
-
-                        Debug.Log($"[Oracle] 成功自动挂载配置模块: {type.Name}");
-                    }
-                    catch (Exception ex)
-                    {
-                        Debug.LogError($"[Oracle] 自动挂载配置模块 {type.Name} 失败: {ex.Message}");
-                    }
+                    cfg.Initialize(config);
+                    Debug.Log($"[Oracle] 初始化配置: {cfg.GetType().Name}");
+                }
+                catch (Exception ex)
+                {
+                    Debug.LogError($"[Oracle] 初始化失败 {cfg.GetType().Name}: {ex}");
                 }
             }
         }

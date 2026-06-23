@@ -216,6 +216,7 @@ namespace Oracle.Combat
     /// <summary>
     /// 配置项定义
     /// </summary>
+    [OracleCfgOrder(1)]
     public class AimbotCfg : IOracleCfg, IOracleKeyUpdate
     {
         internal static ConfigEntry<KeyCode> AimbotKey { get; set; }
