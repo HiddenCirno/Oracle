@@ -132,7 +132,7 @@
         "cfg_esp_module_corpse_esp_enable_key_desc": "Toggle corpse ESP.",
         "cfg_esp_module_corpse_esp_max_distance_name": "Corpse ESP Range",
         "cfg_esp_module_corpse_esp_max_distance_desc": "Maximum distance for corpse detection.",
-        "message_corpse_esp_enable": "Corpse ESP has been {0}",
+        "message_esp_corpse_enable": "Corpse ESP has been {0}",
         "cfg_esp_module_tripwire_esp_enable_name": "Enable Tripwire ESP",
         "cfg_esp_module_tripwire_esp_enable_desc": "Reveal nearby tripwire traps.",
         "cfg_creation_module_item_open_manager_key_name": "Open Item Manager",

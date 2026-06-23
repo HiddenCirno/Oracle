@@ -1,9 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace Oracle.Data
+﻿namespace Oracle.Data
 {
+    /// <summary>
+    /// 自定义色板
+    /// </summary>
     public static class OracleColorManager
     {
         public static readonly OracleColor EnemySafe = new OracleColor("#00FF00");

@@ -1,7 +1,8 @@
-﻿using EFT.Interactive;
-using EFT;
+﻿using EFT;
+using EFT.Interactive;
 using EFT.Interactive;
 using EFT.InventoryLogic;
+using Newtonsoft.Json;
 using Oracle.ESP;
 using System.Collections.Generic;
 using System.Linq;
@@ -41,16 +42,16 @@ namespace Oracle.Data
     /// </summary>
     public struct CorpseData
     {
-        public Vector3 Position;      // 尸体三维坐标
-        public string FormattedText;  // 富文本格式化后的显示文本
-        public int Distance;          // 距离
+        public Vector3 Position;
+        public string FormattedText;
+        public int Distance;
     }
 
     public readonly struct EntityDisplayInfo
     {
         public readonly string Name;
-        public readonly string SideText; // 已包含颜色标签的完整描述
-        public readonly string LevelText; // 空字符串或带颜色的等级
+        public readonly string SideText;
+        public readonly string LevelText;
         public readonly int Distance;
 
         public EntityDisplayInfo(string name, string sideText, string levelText, int distance)
@@ -61,48 +62,71 @@ namespace Oracle.Data
             Distance = distance;
         }
 
-        // 格式化输出方便直接给GUI调用
+        /// <summary>
+        /// 格式化输出结果
+        /// </summary>
+        /// <returns></returns>
         public string ToEspString() => $"{LevelText} {SideText} <color=#FFFF00>{Distance}米</color>".Trim();
     }
+
+    /// <summary>
+    /// 二次封装的自定义颜色结构, 同时具备字符串和UnityColor隐式转换
+    /// </summary>
     public readonly struct OracleColor
     {
-        public readonly string HexColor;       // 带 # 的富文本颜色 (例: "#FF8C00")
-        public readonly string HexColorNoHash; // 不带 # 的纯代码 (例: "FF8C00")
-        public readonly Color UnityColor;      // Unity 原生 Color 对象
+        public readonly string HexColor;
+        public readonly string HexColorNoHash;
+        public readonly Color UnityColor;
 
         /// <summary>
-        /// 从十六进制字符串构造颜色 (例如: "#FF0000" 或 "FF0000" 或带透明度 "#FF0000FF")
+        /// 从十六进制字符串构造颜色
         /// </summary>
         public OracleColor(string hex)
         {
-            // 防御性容错：自动补全 # 号
+            //防御
             HexColor = hex.StartsWith("#") ? hex.ToUpper() : $"#{hex}".ToUpper();
             HexColorNoHash = HexColor.Substring(1);
 
-            // 一次性解析为 Unity 原生 Color，永久缓存
+            //Color
             if (ColorUtility.TryParseHtmlString(HexColor, out Color parsedColor))
             {
                 UnityColor = parsedColor;
             }
             else
             {
-                // 解析失败时，给个刺眼的洋红色作为错误提示
-                Debug.LogError($"[OracleColor] 解析颜色失败，无效的代码: {hex}");
+                //解析失败
+                Debug.LogError($"[Oracle] 解析颜色失败，无效的代码: {hex}");
                 UnityColor = Color.magenta;
             }
         }
 
-        // ⭐ C# 黑魔法 1：隐式转换为 Unity Color
-        // 当方法需要 Color 时，直接传 OracleColor 即可
+        //隐式转换
         public static implicit operator Color(OracleColor oc) => oc.UnityColor;
 
-        // ⭐ C# 黑魔法 2：隐式转换为 String
-        // 当拼接富文本字符串时，直接传 OracleColor，它会自动变成 "#FFFFFF"
         public static implicit operator string(OracleColor oc) => oc.HexColor;
+        
+        //覆盖ToString为文本拼接提供兼容
         public override string ToString() => HexColor;
     }
+
+    /// <summary>
+    /// 本地化文本结构定义
+    /// </summary>
+    public class LocaleData
+    {
+        [JsonProperty("Language")]
+        public string Language { get; set; }
+
+        [JsonProperty("Translate")]
+        public Dictionary<string, string> Translate { get; set; }
+    }
+
+    /// <summary>
+    /// 高亮拓展
+    /// </summary>
     public static class ExtendWishlistItem
     {
+        //O1字典查询
         public static Dictionary<string, string> LabyrinthSpecialItem = new Dictionary<string, string>()
         {
             {"679baa2c61f588ae2b062a24", "一号房钥匙"},

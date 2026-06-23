@@ -1,18 +1,11 @@
-﻿using CommonAssets.Scripts.Game.LabyrinthEvent;
-using EFT;
+﻿using EFT;
 using EFT.Interactive;
-using EFT.SynchronizableObjects;
 using Oracle.ESP;
-using System;
 using System.Collections.Generic;
-using System.Reflection;
 using UnityEngine;
-using static Oracle.ESP.CorpseESP;
 
 namespace Oracle.Data
 {
-    
-
     /// <summary>
     /// 玩家/实体数据引擎：处理所有的状态读取、射线检测、位置换算
     /// </summary>

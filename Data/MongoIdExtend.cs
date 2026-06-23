@@ -15,6 +15,7 @@ namespace Oracle.Data
         private static SHA256 _sha256;
         //HEX预查表
         private static readonly char[] HexLookup = "0123456789abcdef".ToCharArray();
+
         /// <summary>
         /// MongoId的扩展方法, 基于原ID生成新的MongoId
         /// </summary>

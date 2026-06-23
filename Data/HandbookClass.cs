@@ -18,7 +18,11 @@ namespace Oracle.Data
         {
             return RequestHandler.PostJson("/client/handbook/templates", JsonConvert.SerializeObject(new GetHandbookRequest(request)));
         }
+
         //以下为类型接口和通讯结果定义
+        //其实这部分应该原版就有?
+        //懒得找了所以自己写了一套
+        //要不去找找原版咋写的
         public class HandbookResponse
         {
             [JsonProperty("err")]
