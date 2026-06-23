@@ -371,10 +371,12 @@ namespace Oracle.ItemSpawn
                 )
             );
         }
+
         public void RegisterKeyUpdate()
         {
             OracleEvent.OnUpdate += KeyUpdate;
         }
+
         public static void KeyUpdate()
         {
             if (Input.GetKeyDown(AddItemKey.Value))
