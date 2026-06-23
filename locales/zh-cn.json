@@ -158,7 +158,7 @@
         "text_esp_container_tag": "[{0}]",
         "text_esp_loot_format": "<color={0}>{1} {2}</color> <color={3}>{4}米</color>",
         "text_esp_loot_on_the_ground": "地面",
-        "text_esp_loot_in_the_container": "容器",
+        "text_esp_loot_in_the_container": "容器"
 
     }
 }
