@@ -204,10 +204,19 @@ namespace Oracle.RaidManager
         public void Initialize(ConfigFile config)
         {
             ItemManagerKey = config.Bind(
-                "快捷键设置",
+                "4. 奇迹之门 / Creation Module",
                 "打开物品管理器",
                 KeyCode.F10,
-                "打开物品实例管理器"
+                new ConfigDescription(
+                    LocaleManager.Get("cfg_creation_module_item_open_manager_desc"),
+                    null,
+                    new ConfigurationManagerAttributes
+                    {
+                        DispName = LocaleManager.Get("cfg_creation_module_item_open_manager_name"),
+                        IsAdvanced = false,
+                        Order = 130
+                    }
+                )
             );
         }
     }

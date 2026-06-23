@@ -135,11 +135,22 @@
         "message_corpse_esp_enable": "尸体透视已{0}",
         "cfg_esp_module_tripwire_esp_enable_name": "启用绊雷透视",
         "cfg_esp_module_tripwire_esp_enable_desc": "开启后，显示地图中设置的绊雷位置，防止触发爆炸。",
+        "cfg_creation_module_item_open_manager_name": "打开物品管理器",
+        "cfg_creation_module_item_open_manager_desc": "设置用于打开物品管理器界面的快捷键。",
+        "cfg_creation_module_item_id_name": "物品 Template ID",
+        "cfg_creation_module_item_id_desc": "设置用于创建物品的 Template ID。",
+        "cfg_creation_module_item_create_key_name": "创建实例",
+        "cfg_creation_module_item_create_key_desc": "在准星指向位置创建所选物品实例的快捷键。",
+        "cfg_creation_module_itemm_copy_key_name": "保存物品",
+        "cfg_creation_module_item_copy_key_desc": "将选定物品保存到配置库中的快捷键。",
+        "cfg_creation_module_itemm_drop_key_name": "复制物品",
+        "cfg_creation_module_item_drop_key_desc": "通过复制功能生成物品实例的快捷键。",
 
 
 
 
-        "text_esp_tripwire": "<color={0}>绊雷</color> <color={1}>{2}米</color>"
+        "text_esp_tripwire": "<color={0}>绊雷</color> <color={1}>{2}米</color>",
+        "text_spawn_item_error": "生成物品失败！"
 
     }
 }

@@ -376,6 +376,7 @@ namespace Oracle.ESP
     /// <summary>
     /// 配置项定义
     /// </summary>
+    [OracleCfgOrder(3)]
     public class PlayerESPCfg : IOracleCfg, IOracleKeyUpdate
     {
         internal static ConfigEntry<bool> EnablePlayerESP { get; set; }

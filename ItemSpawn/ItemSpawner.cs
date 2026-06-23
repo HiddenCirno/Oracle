@@ -6,6 +6,7 @@ using EFT.Interactive;
 using EFT.InventoryLogic;
 using Oracle.Data;
 using Oracle.RaidManager;
+using Oracle.Utils;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -17,11 +18,14 @@ using static Oracle.Data.OracleInterface;
 namespace Oracle.ItemSpawn
 {
     /// <summary>
-    /// 虚空造物部分
+    /// 虚空造物
     /// </summary>
     public class ItemSpawner
     {
-
+        /// <summary>
+        /// 将物品添加到实例管理器
+        /// </summary>
+        /// <param name="templateId">物品ID</param>
         public static void AddItemToManager(string templateId)
         {
 
@@ -114,10 +118,11 @@ namespace Oracle.ItemSpawn
             }
             catch (Exception ex)
             {
+                OracleCommon.ShowError(ex);
                 //捕获奇怪的错误
-                Console.WriteLine($"物品生成失败: {ex.Message}\n{ex.StackTrace}");
             }
         }
+
         /// <summary>
         /// 在世界上掉落物品
         /// </summary>
@@ -151,6 +156,7 @@ namespace Oracle.ItemSpawn
             {
             }
         }
+
         /// <summary>
         /// 在玩家前方掉落物品
         /// </summary>
@@ -182,6 +188,7 @@ namespace Oracle.ItemSpawn
             {
             }
         }
+
         /// <summary>
         /// 异步加载涉及到的物品资产
         /// </summary>
@@ -229,11 +236,8 @@ namespace Oracle.ItemSpawn
             catch (Exception ex)
             {
                 //捕获
-                NotificationManagerClass.DisplayMessageNotification(
-                    "生成物品失败！",
-                    EFT.Communications.ENotificationDurationType.Default,
-                    EFT.Communications.ENotificationIconType.Alert
-                );
+                OracleNotify.Warning(LocaleManager.Get("text_spawn_item_error"));
+                OracleCommon.ShowError(ex);
             }
         }
 
@@ -253,13 +257,11 @@ namespace Oracle.ItemSpawn
             catch (Exception ex)
             {
                 //捕获
-                NotificationManagerClass.DisplayMessageNotification(
-                    "生成物品失败！",
-                    EFT.Communications.ENotificationDurationType.Default,
-                    EFT.Communications.ENotificationIconType.Alert
-                );
+                OracleNotify.Warning(LocaleManager.Get("text_spawn_item_error"));
+                OracleCommon.ShowError(ex);
             }
         }
+
         //物品栏寻址算法
         public static ItemAddress FindEmptyLocation(Player player, Item newItem)
         {
@@ -290,9 +292,11 @@ namespace Oracle.ItemSpawn
             return null;
         }
     }
+
     /// <summary>
     /// 配置项定义
     /// </summary>
+    [OracleCfgOrder(4)]
     public class ItemSpawnerCfg : IOracleCfg, IOracleKeyUpdate
     {
         internal static ConfigEntry<KeyCode> AddItemKey { get; set; }
@@ -307,28 +311,64 @@ namespace Oracle.ItemSpawn
         public void Initialize(ConfigFile config)
         {
             TargetItemId = config.Bind(
-                "虚空造物",
+                "4. 奇迹之门 / Creation Module",
                 "物品 Template ID",
                 "59faff1d86f7746c51718c9c",
-                "输入需要添加到实例管理器的物品ID"
+                new ConfigDescription(
+                    LocaleManager.Get("cfg_creation_module_item_id_desc"),
+                    null,
+                    new ConfigurationManagerAttributes
+                    {
+                        DispName = LocaleManager.Get("cfg_creation_module_item_id_name"),
+                        IsAdvanced = false,
+                        Order = 129
+                    }
+                )
             );
             AddItemKey = config.Bind<KeyCode>(
-                "虚空造物",
+                "4. 奇迹之门 / Creation Module",
                 "创建实例",
                 KeyCode.KeypadDivide,
-                "按下后将指定ID的物品作为实例添加到实例管理器"
+                new ConfigDescription(
+                    LocaleManager.Get("cfg_creation_module_item_create_key_desc"),
+                    null,
+                    new ConfigurationManagerAttributes
+                    {
+                        DispName = LocaleManager.Get("cfg_creation_module_item_create_key_name"),
+                        IsAdvanced = false,
+                        Order = 128
+                    }
+                )
             );
             CopyItemKey = config.Bind(
-                "虚空造物",
+                "4. 奇迹之门 / Creation Module",
                 "保存物品",
                 new KeyboardShortcut(KeyCode.C, KeyCode.LeftShift),
-                new ConfigDescription("将鼠标指向物品并按下此快捷键将物品组的实例复制保存到内存")
+                new ConfigDescription(
+                    LocaleManager.Get("cfg_creation_module_item_copy_key_desc"),
+                    null,
+                    new ConfigurationManagerAttributes
+                    {
+                        DispName = LocaleManager.Get("cfg_creation_module_itemm_copy_key_name"),
+                        IsAdvanced = false,
+                        Order = 127
+                    }
+                )
             );
             DropItemKey = config.Bind<KeyCode>(
-                "虚空造物",
+                "4. 奇迹之门 / Creation Module",
                 "复制物品",
                 KeyCode.Keypad5,
-                "按下后生成并掉落当前选择的物品"
+                new ConfigDescription(
+                    LocaleManager.Get("cfg_creation_module_item_drop_key_desc"),
+                    null,
+                    new ConfigurationManagerAttributes
+                    {
+                        DispName = LocaleManager.Get("cfg_creation_module_itemm_drop_key_name"),
+                        IsAdvanced = false,
+                        Order = 126
+                    }
+                )
             );
         }
         public void RegisterKeyUpdate()

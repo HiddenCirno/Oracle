@@ -89,6 +89,7 @@ namespace Oracle.ESP
     /// <summary>
     /// 配置项定义
     /// </summary>
+    [OracleCfgOrder(3)]
     public class TripwireESPCfg : IOracleCfg, IOracleKeyUpdate
     {
         internal static ConfigEntry<bool> EnableTripwireESP { get; set; }

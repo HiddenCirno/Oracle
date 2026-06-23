@@ -39,5 +39,11 @@ namespace Oracle.Utils
             }
             return true;
         }
+        
+        public static void ShowError(Exception err, string message = "")
+        {
+
+            Console.WriteLine($"[Oracle] :{message}\n{err.Message}\n{err.StackTrace}");
+        }
     }
 }

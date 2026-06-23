@@ -15,6 +15,7 @@ namespace Oracle.ItemSpawn
         [ThreadStatic]
         private static SHA256 _sha256;
         private static readonly char[] HexLookup = "0123456789abcdef".ToCharArray();
+
         /// <summary>
         /// 拓展方法, 对物品树进行清洗, 将其变为独立的实例
         /// </summary>
@@ -34,6 +35,7 @@ namespace Oracle.ItemSpawn
             }
             return clonedItem;
         }
+
         /// <summary>
         /// 使用sha256生成符合MongoId规范的HEX字符串
         /// </summary>
@@ -52,6 +54,7 @@ namespace Oracle.ItemSpawn
             }
             return new string(hexBuffer);
         }
+
         /// <summary>
         /// 通过反射回调字段修改Id
         /// </summary>
@@ -76,6 +79,7 @@ namespace Oracle.ItemSpawn
                 }
             }
         }
+
         /// <summary>
         /// 拓展方法, 清洗物品状态, 耐久度, 带勾....
         /// </summary>

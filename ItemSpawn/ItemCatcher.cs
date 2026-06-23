@@ -10,10 +10,7 @@ using EFT.UI.DragAndDrop;
 using HarmonyLib;
 using Oracle.Data;
 using Oracle.Utils;
-using System;
 using System.Collections.Generic;
-using System.Text;
-using UnityEngine;
 using static Oracle.Data.OracleInterface;
 
 namespace Oracle.ItemSpawn
@@ -46,13 +43,15 @@ namespace Oracle.ItemSpawn
                 string itemID = selectedItem.TemplateId;
                 string itemName = selectedItem.Name.Localized();
                 //复制-清洗Id-清洗状态, 使用两个拓展方法一步搞定
-                savedItem = selectedItem.CloneItem().ReassignAllIds();//.CleanAndResetItem(ItemSpawnerCfg.ForcedFiR.Value);//这里不能清洗状态, 它涉及到带勾机制, 由玩家自己决定
+                savedItem = selectedItem.CloneItem().ReassignAllIds();
+                //.CleanAndResetItem(ItemSpawnerCfg.ForcedFiR.Value);//这里不能清洗状态, 它涉及到带勾机制, 由玩家自己决定
                 SavedItems.Add(savedItem);
                 //游戏内通知
                 OracleNotify.Message($"物品{itemName}已存储至内存区域: {itemID}", ENotificationIconType.Default, GlobalCfg.MuteNotice.Value);
             }
         }
     }
+
     //Patch
     //全都是用于捕获物品实例的Patch
     [HarmonyPatch(typeof(ItemView), "OnPointerEnter")]
@@ -63,6 +62,7 @@ namespace Oracle.ItemSpawn
             if (__instance.Item != null) ItemCatcher.selectedItem = __instance.Item;
         }
     }
+
     [HarmonyPatch(typeof(EntityIcon), "method_1")]
     internal static class EntityIcon_PointEnterPatch
     {
@@ -72,6 +72,7 @@ namespace Oracle.ItemSpawn
             if (item != null) ItemCatcher.selectedItem = item;
         }
     }
+
     [HarmonyPatch(typeof(TradingRequisitePanel), "method_1")]
     internal static class TradingRequisitePanel_PointEnterPatch
     {
@@ -85,6 +86,7 @@ namespace Oracle.ItemSpawn
             }
         }
     }
+
     [HarmonyPatch(typeof(GridItemView), "OnPointerEnter")]
     internal static class GridItemView_PointEnterPatch
     {
@@ -93,6 +95,7 @@ namespace Oracle.ItemSpawn
             if (__instance.Item != null) ItemCatcher.selectedItem = __instance.Item;
         }
     }
+
     [HarmonyPatch(typeof(HideoutItemView), "OnPointerEnter")]
     internal static class HideoutItemViewPointEnterPatch
     {
@@ -102,6 +105,7 @@ namespace Oracle.ItemSpawn
             if (__instance.Item != null) ItemCatcher.selectedItem = __instance.Item;
         }
     }
+
     //退出点
     [HarmonyPatch(typeof(ItemView), "OnPointerExit")]
     internal static class ItemView_PointOuterPatch
@@ -125,12 +129,5 @@ namespace Oracle.ItemSpawn
     internal static class GridItemView_PointOuterPatch
     {
         private static void Prefix() => ItemCatcher.selectedItem = null;
-    }
-    /// <summary>
-    /// 配置项定义, 留空了, 复制来的
-    /// </summary>
-    public class ItemCatcherCfg
-    {
-
     }
 }
