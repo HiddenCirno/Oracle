@@ -15,7 +15,7 @@ namespace Oracle.Utils
         private static readonly Dictionary<string, Dictionary<string, string>> _loadedTranslations = new Dictionary<string, Dictionary<string, string>>();
         private const string FallbackLangName = "English";
 
-        public static void Init(ConfigFile config)
+        public static void Initialize(ConfigFile config)
         {
             string dirPath = Path.Combine(PluginsCore.pluginDir, "locales");
             //if (!Directory.Exists(dirPath)) Directory.CreateDirectory(dirPath);

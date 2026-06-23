@@ -111,7 +111,7 @@ namespace Oracle.Combat
                 //距离过滤
                 if (!OracleCommon.IsInRange(maxDist, myPos, player.Transform.position)) continue;
                 //找头
-                Vector3? headPos = AimbotCfg.AimbotPartSetting.Value == "头部" ? OraclePlayerManager.GetBonePos(player.PlayerBones.Head) : OraclePlayerManager.GetBonePos(player.PlayerBones.Spine3);
+                Vector3? headPos = AimbotCfg.AimbotPartSetting.Value == EAimingPart.Head ? OraclePlayerManager.GetBonePos(player.PlayerBones.Head) : OraclePlayerManager.GetBonePos(player.PlayerBones.Spine3);
                 if (!headPos.HasValue) continue;
                 //深度过滤
                 Vector3 screenPos = cam.WorldToScreenPoint(headPos.Value);
@@ -145,7 +145,7 @@ namespace Oracle.Combat
             //依旧功能开关+防御
             if (!AimbotCfg.EnableAimbot.Value || !AimbotCfg.DrawTargetLine.Value || LockedTarget == null || LockedTarget.PlayerBones == null) return;
             //找头
-            Vector3? headPos = AimbotCfg.AimbotPartSetting.Value == "头部" ? OraclePlayerManager.GetBonePos(LockedTarget.PlayerBones.Head) : OraclePlayerManager.GetBonePos(LockedTarget.PlayerBones.Spine3);
+            Vector3? headPos = AimbotCfg.AimbotPartSetting.Value == EAimingPart.Head ? OraclePlayerManager.GetBonePos(LockedTarget.PlayerBones.Head) : OraclePlayerManager.GetBonePos(LockedTarget.PlayerBones.Spine3);
             if (!headPos.HasValue) return;
             //3d转2d
             Vector3 screenPos = cam.WorldToScreenPoint(headPos.Value);
@@ -195,7 +195,7 @@ namespace Oracle.Combat
             if (player != PluginsCore.CorrectPlayer.ProfileId)
                 return;
             //找头
-            Vector3? targetPos = AimbotCfg.AimbotPartSetting.Value == "头部" ? OraclePlayerManager.GetBonePos(Aimbot.LockedTarget.PlayerBones.Head) : OraclePlayerManager.GetBonePos(Aimbot.LockedTarget.PlayerBones.Spine3);
+            Vector3? targetPos = AimbotCfg.AimbotPartSetting.Value == EAimingPart.Head ? OraclePlayerManager.GetBonePos(Aimbot.LockedTarget.PlayerBones.Head) : OraclePlayerManager.GetBonePos(Aimbot.LockedTarget.PlayerBones.Spine3);
             //空值, 返回
             if (targetPos == null)
                 return;
@@ -231,7 +231,7 @@ namespace Oracle.Combat
         internal static ConfigEntry<float> MagicBulletSpeed { get; set; }
         internal static ConfigEntry<float> LowRecoilMuti { get; set; }
         internal static ConfigEntry<int> AimbotMaxDistance { get; set; }
-        internal static ConfigEntry<string> AimbotPartSetting { get; set; }
+        internal static ConfigEntry<EAimingPart> AimbotPartSetting { get; set; }
         
         /// <summary>
         /// 配置项初始化
@@ -240,64 +240,212 @@ namespace Oracle.Combat
         public void Initialize(ConfigFile config)
         {
             AimbotKey = config.Bind<KeyCode>(
-                "自瞄设置",
+                "1. 天堂支点 / Combat Module",
                 "自瞄快捷键",
                 KeyCode.F6,
-                "按下切换自瞄与魔法子弹功能"
-            );
-            ChangeAimTargetKey = config.Bind<KeyCode>(
-                "自瞄设置",
-                "切换瞄准部位",
-                KeyCode.KeypadMultiply,
-                "按下切换瞄准的部位(头或胸)"
+                new ConfigDescription(
+                    LocaleManager.Get("cfg_combat_module_aimbot_enable_key_desc"),
+                    null,
+                    new ConfigurationManagerAttributes
+                    {
+                        DispName = LocaleManager.Get("cfg_combat_module_aimbot_enable_key_name"),
+                        IsAdvanced = false,
+                        Order = 300
+                    }
+                )
             );
             EnableAimbot = config.Bind(
-                "自瞄设置", "启用自瞄逻辑", true, "自瞄模块总开关"
+                "1. 天堂支点 / Combat Module",
+                "启用自瞄逻辑",
+                true,
+                new ConfigDescription(
+                    LocaleManager.Get("cfg_combat_module_aimbot_enable_desc"),
+                    null,
+                    new ConfigurationManagerAttributes
+                    {
+                        DispName = LocaleManager.Get("cfg_combat_module_aimbot_enable_name"),
+                        IsAdvanced = false,
+                        Order = 299
+                    }
+                )
             );
-            SuperMagicBullet = config.Bind(
-                "自瞄设置", "超级魔法子弹", false, "启用后子弹会直接在敌人头部生成"
+            AimbotPartSetting = config.Bind<EAimingPart>(
+                "1. 天堂支点 / Combat Module",
+                "自瞄位置选择",
+                EAimingPart.Head,
+                new ConfigDescription(
+                    LocaleManager.Get("cfg_combat_module_aimbot_part_desc"),
+                    null, //原始, 愚蠢, 不可理喻的木头写的弱智代码
+                    new ConfigurationManagerAttributes
+                    {
+                        DispName = LocaleManager.Get("cfg_combat_module_aimbot_part_name"),
+                        IsAdvanced = false,
+                        Order = 298
+                    }
+                )
             );
-            NoRecoil = config.Bind(
-                "自瞄设置", "消除武器后座", true, "禁用武器后坐力系统"
-            );
-            LowRecoil = config.Bind(
-                "自瞄设置", "超低武器后座", true, "将后坐力降至极低，优先级比无后座高，直播用"
-            );
-            LowRecoilMuti = config.Bind(
-                "自瞄设置", "武器后坐倍率", 0.2f,
-                new ConfigDescription("调整自定义后坐力倍率", new AcceptableValueRange<float>(0f, 1f))
-            );
-            DrawAimbotFov = config.Bind(
-                "自瞄设置", "显示自瞄 FOV", true, "在屏幕中心绘制自瞄生效范围圆环"
-            );
-            DrawTargetLine = config.Bind(
-                "自瞄设置", "显示目标锁定线", true, "绘制一条从屏幕中心到最优锁定目标的连线"
-            );
-            AimbotFovRadius = config.Bind(
-                "自瞄设置", "自瞄 FOV 半径", 150f,
-                new ConfigDescription("自瞄圆环的大小", new AcceptableValueRange<float>(10f, 1000f))
-            );
-            AimbotTargetUpdateRate = config.Bind(
-                "自瞄设置", "自瞄目标更新频率", 20,
-                new ConfigDescription("每秒的目标检测和更新频率", new AcceptableValueRange<int>(10, 50))
-            );
-            MagicBulletSpeed = config.Bind(
-                "自瞄设置", "魔法子弹加速度", 20f,
-                new ConfigDescription("魔法子弹加速度", new AcceptableValueRange<float>(10f, 100f))
+            ChangeAimTargetKey = config.Bind<KeyCode>(
+                "1. 天堂支点 / Combat Module",
+                "切换瞄准部位",
+                KeyCode.KeypadMultiply,
+                new ConfigDescription(
+                    LocaleManager.Get("cfg_combat_module_aimbot_change_part_key_desc"),
+                    null,
+                    new ConfigurationManagerAttributes
+                    {
+                        DispName = LocaleManager.Get("cfg_combat_module_aimbot_change_part_key_name"),
+                        IsAdvanced = false,
+                        Order = 297
+                    }
+                )
             );
             AimbotMaxDistance = config.Bind(
-                "自瞄设置", "自瞄最大距离", 200,
-                new ConfigDescription("自瞄生效的最大 3D 物理距离(米)", new AcceptableValueRange<int>(10, 2000))
-            );
-            AimbotPartSetting = config.Bind(
-                "自瞄设置",
-                "自瞄位置选择",
-                "头部",
+                "1. 天堂支点 / Combat Module",
+                "自瞄最大距离",
+                200,
                 new ConfigDescription(
-                    "选择背景样式",
-                    new AcceptableValueList<string>(
-                        "头部", "胸口"
-                    )
+                    LocaleManager.Get("cfg_combat_module_aimbot_max_distance_desc"),
+                    new AcceptableValueRange<int>(10, 2000),
+                    new ConfigurationManagerAttributes
+                    {
+                        DispName = LocaleManager.Get("cfg_combat_module_aimbot_max_distance_name"),
+                        IsAdvanced = false,
+                        Order = 296
+                    }
+                )
+            );
+            DrawAimbotFov = config.Bind(
+                "1. 天堂支点 / Combat Module",
+                "显示自瞄 FOV",
+                true,
+                new ConfigDescription(
+                    LocaleManager.Get("cfg_combat_module_aimbot_show_fov_desc"),
+                    null,
+                    new ConfigurationManagerAttributes
+                    {
+                        DispName = LocaleManager.Get("cfg_combat_module_aimbot_show_fov_name"),
+                        IsAdvanced = false,
+                        Order = 295
+                    }
+                )
+            );
+            AimbotFovRadius = config.Bind(
+                "1. 天堂支点 / Combat Module",
+                "自瞄 FOV 半径",
+                150f,
+                new ConfigDescription(
+                    LocaleManager.Get("cfg_combat_module_aimbot_fov_radius_desc"),
+                    new AcceptableValueRange<float>(0f, 1000f),
+                    new ConfigurationManagerAttributes
+                    {
+                        DispName = LocaleManager.Get("cfg_combat_module_aimbot_fov_radius_name"),
+                        IsAdvanced = false,
+                        Order = 294
+                    }
+                )
+            );
+            DrawTargetLine = config.Bind(
+                "1. 天堂支点 / Combat Module",
+                "显示目标锁定线",
+                true,
+                new ConfigDescription(
+                    LocaleManager.Get("cfg_combat_module_aimbot_show_target_line_desc"),
+                    null,
+                    new ConfigurationManagerAttributes
+                    {
+                        DispName = LocaleManager.Get("cfg_combat_module_aimbot_show_target_line_name"),
+                        IsAdvanced = false,
+                        Order = 293
+                    }
+                )
+            );
+            AimbotTargetUpdateRate = config.Bind(
+                "1. 天堂支点 / Combat Module",
+                "自瞄目标更新频率",
+                20,
+                new ConfigDescription(
+                    LocaleManager.Get("cfg_combat_module_aimbot_target_update_rate_desc"),
+                    new AcceptableValueRange<int>(10, 50),
+                    new ConfigurationManagerAttributes
+                    {
+                        DispName = LocaleManager.Get("cfg_combat_module_aimbot_target_update_rate_name"),
+                        IsAdvanced = false,
+                        Order = 292
+                    }
+                )
+            );
+            SuperMagicBullet = config.Bind(
+                "1. 天堂支点 / Combat Module",
+                "超级魔法子弹",
+                false,
+                new ConfigDescription(
+                    LocaleManager.Get("cfg_combat_module_aimbot_super_magic_bullet_desc"),
+                    null,
+                    new ConfigurationManagerAttributes
+                    {
+                        DispName = LocaleManager.Get("cfg_combat_module_aimbot_super_magic_bullet_name"),
+                        IsAdvanced = false,
+                        Order = 291
+                    }
+                )
+            );
+            MagicBulletSpeed = config.Bind(
+                "1. 天堂支点 / Combat Module",
+                "魔法子弹加速度",
+                20f,
+                new ConfigDescription(
+                    LocaleManager.Get("cfg_combat_module_aimbot_magic_bullet_speed_desc"),
+                    new AcceptableValueRange<float>(10f, 100f),
+                    new ConfigurationManagerAttributes
+                    {
+                        DispName = LocaleManager.Get("cfg_combat_module_aimbot_magic_bullet_speed_name"),
+                        IsAdvanced = false,
+                        Order = 290
+                    }
+                )
+            );
+            NoRecoil = config.Bind(
+                "1. 天堂支点 / Combat Module", 
+                "消除武器后座", 
+                true,
+                new ConfigDescription(
+                    LocaleManager.Get("cfg_combat_module_aimbot_disable_recoil_desc"),
+                    null,
+                    new ConfigurationManagerAttributes
+                    {
+                        DispName = LocaleManager.Get("cfg_combat_module_aimbot_disable_recoil_name"),
+                        IsAdvanced = false,
+                        Order = 289
+                    }
+                )
+            );
+            LowRecoil = config.Bind(
+                "1. 天堂支点 / Combat Module", 
+                "超低武器后座", 
+                true,
+                new ConfigDescription(
+                    LocaleManager.Get("cfg_combat_module_aimbot_low_recoil_desc"),
+                    null,
+                    new ConfigurationManagerAttributes
+                    {
+                        DispName = LocaleManager.Get("cfg_combat_module_aimbot_low_recoil_name"),
+                        IsAdvanced = false,
+                        Order = 288
+                    }
+                )
+            );
+            LowRecoilMuti = config.Bind(
+                "1. 天堂支点 / Combat Module", 
+                "武器后坐倍率", 0.2f,
+                new ConfigDescription(
+                    LocaleManager.Get("cfg_combat_module_aimbot_low_recoil_rate_desc"),
+                    new AcceptableValueRange<float>(0f, 1f),
+                    new ConfigurationManagerAttributes
+                    {
+                        DispName = LocaleManager.Get("cfg_combat_module_aimbot_low_recoil_rate_name"),
+                        IsAdvanced = false,
+                        Order = 287
+                    }
                 )
             );
         }
@@ -315,13 +463,28 @@ namespace Oracle.Combat
             {
                 EnableAimbot.Value = !EnableAimbot.Value;
                 var value = EnableAimbot.Value;
-                OracleNotify.Message($"自瞄已{(value ? "启用" : "禁用")}!", value ? ENotificationIconType.Default : ENotificationIconType.Alert, GlobalCfg.MuteNotice.Value);
+                
+                OracleNotify.Message(
+                    string.Format(
+                        LocaleManager.Get("message_aimbot_enable"), 
+                        value ? LocaleManager.Get("text_enable") : LocaleManager.Get("text_disable")
+                    ), 
+                    value ? ENotificationIconType.Default : ENotificationIconType.Alert, 
+                    GlobalCfg.MuteNotice.Value
+                );
             }
             if (Input.GetKeyDown(ChangeAimTargetKey.Value))
             {
-                AimbotPartSetting.Value = AimbotPartSetting.Value == "头部" ? "胸口" : "头部";
+                AimbotPartSetting.Value = AimbotPartSetting.Value == EAimingPart.Head ? EAimingPart.Chest : EAimingPart.Head;
                 var value = AimbotPartSetting.Value;
-                OracleNotify.Message($"锁定部位切换到{value}", ENotificationIconType.Default, GlobalCfg.MuteNotice.Value);
+                OracleNotify.Message(
+                    string.Format(
+                        LocaleManager.Get("message_aimbot_change_part"),
+                        value == EAimingPart.Head ? LocaleManager.Get("text_aimbot_part_head") : LocaleManager.Get("text_aimbot_part_chest")
+                    ), 
+                    ENotificationIconType.Default, 
+                    GlobalCfg.MuteNotice.Value
+                );
             }
         }
     }
