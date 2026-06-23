@@ -134,7 +134,12 @@
         "cfg_esp_module_corpse_esp_max_distance_desc": "设置尸体透视功能的生效距离（单位：米）。",
         "message_corpse_esp_enable": "尸体透视已{0}",
         "cfg_esp_module_tripwire_esp_enable_name": "启用绊雷透视",
-        "cfg_esp_module_tripwire_esp_enable_desc": "开启后，显示地图中设置的绊雷位置，防止触发爆炸。"
+        "cfg_esp_module_tripwire_esp_enable_desc": "开启后，显示地图中设置的绊雷位置，防止触发爆炸。",
+
+
+
+
+        "text_esp_tripwire": "<color={0}>绊雷</color> <color={1}>{2}米</color>"
 
     }
 }

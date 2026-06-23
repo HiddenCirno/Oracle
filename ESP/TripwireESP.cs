@@ -73,7 +73,8 @@ namespace Oracle.ESP
                 if (screenCenter.z > 0.01f)
                 {
                     int dist = Mathf.RoundToInt(Vector3.Distance(playerPos, trap.CenterPos));
-                    string text = $"<color={OracleColorManager.Tripwire}>绊雷</color> <color={OracleColorManager.Distance}>{dist}米</color>";
+                    
+                    string text = string.Format(LocaleManager.Get("text_esp_tripwire"), OracleColorManager.Tripwire, OracleColorManager.Distance, dist);
 
                     float screenX = screenCenter.x;
                     float screenY = Screen.height - screenCenter.y;
@@ -113,7 +114,7 @@ namespace Oracle.ESP
                     }
                 )
             );
-        }
+        } 
         public void RegisterKeyUpdate()
         {
             OracleEvent.OnUpdate += KeyUpdate;
