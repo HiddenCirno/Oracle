@@ -73,5 +73,9 @@
 		</None>
 	</ItemGroup>
 
+	<ItemGroup>
+	  <None Remove="Combat\FlashPlayer.cs~RF1e6395bb.TMP" />
+	</ItemGroup>
+
 
 </Project>

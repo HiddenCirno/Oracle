@@ -49,6 +49,15 @@
         "cfg_global_module_screen_crosshair_enable_name": "启用自定义准星",
         "cfg_global_module_screen_crosshair_enable_desc": "是否在屏幕中心渲染自定义的辅助准星。",
         "cfg_global_module_choose_screen_crosshair_name": "选择准星样式",
-        "cfg_global_module_choose_screen_crosshair_desc": "从当前已加载的准星图片列表中选择准星样式。"
+        "cfg_global_module_choose_screen_crosshair_desc": "从当前已加载的准星图片列表中选择准星样式。",
+        "cfg_combat_module_flash_key_name": "闪现快捷键",
+        "cfg_combat_module_flash_key_desc": "设置用于触发闪现功能的快捷键。",
+        "cfg_combat_module_flash_distance_name": "闪现距离",
+        "cfg_combat_module_flash_distance_desc": "调整每次触发闪现时，角色移动的跨度距离（单位：米）。",
+        "cfg_combat_module_ghost_mode_enable_name": "隐身模式",
+        "cfg_combat_module_ghost_mode_enable_desc": "开启后，敌人将无法探测到玩家，角色进入完全隐身状态。",
+        "cfg_combat_module_ghost_mode_enable_key_name": "隐身快捷键",
+        "cfg_combat_module_ghost_mode_enable_key_desc": "设置用于切换隐身模式的快捷键。",
+        "message_ghost_mode_enable": "隐身已{0}"
     }
 }

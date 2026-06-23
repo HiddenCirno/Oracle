@@ -50,6 +50,10 @@
         "cfg_global_module_screen_crosshair_enable_name": "Enable Custom Crosshair",
         "cfg_global_module_screen_crosshair_enable_desc": "Enable or disable rendering a custom assistive crosshair at the center of the screen.",
         "cfg_global_module_choose_screen_crosshair_name": "Select Crosshair Style",
-        "cfg_global_module_choose_screen_crosshair_desc": "Choose your preferred crosshair style from the list of loaded crosshair images."
+        "cfg_global_module_choose_screen_crosshair_desc": "Choose your preferred crosshair style from the list of loaded crosshair images.",
+        "cfg_combat_module_flash_key_name": "Flash Hotkey",
+        "cfg_combat_module_flash_key_desc": "Set the hotkey to trigger the instant teleportation (flash) function.",
+        "cfg_combat_module_flash_distance_name": "Flash Distance",
+        "cfg_combat_module_flash_distance_desc": "Adjust the teleportation distance per flash trigger (in meters)."
     }
 }

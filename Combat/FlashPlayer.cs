@@ -1,21 +1,19 @@
 ﻿using BepInEx.Configuration;
-using Comfort.Common;
-using EFT;
-using EFT.Ballistics;
-using EFT.InventoryLogic;
-using HarmonyLib;
 using Oracle.Data;
-using Oracle.ItemSpawn;
-using System;
-using System.Reflection;
+using Oracle.Utils;
 using UnityEngine;
 using static Oracle.Data.OracleInterface;
 
 namespace Oracle.Combat
 {
+    /// <summary>
+    /// 闪现
+    /// </summary>
     public static class FlashPlayer
     {
-        // 使用纯原生 Harmony 注解，直接绑定目标方法
+        /// <summary>
+        /// 向前传送
+        /// </summary>
         public static void TeleportPlayer()
         {
             var mainPlayer = PluginsCore.CorrectPlayer;
@@ -27,16 +25,16 @@ namespace Oracle.Combat
 
             Vector3 targetPos = mainPlayer.Position + forwardDir * FlashPlayerCfg.FlashDistance.Value;
 
-            // 3. 执行传送
+            //执行
             mainPlayer.Teleport(targetPos, true);
         }
     }
     /// <summary>
     /// 配置项定义
     /// </summary>
+    [OracleCfgOrder(1)]
     public class FlashPlayerCfg : IOracleCfg, IOracleKeyUpdate
     {
-
         internal static ConfigEntry<KeyCode> FlashKey { get; set; }
         internal static ConfigEntry<float> FlashDistance { get; set; }
 
@@ -47,20 +45,42 @@ namespace Oracle.Combat
         public void Initialize(ConfigFile config)
         {
             FlashKey = config.Bind(
-                "闪现设置",
+                "1. 天堂支点 / Combat Module",
                 "闪现快捷键",
                 KeyCode.Z,
-                "按下无视空间阻挡向前闪现一段距离"
+                new ConfigDescription(
+                    LocaleManager.Get("cfg_combat_module_flash_key_desc"),
+                    null,
+                    new ConfigurationManagerAttributes
+                    {
+                        DispName = LocaleManager.Get("cfg_combat_module_flash_key_name"),
+                        IsAdvanced = false,
+                        Order = 270
+                    }
+                )
             );
             FlashDistance = config.Bind(
-                "闪现设置", "闪现距离", 3f,
-                new ConfigDescription("闪现的距离", new AcceptableValueRange<float>(0f, 1000f))
+                "1. 天堂支点 / Combat Module", 
+                "闪现距离", 
+                3f,
+                new ConfigDescription(
+                    LocaleManager.Get("cfg_combat_module_flash_distance_desc"),
+                    new AcceptableValueRange<float>(0f, 1000f),
+                    new ConfigurationManagerAttributes
+                    {
+                        DispName = LocaleManager.Get("cfg_combat_module_flash_distance_name"),
+                        IsAdvanced = false,
+                        Order = 269
+                    }
+                )
             );
         }
+
         public void RegisterKeyUpdate()
         {
             OracleEvent.OnUpdate += KeyUpdate;
         }
+
         public static void KeyUpdate()
         {
             if (Input.GetKeyDown(FlashKey.Value))

@@ -464,7 +464,6 @@ namespace Oracle.Combat
             {
                 EnableAimbot.Value = !EnableAimbot.Value;
                 var value = EnableAimbot.Value;
-                
                 OracleNotify.Message(
                     string.Format(
                         LocaleManager.Get("message_aimbot_enable"), 
