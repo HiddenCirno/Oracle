@@ -153,11 +153,24 @@
 
         "text_esp_tripwire": "<color={0}>Tripwire</color> <color={1}>{2}m</color>",
         "text_spawn_item_error": "Failed to spawn item!",
-        "text_esp_corpse_dead_tag": "[Dead]",
+        "text_esp_corpse_dead_tag": "<b>[Dead]</b>",
         "text_esp_corpse_format": "<color={0}>{1}</color> {2}",
         "text_esp_container_tag": "[{0}]",
         "text_esp_loot_format": "<color={0}>{1} {2}</color> <color={3}>{4}m</color>",
         "text_esp_loot_on_the_ground": "Ground",
-        "text_esp_loot_in_the_container": "Container"
+        "text_esp_loot_in_the_container": "Container",
+        "text_esp_player_tag_scav": "Scav",
+        "text_esp_player_tag_boss": "Boss",
+        "text_esp_player_tag_sniper": "Sniper",
+        "text_esp_player_tag_raider": "Raider",
+        "text_esp_player_tag_rogue": "Rogue",
+        "text_esp_player_tag_follower": "Guard",
+        "text_esp_player_tag_sectant": "Cultist",
+        "text_esp_player_tag_santa": "Santa",
+        "text_esp_player_tag_btr": "BTR",
+        "text_esp_player_tag_bd": "B.D.",
+        "text_esp_player_tag_teammate": "Teammate",
+        "text_esp_player_level": "<color={0}>Lv.{1}</color>",
+        "text_esp_player": "{0} {1} <color={2}>{3}m</color>"
     }
 }

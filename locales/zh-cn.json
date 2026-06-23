@@ -153,12 +153,27 @@
 
         "text_esp_tripwire": "<color={0}>绊雷</color> <color={1}>{2}米</color>",
         "text_spawn_item_error": "生成物品失败！",
-        "text_esp_corpse_dead_tag": "[已死亡]",
+        "text_esp_corpse_dead_tag": "<b>[已死亡]</b>",
         "text_esp_corpse_format": "<color={0}>{1}</color> {2}",
         "text_esp_container_tag": "[{0}]",
         "text_esp_loot_format": "<color={0}>{1} {2}</color> <color={3}>{4}米</color>",
         "text_esp_loot_on_the_ground": "地面",
-        "text_esp_loot_in_the_container": "容器"
+        "text_esp_loot_in_the_container": "容器",
+        "text_esp_player_tag_scav": "Scav",
+        "text_esp_player_tag_boss": "Boss",
+        "text_esp_player_tag_sniper": "狙击Scav",
+        "text_esp_player_tag_raider": "美军",
+        "text_esp_player_tag_rogue": "美军",
+        "text_esp_player_tag_follower": "护卫",
+        "text_esp_player_tag_sectant": "邪教徒",
+        "text_esp_player_tag_santa": "圣诞老人",
+        "text_esp_player_tag_btr": "BTR",
+        "text_esp_player_tag_bd": "黑狐",
+        "text_esp_player_tag_teammate": "友军",
+        "text_esp_player_level": "<color={0}>{1}级</color>",
+        "text_esp_player": "{0} {1} <color={2}>{3}米</color>",
+        "text_item_instance_manager_item_saved": "物品{0}已存储至内存区域: {1}"
+
 
     }
 }

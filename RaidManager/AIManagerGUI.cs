@@ -88,13 +88,13 @@ namespace Oracle.RaidManager
                     var info = player.Profile?.Info;
                     if (info == null) continue;
                     string targetGroupId = info?.GroupId ?? "";
-                    bool isTeammate = OraclePlayerManager.IsTeammate(info);
+                    bool isTeammate = OraclePlayerDataManager.IsTeammate(info);
                     if (isTeammate) continue;
 
                     aliveCount++;
 
                     // --- 调用新的重构逻辑 ---
-                    var entityInfo = OraclePlayerManager.GetEntityInfo(player, isTeammate, false);
+                    var entityInfo = OraclePlayerDataManager.GetEntityInfo(player, isTeammate, false);
 
                     // --- 绘制 ---
                     GUILayout.BeginHorizontal(UIStyleManager.BoxStyle);

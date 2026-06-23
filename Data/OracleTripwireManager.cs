@@ -1,7 +1,4 @@
-﻿using CommonAssets.Scripts.Game.LabyrinthEvent;
-using EFT;
-using EFT.Interactive;
-using EFT.SynchronizableObjects;
+﻿using EFT.SynchronizableObjects;
 using Oracle.ESP;
 using System;
 using System.Collections.Generic;
@@ -13,36 +10,39 @@ namespace Oracle.Data
     
 
     /// <summary>
-    /// 玩家/实体数据引擎：处理所有的状态读取、射线检测、位置换算
+    /// 绊雷数据总线
     /// </summary>
     public static class OracleTripwireManager
     {
+        /// <summary>
+        /// 全局缓存表
+        /// </summary>
         public static List<TripwireData> CachedTripwires = new List<TripwireData>();
 
+        //反射存储
         private static FieldInfo _tripwireStartField = typeof(TripwireProceduralMesh).GetField("vector3_0", BindingFlags.NonPublic | BindingFlags.Instance);
         private static FieldInfo _tripwireEndField = typeof(TripwireProceduralMesh).GetField("vector3_1", BindingFlags.NonPublic | BindingFlags.Instance);
 
         /// <summary>
-        /// 绊雷扫描协程
+        /// 扫描协程
         /// </summary>
         public static System.Collections.IEnumerator TripwireScannerCoroutine()
         {
-            // 初始化反射字段
+            //反射
             _tripwireStartField = typeof(TripwireProceduralMesh).GetField("vector3_0", BindingFlags.NonPublic | BindingFlags.Instance);
             _tripwireEndField = typeof(TripwireProceduralMesh).GetField("vector3_1", BindingFlags.NonPublic | BindingFlags.Instance);
 
-            // ⭐ 双缓冲预分配
+            //双缓存
             List<TripwireData> frontBuffer = new List<TripwireData>(100);
             List<TripwireData> backBuffer = new List<TripwireData>(100);
             CachedTripwires = frontBuffer;
 
             while (true)
             {
-                yield return new WaitForSeconds(2f); // 每2秒扫描一次
+                yield return new WaitForSeconds(2f);
 
                 if (PluginsCore.CorrectGameWorld == null || PluginsCore.CorrectPlayer == null || !TripwireESPCfg.EnableTripwireESP.Value)
                 {
-                    // 如果没开启或者不在战局，清空缓存并交换指针，防止上一局的残留画在屏幕上
                     backBuffer.Clear();
                     var tmp = frontBuffer;
                     frontBuffer = backBuffer;
@@ -51,11 +51,10 @@ namespace Oracle.Data
                     continue;
                 }
 
-                // ⭐ 极速清空后台缓冲区
+                //清空缓存
                 backBuffer.Clear();
 
-                // ⚠️ 注：FindObjectsOfType 底层会 new 一个数组，这里会产生微量 GC。
-                // 但因为是 2 秒一次，且不是在 OnGUI 里，所以完全可以接受。
+                //寻找绊雷
                 TripwireProceduralMesh[] tripwires = UnityEngine.Object.FindObjectsOfType<TripwireProceduralMesh>();
 
                 foreach (TripwireProceduralMesh tripwire in tripwires)
@@ -66,7 +65,7 @@ namespace Oracle.Data
                     {
                         try
                         {
-                            // 通过反射提取起点和终点的世界坐标
+                            //查找两端
                             Vector3 start = (Vector3)_tripwireStartField.GetValue(tripwire);
                             Vector3 end = (Vector3)_tripwireEndField.GetValue(tripwire);
                             Vector3 center = (start + end) / 2f;
@@ -81,12 +80,12 @@ namespace Oracle.Data
                         }
                         catch (Exception ex)
                         {
-                            Debug.LogError($"[Tripwire ESP] 读取坐标失败: {ex.Message}");
+                            Debug.LogError($"[Oracle] 绊雷坐标读取失败: {ex.Message}");
                         }
                     }
                 }
 
-                // ⭐ 瞬间交换指针
+                //交换指针
                 var temp = frontBuffer;
                 frontBuffer = backBuffer;
                 backBuffer = temp;

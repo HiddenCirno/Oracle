@@ -1,14 +1,5 @@
-﻿using CommonAssets.Scripts.Game.LabyrinthEvent;
-using EFT;
-using EFT.Interactive;
-using EFT.SynchronizableObjects;
-using Oracle.ESP;
+﻿using EFT;
 using Oracle.Utils;
-using System;
-using System.Collections.Generic;
-using System.Data;
-using System.Reflection;
-using System.Xml.Linq;
 using UnityEngine;
 
 namespace Oracle.Data
@@ -16,9 +7,9 @@ namespace Oracle.Data
     
 
     /// <summary>
-    /// 玩家/实体数据引擎：处理所有的状态读取、射线检测、位置换算
+    /// 玩家数据总线
     /// </summary>
-    public static class OraclePlayerManager
+    public static class OraclePlayerDataManager
     {
         //FOV计算参数
         public const float BotFovThreshold = 0.5f;
@@ -28,6 +19,11 @@ namespace Oracle.Data
             (1 << LayerMask.NameToLayer("Terrain")) |
             (1 << LayerMask.NameToLayer("HighPolyCollider"));
 
+        /// <summary>
+        /// 取玩家名字
+        /// </summary>
+        /// <param name="info"></param>
+        /// <returns></returns>
         public static string GetPlayerName(InfoClass info)
         {
             if (info == null) return "Nikita Buyanov";
@@ -35,6 +31,12 @@ namespace Oracle.Data
             //迷宫小弟、玩家和全英文名不经过转换，反向筛选西里尔字母
             return ((info.Side == EPlayerSide.Bear || info.Side == EPlayerSide.Usec) || (role == "tagillahelperagro") || OracleCommon.IsAllEnglish(info.Nickname)) ? info.Nickname : GStruct21.ConvertToLatinic(info.Nickname);
         }
+
+        /// <summary>
+        /// 敌我识别
+        /// </summary>
+        /// <param name="info"></param>
+        /// <returns></returns>
         public static bool IsTeammate(InfoClass info)
         {
             if(info == null) return false;
@@ -42,77 +44,82 @@ namespace Oracle.Data
             return !string.IsNullOrEmpty(PluginsCore.CorrectGroupId) && targetGroupId == PluginsCore.CorrectGroupId;
         }
 
+        /// <summary>
+        /// 组合玩家数据
+        /// </summary>
+        /// <param name="player"></param>
+        /// <param name="isTeammate"></param>
+        /// <param name="includeName"></param>
+        /// <returns></returns>
+
         public static EntityDisplayInfo GetEntityInfo(Player player, bool isTeammate, bool includeName = true)
         {
             var info = player.Profile?.Info;
+            //默认Fallback
             string name = "Nikita Buyanov";
             string sideText = "Unheard";
             string level = "";
 
-            // 距离计算
+            //距离求解
             int distance = Mathf.RoundToInt(Vector3.Distance(PluginsCore.CorrectPlayer.Transform.position, player.Transform.position));
 
             if (info != null)
             {
                 name = GetPlayerName(info);
 
-                // ⭐ 一行代码，直接把 sideText 和 level 传进去让它处理好再吐出来
                 DeterminePlayerText(info, name, isTeammate, includeName, out sideText, out level);
             }
 
             return new EntityDisplayInfo(name, sideText, level, distance);
         }
         /// <summary>
-        /// 统一处理玩家与AI的文本和颜色标签
+        /// 获取玩家数据富文本
         /// </summary>
         public static void DeterminePlayerText(InfoClass info, string name, bool isTeammate, bool includeName, out string sideText, out string levelText)
         {
             sideText = "Unheard";
-            levelText = ""; // 默认 AI 没有等级
+            levelText = "";
 
             if (info.Side.ToString() == "Savage")
             {
-                // ==========================================
-                // AI / Scav 阵营处理逻辑
-                // ==========================================
+                //取角色
                 var role = info.Settings?.Role.ToString().ToLower() ?? "assault";
-                // 使用变量存储核心标识，不再重复拼接颜色标签
-                string roleLabel = "Scav";
+
+                string roleLabel = LocaleManager.Get("text_esp_player_tag_scav");
                 string colorHex = OracleColorManager.Scav;
 
                 //这里是不是可以加上多角色适配？
                 // 核心优先级逻辑
-                if (role.Contains("boss") || IsSpecialBoss(role)) { roleLabel = "Boss"; colorHex = OracleColorManager.Boss; }
-                else if (role == "bossboarsniper" || role == "marksman") { roleLabel = "狙击Scav"; colorHex = OracleColorManager.Sniper; }
-                else if (role == "pmcbot" || role == "exusec") { roleLabel = "美军"; colorHex = OracleColorManager.Raider; }
-                else if (role.Contains("follower") || role == "tagillahelperagro") { roleLabel = "护卫"; colorHex = OracleColorManager.Follower; }
-                else if (role.Contains("sectant")) { roleLabel = "邪教徒"; colorHex = OracleColorManager.Sectant; }
-                else if (role == "gifter") { roleLabel = "圣诞老人"; colorHex = OracleColorManager.Santa; }
-                else if (role.Contains("btr")) { roleLabel = "BTR"; colorHex = OracleColorManager.BTR; }
-                else if (role.Contains("black")) { roleLabel = "黑狐"; colorHex = OracleColorManager.BlackDiv; }
+                if (role.Contains("boss") || IsSpecialBoss(role)) { roleLabel = LocaleManager.Get("text_esp_player_tag_boss"); colorHex = OracleColorManager.Boss; }
+                else if (role == "bossboarsniper" || role == "marksman") { roleLabel = LocaleManager.Get("text_esp_player_tag_sniper"); colorHex = OracleColorManager.Sniper; }
+                else if (role == "pmcbot") { roleLabel = LocaleManager.Get("text_esp_player_tag_raider"); colorHex = OracleColorManager.Raider; }
+                else if (role == "exusec") { roleLabel = LocaleManager.Get("text_esp_player_tag_rogue"); colorHex = OracleColorManager.Raider; }
+                else if (role.Contains("follower") || role == "tagillahelperagro") { roleLabel = LocaleManager.Get("text_esp_player_tag_follower"); colorHex = OracleColorManager.Follower; }
+                else if (role.Contains("sectant")) { roleLabel = LocaleManager.Get("text_esp_player_tag_sectant"); colorHex = OracleColorManager.Sectant; }
+                else if (role == "gifter") { roleLabel = LocaleManager.Get("text_esp_player_tag_santa"); colorHex = OracleColorManager.Santa; }
+                else if (role.Contains("btr")) { roleLabel = LocaleManager.Get("text_esp_player_tag_btr"); colorHex = OracleColorManager.BTR; }
+                else if (role.Contains("black")) { roleLabel = LocaleManager.Get("text_esp_player_tag_bd"); colorHex = OracleColorManager.BlackDiv; }
 
                 // 组合名称部分
                 string displayString = includeName ? $"{roleLabel} {name}" : roleLabel;
                 string finalRes = $"<color={colorHex}>{displayString}</color>";
 
                 // 组合友军部分
-                sideText = isTeammate ? $"<color={OracleColorManager.AllyPlayer}>友军 </color>{finalRes}" : finalRes;
+                sideText = isTeammate ? $"<color={OracleColorManager.AllyPlayer}>{LocaleManager.Get("text_esp_player_tag_teammate")} </color>{finalRes}" : finalRes;
             }
             else
             {
-                // ==========================================
-                // PMC (真实玩家) 阵营处理逻辑
-                // ==========================================
-                levelText = $"<color={OracleColorManager.PlayerLevel}>{info.Level}级</color>";
+                levelText = string.Format(LocaleManager.Get("text_esp_player_level"), OracleColorManager.PlayerLevel, info.Level);
                 string color = info.Side.ToString() == "Usec" ? OracleColorManager.PMCUSEC : OracleColorManager.PMCBEAR;
 
                 string displayContent = includeName ? $"{info.Side} {name}" : info.Side.ToString();
                 string baseText = $"<color={color}>{displayContent}</color>";
 
-                sideText = isTeammate ? $"<color={OracleColorManager.AllyPlayer}>友军 </color>{baseText}" : baseText;
+                sideText = isTeammate ? $"<color={OracleColorManager.AllyPlayer}>{LocaleManager.Get("text_esp_player_tag_teammate")} </color>{baseText}" : baseText;
             }
         }
 
+        //不含boss字符串的boss单位
         private static bool IsSpecialBoss(string role)
         {
             return role == "followerbirdeye" || role == "followerbigpipe" ||
@@ -130,6 +137,7 @@ namespace Oracle.Data
             if (t == null) return null;
             return t.position;
         }
+
         /// <summary>
         /// 使用.Original安全提取BifacialTransform坐标
         /// </summary>
@@ -222,6 +230,7 @@ namespace Oracle.Data
             }
             return false;
         }
+
         /// <summary>
         /// 安全获取玩家总血量和生命上限
         /// </summary>

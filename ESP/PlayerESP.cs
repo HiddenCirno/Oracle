@@ -68,9 +68,9 @@ namespace Oracle.ESP
                 //初始化透视颜色
                 Color finalColor;
                 //玩家能否看到AI(射线计算
-                bool canPlayerSeeBot = OraclePlayerManager.IsPlayerVisible(cam.transform.position, player, OraclePlayerManager.HighPolyWithTerrainMask);
+                bool canPlayerSeeBot = OraclePlayerDataManager.IsPlayerVisible(cam.transform.position, player, OraclePlayerDataManager.HighPolyWithTerrainMask);
                 //AI能否看到玩家(射线计算
-                bool canBotSeePlayer = OraclePlayerManager.IsBotVisible(player, PluginsCore.CorrectPlayer, OraclePlayerManager.HighPolyWithTerrainMask);
+                bool canBotSeePlayer = OraclePlayerDataManager.IsBotVisible(player, PluginsCore.CorrectPlayer, OraclePlayerDataManager.HighPolyWithTerrainMask);
                 //根据状态决定绘制火柴人的颜色
                 if (canBotSeePlayer)
                 {
@@ -95,25 +95,25 @@ namespace Oracle.ESP
                 var bones = player.PlayerBones;
                 //查找所有需要的骨骼节点的坐标
                 //头颈腰臀
-                Vector3? head = OraclePlayerManager.GetBonePos(bones.Head);
-                Vector3? neck = OraclePlayerManager.GetBonePos(bones.Neck);
-                Vector3? spine3 = OraclePlayerManager.GetBonePos(bones.Spine3);
-                Vector3? pelvis = OraclePlayerManager.GetBonePos(bones.Pelvis);
+                Vector3? head = OraclePlayerDataManager.GetBonePos(bones.Head);
+                Vector3? neck = OraclePlayerDataManager.GetBonePos(bones.Neck);
+                Vector3? spine3 = OraclePlayerDataManager.GetBonePos(bones.Spine3);
+                Vector3? pelvis = OraclePlayerDataManager.GetBonePos(bones.Pelvis);
                 //肩膀
-                Vector3? lShoulder = OraclePlayerManager.GetBonePos(bones.LeftShoulder);
-                Vector3? rShoulder = OraclePlayerManager.GetBonePos(bones.RightShoulder);
+                Vector3? lShoulder = OraclePlayerDataManager.GetBonePos(bones.LeftShoulder);
+                Vector3? rShoulder = OraclePlayerDataManager.GetBonePos(bones.RightShoulder);
                 //大臂
-                Vector3? lUpperarm = (bones.Upperarms != null && bones.Upperarms.Length > 0) ? OraclePlayerManager.GetBonePos(bones.Upperarms[0]) : null;
-                Vector3? rUpperarm = (bones.Upperarms != null && bones.Upperarms.Length > 1) ? OraclePlayerManager.GetBonePos(bones.Upperarms[1]) : null;
+                Vector3? lUpperarm = (bones.Upperarms != null && bones.Upperarms.Length > 0) ? OraclePlayerDataManager.GetBonePos(bones.Upperarms[0]) : null;
+                Vector3? rUpperarm = (bones.Upperarms != null && bones.Upperarms.Length > 1) ? OraclePlayerDataManager.GetBonePos(bones.Upperarms[1]) : null;
                 //小臂
-                Vector3? lForearm = (bones.Forearms != null && bones.Forearms.Length > 0) ? OraclePlayerManager.GetBonePos(bones.Forearms[0]) : null;
-                Vector3? rForearm = (bones.Forearms != null && bones.Forearms.Length > 1) ? OraclePlayerManager.GetBonePos(bones.Forearms[1]) : null;
+                Vector3? lForearm = (bones.Forearms != null && bones.Forearms.Length > 0) ? OraclePlayerDataManager.GetBonePos(bones.Forearms[0]) : null;
+                Vector3? rForearm = (bones.Forearms != null && bones.Forearms.Length > 1) ? OraclePlayerDataManager.GetBonePos(bones.Forearms[1]) : null;
                 //手掌(手腕
-                Vector3? lPalm = OraclePlayerManager.GetBonePos(bones.LeftPalm);
-                Vector3? rPalm = OraclePlayerManager.GetBonePos(bones.RightPalm);
+                Vector3? lPalm = OraclePlayerDataManager.GetBonePos(bones.LeftPalm);
+                Vector3? rPalm = OraclePlayerDataManager.GetBonePos(bones.RightPalm);
                 //左腿
-                Vector3? lThigh1 = OraclePlayerManager.GetBonePos(bones.LeftThigh1);
-                Vector3? lKnee = OraclePlayerManager.GetBonePos(bones.LeftThigh2);
+                Vector3? lThigh1 = OraclePlayerDataManager.GetBonePos(bones.LeftThigh1);
+                Vector3? lKnee = OraclePlayerDataManager.GetBonePos(bones.LeftThigh2);
                 Vector3? lCalf = null;
                 Vector3? lFoot = null;
                 //对左腿做Check, 顺位获取小腿和脚掌坐标(腿部结构和常规骨骼不同
@@ -128,8 +128,8 @@ namespace Oracle.ESP
                     }
                 }
                 //右腿
-                Vector3? rThigh1 = OraclePlayerManager.GetBonePos(bones.RightThigh1);
-                Vector3? rKnee = OraclePlayerManager.GetBonePos(bones.RightThigh2);
+                Vector3? rThigh1 = OraclePlayerDataManager.GetBonePos(bones.RightThigh1);
+                Vector3? rKnee = OraclePlayerDataManager.GetBonePos(bones.RightThigh2);
                 Vector3? rCalf = null;
                 Vector3? rFoot = null;
                 //同左腿
@@ -202,9 +202,9 @@ namespace Oracle.ESP
                 }
                 //过滤队友
                 string targetGroupId = player.Profile?.Info?.GroupId ?? "";
-                bool isTeammate = OraclePlayerManager.IsTeammate(player.Profile?.Info);
+                bool isTeammate = OraclePlayerDataManager.IsTeammate(player.Profile?.Info);
                 //获取头部坐标, 这样信息才能悬浮于头顶
-                Vector3? headPos = OraclePlayerManager.GetBonePos(player.PlayerBones.Head);
+                Vector3? headPos = OraclePlayerDataManager.GetBonePos(player.PlayerBones.Head);
                 if (!headPos.HasValue) continue;
                 //向头顶偏移防止和骨骼绘制重叠
                 Vector3 textWorldPos = headPos.Value + new Vector3(0, 0.3f, 0);
@@ -212,7 +212,7 @@ namespace Oracle.ESP
                 //深度检查
                 if (textScreenPos.z > 0.01f)
                 {
-                    var info = OraclePlayerManager.GetEntityInfo(player, isTeammate);
+                    var info = OraclePlayerDataManager.GetEntityInfo(player, isTeammate);
                     textStyle.richText = true;
 
                     float screenX = textScreenPos.x;
@@ -260,7 +260,7 @@ namespace Oracle.ESP
             //深度检查
             if (feetScreenPos.z <= 0.01f) return;
             //血量获取
-            OraclePlayerManager.GetPlayerTotalHealth(player, out float curHp, out float maxHp);
+            OraclePlayerDataManager.GetPlayerTotalHealth(player, out float curHp, out float maxHp);
             //百分比变色
             if (maxHp <= 0) return;
 

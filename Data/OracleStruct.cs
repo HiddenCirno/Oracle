@@ -4,6 +4,7 @@ using EFT.Interactive;
 using EFT.InventoryLogic;
 using Newtonsoft.Json;
 using Oracle.ESP;
+using Oracle.Utils;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -66,7 +67,7 @@ namespace Oracle.Data
         /// 格式化输出结果
         /// </summary>
         /// <returns></returns>
-        public string ToEspString() => $"{LevelText} {SideText} <color=#FFFF00>{Distance}米</color>".Trim();
+        public string ToEspString() => string.Format(LocaleManager.Get("text_esp_player"), LevelText, SideText, OracleColorManager.Distance, Distance).Trim();
     }
 
     /// <summary>

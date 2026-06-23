@@ -86,7 +86,7 @@ namespace Oracle.Data
                                 InfoClass info = deadPlayer.Profile.Info;
                                 if (info != null)
                                 {
-                                    OraclePlayerManager.DeterminePlayerText(info,OraclePlayerManager.GetPlayerName(info),OraclePlayerManager.IsTeammate(info),true,out result,out string levelText);
+                                    OraclePlayerDataManager.DeterminePlayerText(info,OraclePlayerDataManager.GetPlayerName(info),OraclePlayerDataManager.IsTeammate(info),true,out result,out string levelText);
 
                                     //拼接
                                     if (!string.IsNullOrEmpty(levelText))
