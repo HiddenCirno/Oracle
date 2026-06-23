@@ -1,6 +1,6 @@
-﻿using BepInEx;
-using BepInEx.Configuration;
+﻿using BepInEx.Configuration;
 using Oracle.Data;
+using Oracle.Utils;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -10,14 +10,29 @@ using static Oracle.Data.OracleInterface;
 
 namespace Oracle.ESP
 {
+    /// <summary>
+    /// 屏幕准星
+    /// </summary>
     public class CrosshairManager : IOracleCrosshair
     {
-
+        /// <summary>
+        /// 当前使用的准星图片缓存
+        /// </summary>
         private static Texture2D _cachedCrosshairTex;
-        private static string _lastLoadedCrosshairName = "";
-        public const string FallbackImageName = "无图片";
 
-        // 准星图片存放目录
+        /// <summary>
+        /// 上一次加载的准星名字
+        /// </summary>
+        private static string _lastLoadedCrosshairName = "";
+
+        /// <summary>
+        /// 默认Fallback
+        /// </summary>
+        public const string FallbackImageName = "No Image";
+
+        /// <summary>
+        /// 准星目录
+        /// </summary>
         public static string CrosshairDirectory => Path.Combine(PluginsCore.pluginDir, "crosshairs");
 
         public void SubscribeEvent()
@@ -26,7 +41,7 @@ namespace Oracle.ESP
         }
 
         /// <summary>
-        /// 从本地流读取图片并生成 Texture2D (严禁在 OnGUI 中调用)
+        /// 从本地流读取图片并生成Texture2D
         /// </summary>
         public static void LoadCrosshairTexture()
         {
@@ -36,12 +51,12 @@ namespace Oracle.ESP
             string fullPath = Path.Combine(CrosshairDirectory, fileName);
             if (!File.Exists(fullPath)) return;
 
-            // 防止重复加载消耗性能
+            //防止重复加载
             if (_lastLoadedCrosshairName == fileName && _cachedCrosshairTex != null) return;
 
             try
             {
-                // ⭐ 核心防泄漏：Unity不会自动回收通过 LoadImage 创建的 Texture2D，必须手动销毁旧的！
+                //手动销毁旧内存
                 if (_cachedCrosshairTex != null)
                 {
                     UnityEngine.Object.Destroy(_cachedCrosshairTex);
@@ -50,9 +65,8 @@ namespace Oracle.ESP
 
                 byte[] fileData = File.ReadAllBytes(fullPath);
 
-                // 尺寸会被 LoadImage 自动覆盖为真实尺寸
+                //覆盖大小和样式
                 Texture2D tex = new Texture2D(2, 2, TextureFormat.RGBA32, false);
-                // 解决某些图片边缘出现白边的问题
                 tex.filterMode = FilterMode.Bilinear;
                 tex.wrapMode = TextureWrapMode.Clamp;
 
@@ -68,7 +82,7 @@ namespace Oracle.ESP
         }
 
         /// <summary>
-        /// 在全局 OnGUI 中调用此方法进行绘制
+        /// 绘制准星
         /// </summary>
         public static void DrawCrosshair()
         {
@@ -77,25 +91,26 @@ namespace Oracle.ESP
             bool isAiming = (pwa != null && pwa.IsAiming);
 
             if (isAiming) return;
-            // 获取图片真实的像素宽高
             float texWidth = _cachedCrosshairTex.width;
             float texHeight = _cachedCrosshairTex.height;
 
-            // ⭐ 绝对居中算法：屏幕中心点 - 图片尺寸的一半
+            //居中
             float x = (Screen.width - texWidth) / 2f;
             float y = (Screen.height - texHeight) / 2f;
 
-            // 绘制
+            //绘制
             GUI.DrawTexture(new Rect(x, y, texWidth, texHeight), _cachedCrosshairTex);
         }
     }
+
+    /// <summary>
+    /// 配置项定义
+    /// </summary>
     public class CrosshairManagerCfg : IOracleCfg
     {
         public static ConfigEntry<bool> EnableCrosshair;
         public static ConfigEntry<string> SelectedCrosshair;
-        /// <summary>
-        /// 初始化配置与文件扫描
-        /// </summary>
+
         public void Initialize(ConfigFile config)
         {
             if (!Directory.Exists(CrosshairManager.CrosshairDirectory))
@@ -103,7 +118,7 @@ namespace Oracle.ESP
                 Directory.CreateDirectory(CrosshairManager.CrosshairDirectory);
             }
 
-            // 1. 扫描目录下所有 PNG 图片
+            //扫描目录
             List<string> availableImages = Directory.GetFiles(CrosshairManager.CrosshairDirectory, "*.png")
                                                     .Select(Path.GetFileName)
                                                     .ToList();
@@ -113,29 +128,41 @@ namespace Oracle.ESP
                 availableImages.Add(CrosshairManager.FallbackImageName);
             }
 
-            // 2. 绑定总开关
             EnableCrosshair = config.Bind(
-                "屏幕准星 / Overlay",
-                "启用自定义准星/覆盖层",
+                "0. 联觉信标 / Draw Module",
+                "启用自定义准星",
                 true,
-                "在屏幕中心绘制自定义PNG图片"
+                new ConfigDescription(
+                    LocaleManager.Get("cfg_global_module_screen_crosshair_enable_desc"),
+                    null,
+                    new ConfigurationManagerAttributes
+                    {
+                        DispName = LocaleManager.Get("cfg_global_module_screen_crosshair_enable_name"),
+                        IsAdvanced = false,
+                        Order = 395
+                    }
+                )
             );
-
-            // 3. 绑定下拉菜单
             SelectedCrosshair = config.Bind(
-                "屏幕准星 / Overlay",
-                "选择图片样式",
+                "0. 联觉信标 / Draw Module",
+                "选择准星样式",
                 availableImages[0],
                 new ConfigDescription(
-                    $"选择准星图片 (请将png文件放入 {CrosshairManager.CrosshairDirectory} 目录下)",
-                    new AcceptableValueList<string>(availableImages.ToArray())
+                    LocaleManager.Get("cfg_global_module_choose_screen_crosshair_desc"),
+                    new AcceptableValueList<string>(availableImages.ToArray()),
+                    new ConfigurationManagerAttributes
+                    {
+                        DispName = LocaleManager.Get("cfg_global_module_choose_screen_crosshair_name"),
+                        IsAdvanced = false,
+                        Order = 394
+                    }
                 )
             );
 
-            // 4. 监听配置变更，玩家在 F12 菜单切换图片时动态重载
+            //监听变更事件并重载准星
             SelectedCrosshair.SettingChanged += (sender, args) => CrosshairManager.LoadCrosshairTexture();
 
-            // 首次初始化加载
+            //初始化加载准星
             CrosshairManager.LoadCrosshairTexture();
         }
 

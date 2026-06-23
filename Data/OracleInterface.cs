@@ -10,8 +10,13 @@ namespace Oracle.Data
         /// </summary>
         public interface IOracleCfg
         {
+            /// <summary>
+            /// 配置项初始化
+            /// </summary>
+            /// <param name="config"></param>
             void Initialize(ConfigFile config);
         }
+
         /// <summary>
         /// 通用快捷键监听接口
         /// </summary>
@@ -22,6 +27,7 @@ namespace Oracle.Data
             /// </summary>
             void RegisterKeyUpdate();
         }
+
         /// <summary>
         /// 事件订阅接口类
         /// </summary>
@@ -32,24 +38,28 @@ namespace Oracle.Data
             /// </summary>
             void SubscribeEvent();
         }
+
         /// <summary>
         /// ManagerGUI使用的订阅接口
         /// </summary>
         public interface IOracleManagerGUI : IOracleEventSubscribe
         {
         }
+
         /// <summary>
         /// ESP使用的订阅接口
         /// </summary>
         public interface IOracleESP : IOracleEventSubscribe
         {
         }
+
         /// <summary>
         /// 准星使用的订阅接口
         /// </summary>
         public interface IOracleCrosshair : IOracleEventSubscribe
         {
         }
+
         /// <summary>
         /// 自瞄使用的订阅接口
         /// </summary>

@@ -1,4 +1,5 @@
 ﻿using BepInEx.Configuration;
+using Oracle.Data;
 using System;
 using System.Runtime.InteropServices;
 using static Oracle.Data.OracleInterface;
@@ -6,7 +7,7 @@ using static Oracle.Data.OracleInterface;
 namespace Oracle.Utils
 {
     /// <summary>
-    /// 过直播部分
+    /// 过直播
     /// </summary>
     public static class NativeOverlay
     {
@@ -90,7 +91,7 @@ namespace Oracle.Utils
         }
 
         /// <summary>
-        /// 🌟 新增：彻底摧毁叠加层窗口并释放资源
+        /// 摧毁叠加层
         /// </summary>
         public static void Destroy()
         {
@@ -98,20 +99,19 @@ namespace Oracle.Utils
 
             try
             {
-                // 1. 隐藏窗口并擦除最后一帧的画面，防止视觉残留
+                //清除画面
                 ShowWindow(hwnd, SW_HIDE);
                 UpdateFrame(new byte[screenW * screenH * 4]);
 
-                // 2. 调用 Windows API 销毁窗口
+                //销毁窗口
                 DestroyWindow(hwnd);
             }
             catch
             {
-                // 忽略显隐导致的异常，确保 hwnd 能够被重置
             }
             finally
             {
-                // 3. 将句柄重置为 Zero，以便后续可以重新 Initialize
+                //重置句柄
                 hwnd = IntPtr.Zero;
                 isVisible = false;
             }
@@ -155,10 +155,19 @@ namespace Oracle.Utils
         public void Initialize(ConfigFile config)
         {
             EnableNativeOverlay = config.Bind(
-                "绘制设置",
+                "0. 联觉信标 / Draw Module",
                 "启用叠加层",
                 false,
-                "启用后捕获窗口将捕获不到绘制层"
+                new ConfigDescription(
+                    LocaleManager.Get("cfg_global_module_overlay_enable_desc"),
+                    null,
+                    new ConfigurationManagerAttributes
+                    {
+                        DispName = LocaleManager.Get("cfg_global_module_overlay_enable_name"),
+                        IsAdvanced = false,
+                        Order = 397
+                    }
+                )
             );
         }
     }

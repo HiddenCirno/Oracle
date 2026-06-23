@@ -34,6 +34,21 @@
         "message_aimbot_enable": "自瞄已{0}",
         "message_aimbot_change_part": "锁定部位切换到{0}",
         "text_aimbot_part_head": "头部",
-        "text_aimbot_part_chest": "胸口"
+        "text_aimbot_part_chest": "胸口",
+        "cfg_global_module_uni_gui_enable_name": "启用绘制",
+        "cfg_global_module_uni_gui_enable_desc": "所有绘制逻辑的总开关。",
+        "cfg_global_module_uni_gui_enable_key_name": "切换全局绘制",
+        "cfg_global_module_uni_gui_enable_key_desc": "设置用于一键显示或隐藏所有全局绘制界面的快捷键。",
+        "cfg_global_module_mute_notice_enable_name": "静默提示",
+        "cfg_global_module_mute_notice_enable_desc": "开启后，在使用快捷键切换各项功能时将不再弹出右下角的通知弹窗。",
+        "cfg_global_module_overlay_fps_limit_enable_name": "开启帧数限制",
+        "cfg_global_module_overlay_fps_limit_enable_desc": "限制叠加层的最大绘制帧率，可以降低叠加层的性能占用。",
+        "cfg_global_module_overlay_enable_name": "启用叠加层",
+        "cfg_global_module_overlay_enable_desc": "启用后捕获游戏窗口将无法捕获到管理菜单之外的绘制画面，会造成性能损耗。",
+        "message_uni_gui_enable": "全局绘制已{0}",
+        "cfg_global_module_screen_crosshair_enable_name": "启用自定义准星",
+        "cfg_global_module_screen_crosshair_enable_desc": "是否在屏幕中心渲染自定义的辅助准星。",
+        "cfg_global_module_choose_screen_crosshair_name": "选择准星样式",
+        "cfg_global_module_choose_screen_crosshair_desc": "从当前已加载的准星图片列表中选择准星样式。"
     }
 }

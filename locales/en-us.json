@@ -35,6 +35,21 @@
         "message_aimbot_enable": "Aimbot {0}",
         "message_aimbot_change_part": "Aimbot target switched to {0}",
         "text_aimbot_part_head": "Head",
-        "text_aimbot_part_chest": "Chest"
+        "text_aimbot_part_chest": "Chest",
+        "cfg_global_module_uni_gui_enable_name": "Enable Drawing",
+        "cfg_global_module_uni_gui_enable_desc": "Master switch to enable or disable global drawing and visual module logic.",
+        "cfg_global_module_uni_gui_enable_key_name": "Toggle Global Drawing Key",
+        "cfg_global_module_uni_gui_enable_key_desc": "Set the hotkey to quickly show or hide all global drawing overlays.",
+        "cfg_global_module_mute_notice_enable_name": "Mute Notifications",
+        "cfg_global_module_mute_notice_enable_desc": "When enabled, notification popups will be muted during hotkey feature toggles.",
+        "cfg_global_module_overlay_fps_limit_enable_name": "Enable FPS Limit",
+        "cfg_global_module_overlay_fps_limit_enable_desc": "Limit the maximum rendering frames of the overlay to reduce GPU overhead and improve game FPS.",
+        "cfg_global_module_overlay_enable_name": "Enable Native Overlay",
+        "cfg_global_module_overlay_enable_desc": "Enable the native overlay rendering layer on top of the game screen.",
+        "message_uni_gui_enable": "Global drawing {0}",
+        "cfg_global_module_screen_crosshair_enable_name": "Enable Custom Crosshair",
+        "cfg_global_module_screen_crosshair_enable_desc": "Enable or disable rendering a custom assistive crosshair at the center of the screen.",
+        "cfg_global_module_choose_screen_crosshair_name": "Select Crosshair Style",
+        "cfg_global_module_choose_screen_crosshair_desc": "Choose your preferred crosshair style from the list of loaded crosshair images."
     }
 }

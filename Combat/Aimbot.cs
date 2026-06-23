@@ -11,7 +11,7 @@ using static Oracle.Data.OracleInterface;
 namespace Oracle.Combat
 {
     /// <summary>
-    /// 自瞄部分
+    /// 自瞄
     /// </summary>
     public class Aimbot : IOracleAimbot
     {
@@ -239,21 +239,6 @@ namespace Oracle.Combat
         /// <param name="config">传入配置实例</param>
         public void Initialize(ConfigFile config)
         {
-            AimbotKey = config.Bind<KeyCode>(
-                "1. 天堂支点 / Combat Module",
-                "自瞄快捷键",
-                KeyCode.F6,
-                new ConfigDescription(
-                    LocaleManager.Get("cfg_combat_module_aimbot_enable_key_desc"),
-                    null,
-                    new ConfigurationManagerAttributes
-                    {
-                        DispName = LocaleManager.Get("cfg_combat_module_aimbot_enable_key_name"),
-                        IsAdvanced = false,
-                        Order = 300
-                    }
-                )
-            );
             EnableAimbot = config.Bind(
                 "1. 天堂支点 / Combat Module",
                 "启用自瞄逻辑",
@@ -264,6 +249,21 @@ namespace Oracle.Combat
                     new ConfigurationManagerAttributes
                     {
                         DispName = LocaleManager.Get("cfg_combat_module_aimbot_enable_name"),
+                        IsAdvanced = false,
+                        Order = 300
+                    }
+                )
+            );
+            AimbotKey = config.Bind<KeyCode>(
+                "1. 天堂支点 / Combat Module",
+                "自瞄快捷键",
+                KeyCode.F6,
+                new ConfigDescription(
+                    LocaleManager.Get("cfg_combat_module_aimbot_enable_key_desc"),
+                    null,
+                    new ConfigurationManagerAttributes
+                    {
+                        DispName = LocaleManager.Get("cfg_combat_module_aimbot_enable_key_name"),
                         IsAdvanced = false,
                         Order = 299
                     }

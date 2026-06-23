@@ -1,8 +1,5 @@
 ﻿using BepInEx.Configuration;
 using EFT.Communications;
-using Oracle.Combat;
-using Oracle.ESP;
-using Oracle.ItemSpawn;
 using Oracle.Utils;
 using UnityEngine;
 using static Oracle.Data.OracleInterface;
@@ -10,7 +7,7 @@ using static Oracle.Data.OracleInterface;
 namespace Oracle.Data
 {
     /// <summary>
-    /// 快捷键管理器和全局配置定义
+    /// 全局配置定义, 其实现在只剩绘制部分了
     /// </summary>
     internal class GlobalCfg : IOracleCfg, IOracleKeyUpdate
     {
@@ -23,6 +20,7 @@ namespace Oracle.Data
         {
             OracleEvent.OnUpdate += KeyUpdate;
         }
+
         /// <summary>
         /// 按键监听, 挂载到Update里
         /// </summary>
@@ -32,39 +30,83 @@ namespace Oracle.Data
             {
                 UniGUI.Value = !UniGUI.Value;
                 var value = UniGUI.Value;
-                OracleNotify.Message($"全局绘制已{(value ? "启用" : "禁用")}!", value ? ENotificationIconType.Default : ENotificationIconType.Alert, MuteNotice.Value);
+                OracleNotify.Message(
+                    string.Format(
+                        LocaleManager.Get("message_uni_gui_enable"),
+                        value ? LocaleManager.Get("text_enable") : LocaleManager.Get("text_disable")
+                    ), 
+                    value ? ENotificationIconType.Default : ENotificationIconType.Alert, 
+                    MuteNotice.Value
+                );
             }
             
         }
+
         /// <summary>
         /// 配置项初始化
         /// </summary>
         /// <param name="config">传入配置实例</param>
         public void Initialize(ConfigFile config)
         {
-            UniGUIKey = config.Bind(
-                "绘制设置",
-                "切换全局绘制",
-                KeyCode.Insert,
-                "按下切换所有绘制状态"
-            );
             UniGUI = config.Bind(
-                "绘制设置",
+                "0. 联觉信标 / Draw Module",
                 "启用绘制",
                 true,
-                "启用绘制"
+                new ConfigDescription(
+                    LocaleManager.Get("cfg_global_module_uni_gui_enable_desc"),
+                    null,
+                    new ConfigurationManagerAttributes
+                    {
+                        DispName = LocaleManager.Get("cfg_global_module_uni_gui_enable_name"),
+                        IsAdvanced = false,
+                        Order = 400
+                    }
+                )
             );
-            FPSLimit = config.Bind(
-                "绘制设置",
-                "开启帧数限制",
-                true,
-                "启用后透视将以50帧为上限绘制而不是每帧绘制，关闭可能造成一定的帧数下降"
+            UniGUIKey = config.Bind(
+                "0. 联觉信标 / Draw Module",
+                "切换全局绘制",
+                KeyCode.Insert,
+                new ConfigDescription(
+                    LocaleManager.Get("cfg_global_module_uni_gui_enable_key_desc"),
+                    null,
+                    new ConfigurationManagerAttributes
+                    {
+                        DispName = LocaleManager.Get("cfg_global_module_uni_gui_enable_key_name"),
+                        IsAdvanced = false,
+                        Order = 399
+                    }
+                )
             );
             MuteNotice = config.Bind(
-                "绘制设置",
+                "0. 联觉信标 / Draw Module",
                 "静默提示",
                 false,
-                "启用后切换功能开关将不会有任何提示"
+                new ConfigDescription(
+                    LocaleManager.Get("cfg_global_module_mute_notice_enable_desc"),
+                    null,
+                    new ConfigurationManagerAttributes
+                    {
+                        DispName = LocaleManager.Get("cfg_global_module_mute_notice_enable_name"),
+                        IsAdvanced = false,
+                        Order = 398
+                    }
+                )
+            );
+            FPSLimit = config.Bind(
+                "0. 联觉信标 / Draw Module",
+                "开启帧数限制",
+                true,
+                new ConfigDescription(
+                    LocaleManager.Get("cfg_global_module_overlay_fps_limit_enable_desc"),
+                    null,
+                    new ConfigurationManagerAttributes
+                    {
+                        DispName = LocaleManager.Get("cfg_global_module_overlay_fps_limit_enable_name"),
+                        IsAdvanced = false,
+                        Order = 396
+                    }
+                )
             );
         }
     }
