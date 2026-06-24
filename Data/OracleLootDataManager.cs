@@ -114,7 +114,7 @@ namespace Oracle.Data
                             //写入缓存
                             TryAddLootData(backBuffer, positionOffsets, item, null, container,
                                 LootESPCfg.ShowItemFullName.Value ? item.Name.Localized() : item.ShortName.Localized(),
-                                container.transform.position, dist, string.Format(LocaleManager.Get("text_esp_container_tag"), containerName));
+                                container.transform.position, dist, string.Format("text_esp_container_tag".i18n(), containerName));
                         }
                     }
                 }
@@ -191,7 +191,7 @@ namespace Oracle.Data
             OracleColor iColor = GetColorByLevel(itemLevel);
             //富文本合并
             string fullName = string.IsNullOrEmpty(prefix) ? itemName : $"{prefix} {itemName}";
-            string formattedName = string.Format(LocaleManager.Get("text_esp_loot_format"), iColor, fullName, priceStr, OracleColorManager.Distance, dist);
+            string formattedName = string.Format("text_esp_loot_format".i18n(), iColor, fullName, priceStr, OracleColorManager.Distance, dist);
             int currentYOffset = 0;
 
             // ⭐ 核心优化：只有容器/尸体（StaticLoot）才参与 YOffset 计算

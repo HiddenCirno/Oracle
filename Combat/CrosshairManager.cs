@@ -133,11 +133,11 @@ namespace Oracle.ESP
                 "启用自定义准星",
                 true,
                 new ConfigDescription(
-                    LocaleManager.Get("cfg_global_module_screen_crosshair_enable_desc"),
+                    "cfg_global_module_screen_crosshair_enable_desc".i18n(),
                     null,
                     new ConfigurationManagerAttributes
                     {
-                        DispName = LocaleManager.Get("cfg_global_module_screen_crosshair_enable_name"),
+                        DispName = "cfg_global_module_screen_crosshair_enable_name".i18n(),
                         IsAdvanced = false,
                         Order = 395
                     }
@@ -148,11 +148,11 @@ namespace Oracle.ESP
                 "选择准星样式",
                 availableImages[0],
                 new ConfigDescription(
-                    LocaleManager.Get("cfg_global_module_choose_screen_crosshair_desc"),
+                    "cfg_global_module_choose_screen_crosshair_desc".i18n(),
                     new AcceptableValueList<string>(availableImages.ToArray()),
                     new ConfigurationManagerAttributes
                     {
-                        DispName = LocaleManager.Get("cfg_global_module_choose_screen_crosshair_name"),
+                        DispName = "cfg_global_module_choose_screen_crosshair_name".i18n(),
                         IsAdvanced = false,
                         Order = 394
                     }

@@ -173,6 +173,8 @@
         "text_esp_player_level": "<color={0}>Lv.{1}</color>",
         "text_esp_player": "{0} {1} <color={2}>{3}m</color>",
         "text_item_instance_manager_item_saved": "Item {0} saved to memory block: {1}",
+        "text_button_manger_close": "Close",
+        "text_raid_manager_title": "Raid Manager",
         "text_tab_loot_manager_title": "Loot",
         "text_tab_ai_manager_title": "Bot",
         "text_tab_bot_generator_title": "Bot Gen",
@@ -190,6 +192,17 @@
         "text_bot_generator_generate_type": "<b>Select Entity Type to Spawn ({0} total):</b>",
         "text_button_bot_generator_generate": "Spawn {0}",
         "text_button_bot_generator_generating": "Spawning...",
-        "text_bot_generator_generate_failed": "Spawn failed! AI type may be undefined or data is missing, please check the console log!"
+        "text_bot_generator_generate_failed": "Spawn failed! AI type may be undefined or data is missing, please check the console log!",
+        "text_item_instance_manager_title": "Item Instance Manager",
+        "text_item_instance_manager_no_result": "No stored items in memory.",
+        "text_item_instance_manager_item_info": "<color={0}>Item ID: {1}</color>",
+        "text_item_instance_manager_item_stack": "<color={0}>Stack:</color>",
+        "text_item_instance_manager_no_icon": "No Icon",
+        "text_button_item_instance_manager_fir": "FiR",
+        "text_button_item_instance_manager_spawn": "Spawn",
+        "text_button_item_instance_manager_select": "Select",
+        "text_button_item_instance_manager_selected": "Selected",
+        "text_button_item_instance_manager_drop": "Drop",
+        "text_button_item_instance_manager_delete": "Delete"
     }
 }

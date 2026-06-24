@@ -37,7 +37,10 @@
         public static readonly OracleColor LootTier6 = new OracleColor("#FF55FF");
         public static readonly OracleColor LootTierX = new OracleColor("#808080");
         public static readonly OracleColor LootTierEX = new OracleColor("#DC143C");
+
         public static readonly OracleColor TextGray = new OracleColor("#808080");
+
+        public static readonly OracleColor ManagerGUIBackground = new OracleColor("#FFFFFF");
 
         public static readonly OracleColor PlayerLevel = new OracleColor("#7FFF00");
         public static readonly OracleColor PMCUSEC = new OracleColor("#007CFF");

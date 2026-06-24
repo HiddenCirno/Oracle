@@ -56,11 +56,11 @@ namespace Oracle.Combat
                 "武器无故障",
                 false,
                 new ConfigDescription(
-                    LocaleManager.Get("cfg_combat_module_no_malfunction_desc"),
+                    "cfg_combat_module_no_malfunction_desc".i18n(),
                     null,
                     new ConfigurationManagerAttributes
                     {
-                        DispName = LocaleManager.Get("cfg_combat_module_no_malfunction_name"),
+                        DispName = "cfg_combat_module_no_malfunction_name".i18n(),
                         IsAdvanced = false,
                         Order = 240
                     }

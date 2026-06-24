@@ -245,11 +245,11 @@ namespace Oracle.Combat
                 "启用自瞄逻辑",
                 true,
                 new ConfigDescription(
-                    LocaleManager.Get("cfg_combat_module_aimbot_enable_desc"),
+                    "cfg_combat_module_aimbot_enable_desc".i18n(),
                     null,
                     new ConfigurationManagerAttributes
                     {
-                        DispName = LocaleManager.Get("cfg_combat_module_aimbot_enable_name"),
+                        DispName = "cfg_combat_module_aimbot_enable_name".i18n(),
                         IsAdvanced = false,
                         Order = 300
                     }
@@ -260,11 +260,11 @@ namespace Oracle.Combat
                 "自瞄快捷键",
                 KeyCode.F6,
                 new ConfigDescription(
-                    LocaleManager.Get("cfg_combat_module_aimbot_enable_key_desc"),
+                    "cfg_combat_module_aimbot_enable_key_desc".i18n(),
                     null,
                     new ConfigurationManagerAttributes
                     {
-                        DispName = LocaleManager.Get("cfg_combat_module_aimbot_enable_key_name"),
+                        DispName = "cfg_combat_module_aimbot_enable_key_name".i18n(),
                         IsAdvanced = false,
                         Order = 299
                     }
@@ -275,11 +275,11 @@ namespace Oracle.Combat
                 "自瞄位置选择",
                 EAimingPart.Head,
                 new ConfigDescription(
-                    LocaleManager.Get("cfg_combat_module_aimbot_part_desc"),
+                    "cfg_combat_module_aimbot_part_desc".i18n(),
                     null, //原始, 愚蠢, 不可理喻的木头写的弱智代码
                     new ConfigurationManagerAttributes
                     {
-                        DispName = LocaleManager.Get("cfg_combat_module_aimbot_part_name"),
+                        DispName = "cfg_combat_module_aimbot_part_name".i18n(),
                         IsAdvanced = false,
                         Order = 298
                     }
@@ -290,11 +290,11 @@ namespace Oracle.Combat
                 "切换瞄准部位",
                 KeyCode.KeypadMultiply,
                 new ConfigDescription(
-                    LocaleManager.Get("cfg_combat_module_aimbot_change_part_key_desc"),
+                    "cfg_combat_module_aimbot_change_part_key_desc".i18n(),
                     null,
                     new ConfigurationManagerAttributes
                     {
-                        DispName = LocaleManager.Get("cfg_combat_module_aimbot_change_part_key_name"),
+                        DispName = "cfg_combat_module_aimbot_change_part_key_name".i18n(),
                         IsAdvanced = false,
                         Order = 297
                     }
@@ -305,11 +305,11 @@ namespace Oracle.Combat
                 "自瞄最大距离",
                 200,
                 new ConfigDescription(
-                    LocaleManager.Get("cfg_combat_module_aimbot_max_distance_desc"),
+                    "cfg_combat_module_aimbot_max_distance_desc".i18n(),
                     new AcceptableValueRange<int>(10, 2000),
                     new ConfigurationManagerAttributes
                     {
-                        DispName = LocaleManager.Get("cfg_combat_module_aimbot_max_distance_name"),
+                        DispName = "cfg_combat_module_aimbot_max_distance_name".i18n(),
                         IsAdvanced = false,
                         Order = 296
                     }
@@ -320,11 +320,11 @@ namespace Oracle.Combat
                 "显示自瞄 FOV",
                 true,
                 new ConfigDescription(
-                    LocaleManager.Get("cfg_combat_module_aimbot_show_fov_desc"),
+                    "cfg_combat_module_aimbot_show_fov_desc".i18n(),
                     null,
                     new ConfigurationManagerAttributes
                     {
-                        DispName = LocaleManager.Get("cfg_combat_module_aimbot_show_fov_name"),
+                        DispName = "cfg_combat_module_aimbot_show_fov_name".i18n(),
                         IsAdvanced = false,
                         Order = 295
                     }
@@ -335,11 +335,11 @@ namespace Oracle.Combat
                 "自瞄 FOV 半径",
                 150f,
                 new ConfigDescription(
-                    LocaleManager.Get("cfg_combat_module_aimbot_fov_radius_desc"),
+                    "cfg_combat_module_aimbot_fov_radius_desc".i18n(),
                     new AcceptableValueRange<float>(0f, 1000f),
                     new ConfigurationManagerAttributes
                     {
-                        DispName = LocaleManager.Get("cfg_combat_module_aimbot_fov_radius_name"),
+                        DispName = "cfg_combat_module_aimbot_fov_radius_name".i18n(),
                         IsAdvanced = false,
                         Order = 294
                     }
@@ -350,11 +350,11 @@ namespace Oracle.Combat
                 "显示目标锁定线",
                 true,
                 new ConfigDescription(
-                    LocaleManager.Get("cfg_combat_module_aimbot_show_target_line_desc"),
+                    "cfg_combat_module_aimbot_show_target_line_desc".i18n(),
                     null,
                     new ConfigurationManagerAttributes
                     {
-                        DispName = LocaleManager.Get("cfg_combat_module_aimbot_show_target_line_name"),
+                        DispName = "cfg_combat_module_aimbot_show_target_line_name".i18n(),
                         IsAdvanced = false,
                         Order = 293
                     }
@@ -365,11 +365,11 @@ namespace Oracle.Combat
                 "自瞄目标更新频率",
                 20,
                 new ConfigDescription(
-                    LocaleManager.Get("cfg_combat_module_aimbot_target_update_rate_desc"),
+                    "cfg_combat_module_aimbot_target_update_rate_desc".i18n(),
                     new AcceptableValueRange<int>(10, 50),
                     new ConfigurationManagerAttributes
                     {
-                        DispName = LocaleManager.Get("cfg_combat_module_aimbot_target_update_rate_name"),
+                        DispName = "cfg_combat_module_aimbot_target_update_rate_name".i18n(),
                         IsAdvanced = false,
                         Order = 292
                     }
@@ -380,11 +380,11 @@ namespace Oracle.Combat
                 "超级魔法子弹",
                 false,
                 new ConfigDescription(
-                    LocaleManager.Get("cfg_combat_module_aimbot_super_magic_bullet_desc"),
+                    "cfg_combat_module_aimbot_super_magic_bullet_desc".i18n(),
                     null,
                     new ConfigurationManagerAttributes
                     {
-                        DispName = LocaleManager.Get("cfg_combat_module_aimbot_super_magic_bullet_name"),
+                        DispName = "cfg_combat_module_aimbot_super_magic_bullet_name".i18n(),
                         IsAdvanced = false,
                         Order = 291
                     }
@@ -395,11 +395,11 @@ namespace Oracle.Combat
                 "魔法子弹加速度",
                 20f,
                 new ConfigDescription(
-                    LocaleManager.Get("cfg_combat_module_aimbot_magic_bullet_speed_desc"),
+                    "cfg_combat_module_aimbot_magic_bullet_speed_desc".i18n(),
                     new AcceptableValueRange<float>(10f, 100f),
                     new ConfigurationManagerAttributes
                     {
-                        DispName = LocaleManager.Get("cfg_combat_module_aimbot_magic_bullet_speed_name"),
+                        DispName = "cfg_combat_module_aimbot_magic_bullet_speed_name".i18n(),
                         IsAdvanced = false,
                         Order = 290
                     }
@@ -410,11 +410,11 @@ namespace Oracle.Combat
                 "消除武器后座", 
                 true,
                 new ConfigDescription(
-                    LocaleManager.Get("cfg_combat_module_aimbot_disable_recoil_desc"),
+                    "cfg_combat_module_aimbot_disable_recoil_desc".i18n(),
                     null,
                     new ConfigurationManagerAttributes
                     {
-                        DispName = LocaleManager.Get("cfg_combat_module_aimbot_disable_recoil_name"),
+                        DispName = "cfg_combat_module_aimbot_disable_recoil_name".i18n(),
                         IsAdvanced = false,
                         Order = 289
                     }
@@ -425,11 +425,11 @@ namespace Oracle.Combat
                 "超低武器后座", 
                 true,
                 new ConfigDescription(
-                    LocaleManager.Get("cfg_combat_module_aimbot_low_recoil_desc"),
+                    "cfg_combat_module_aimbot_low_recoil_desc".i18n(),
                     null,
                     new ConfigurationManagerAttributes
                     {
-                        DispName = LocaleManager.Get("cfg_combat_module_aimbot_low_recoil_name"),
+                        DispName = "cfg_combat_module_aimbot_low_recoil_name".i18n(),
                         IsAdvanced = false,
                         Order = 288
                     }
@@ -439,11 +439,11 @@ namespace Oracle.Combat
                 "1. 天堂支点 / Combat Module", 
                 "武器后坐倍率", 0.2f,
                 new ConfigDescription(
-                    LocaleManager.Get("cfg_combat_module_aimbot_low_recoil_rate_desc"),
+                    "cfg_combat_module_aimbot_low_recoil_rate_desc".i18n(),
                     new AcceptableValueRange<float>(0f, 1f),
                     new ConfigurationManagerAttributes
                     {
-                        DispName = LocaleManager.Get("cfg_combat_module_aimbot_low_recoil_rate_name"),
+                        DispName = "cfg_combat_module_aimbot_low_recoil_rate_name".i18n(),
                         IsAdvanced = false,
                         Order = 287
                     }
@@ -466,8 +466,8 @@ namespace Oracle.Combat
                 var value = EnableAimbot.Value;
                 OracleNotify.Message(
                     string.Format(
-                        LocaleManager.Get("message_aimbot_enable"), 
-                        value ? LocaleManager.Get("text_enable") : LocaleManager.Get("text_disable")
+                        "message_aimbot_enable".i18n(), 
+                        value ? "text_enable".i18n() : "text_disable".i18n()
                     ), 
                     value ? ENotificationIconType.Default : ENotificationIconType.Alert, 
                     GlobalCfg.MuteNotice.Value
@@ -479,8 +479,8 @@ namespace Oracle.Combat
                 var value = AimbotPartSetting.Value;
                 OracleNotify.Message(
                     string.Format(
-                        LocaleManager.Get("message_aimbot_change_part"),
-                        value == EAimingPart.Head ? LocaleManager.Get("text_aimbot_part_head") : LocaleManager.Get("text_aimbot_part_chest")
+                        "message_aimbot_change_part".i18n(),
+                        value == EAimingPart.Head ? "text_aimbot_part_head".i18n() : "text_aimbot_part_chest".i18n()
                     ), 
                     ENotificationIconType.Default, 
                     GlobalCfg.MuteNotice.Value

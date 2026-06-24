@@ -159,11 +159,11 @@ namespace Oracle.Utils
                 "启用叠加层",
                 false,
                 new ConfigDescription(
-                    LocaleManager.Get("cfg_global_module_overlay_enable_desc"),
+                    "cfg_global_module_overlay_enable_desc".i18n(),
                     null,
                     new ConfigurationManagerAttributes
                     {
-                        DispName = LocaleManager.Get("cfg_global_module_overlay_enable_name"),
+                        DispName = "cfg_global_module_overlay_enable_name".i18n(),
                         IsAdvanced = false,
                         Order = 397
                     }

@@ -91,11 +91,11 @@ namespace Oracle.Ability
                 "无限体力",
                 true,
                 new ConfigDescription(
-                    LocaleManager.Get("cfg_ability_module_infinity_stamina_desc"),
+                    "cfg_ability_module_infinity_stamina_desc".i18n(),
                     null,
                     new ConfigurationManagerAttributes
                     {
-                        DispName = LocaleManager.Get("cfg_ability_module_infinity_stamina_name"),
+                        DispName = "cfg_ability_module_infinity_stamina_name".i18n(),
                         IsAdvanced = false,
                         Order = 210
                     }
@@ -106,11 +106,11 @@ namespace Oracle.Ability
                 "无限负重",
                 true,
                 new ConfigDescription(
-                    LocaleManager.Get("cfg_ability_module_infinity_weight_desc"),
+                    "cfg_ability_module_infinity_weight_desc".i18n(),
                     null,
                     new ConfigurationManagerAttributes
                     {
-                        DispName = LocaleManager.Get("cfg_ability_module_infinity_weight_name"),
+                        DispName = "cfg_ability_module_infinity_weight_name".i18n(),
                         IsAdvanced = false,
                         Order = 209
                     }

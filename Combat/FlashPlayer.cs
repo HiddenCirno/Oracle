@@ -49,11 +49,11 @@ namespace Oracle.Combat
                 "闪现快捷键",
                 KeyCode.Z,
                 new ConfigDescription(
-                    LocaleManager.Get("cfg_combat_module_flash_key_desc"),
+                    "cfg_combat_module_flash_key_desc".i18n(),
                     null,
                     new ConfigurationManagerAttributes
                     {
-                        DispName = LocaleManager.Get("cfg_combat_module_flash_key_name"),
+                        DispName = "cfg_combat_module_flash_key_name".i18n(),
                         IsAdvanced = false,
                         Order = 270
                     }
@@ -64,11 +64,11 @@ namespace Oracle.Combat
                 "闪现距离", 
                 3f,
                 new ConfigDescription(
-                    LocaleManager.Get("cfg_combat_module_flash_distance_desc"),
+                    "cfg_combat_module_flash_distance_desc".i18n(),
                     new AcceptableValueRange<float>(0f, 1000f),
                     new ConfigurationManagerAttributes
                     {
-                        DispName = LocaleManager.Get("cfg_combat_module_flash_distance_name"),
+                        DispName = "cfg_combat_module_flash_distance_name".i18n(),
                         IsAdvanced = false,
                         Order = 269
                     }

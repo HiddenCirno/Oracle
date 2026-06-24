@@ -78,11 +78,11 @@ namespace Oracle.ESP
                 "启用尸体透视",
                 true,
                 new ConfigDescription(
-                    LocaleManager.Get("cfg_esp_module_corpse_esp_enable_desc"),
+                    "cfg_esp_module_corpse_esp_enable_desc".i18n(),
                     null,
                     new ConfigurationManagerAttributes
                     {
-                        DispName = LocaleManager.Get("cfg_esp_module_corpse_esp_enable_name"),
+                        DispName = "cfg_esp_module_corpse_esp_enable_name".i18n(),
                         IsAdvanced = false,
                         Order = 150
                     }
@@ -93,11 +93,11 @@ namespace Oracle.ESP
                 "尸体透视快捷键",
                 KeyCode.F5,
                 new ConfigDescription(
-                    LocaleManager.Get("cfg_esp_module_corpse_esp_enable_key_desc"),
+                    "cfg_esp_module_corpse_esp_enable_key_desc".i18n(),
                     null,
                     new ConfigurationManagerAttributes
                     {
-                        DispName = LocaleManager.Get("cfg_esp_module_corpse_esp_enable_key_name"),
+                        DispName = "cfg_esp_module_corpse_esp_enable_key_name".i18n(),
                         IsAdvanced = false,
                         Order = 149
                     }
@@ -108,11 +108,11 @@ namespace Oracle.ESP
                 "尸体透视最大距离",
                 300,
                 new ConfigDescription(
-                    LocaleManager.Get("cfg_esp_module_corpse_esp_max_distance_desc"),
+                    "cfg_esp_module_corpse_esp_max_distance_desc".i18n(),
                     new AcceptableValueRange<int>(50, 1000),
                     new ConfigurationManagerAttributes
                     {
-                        DispName = LocaleManager.Get("cfg_esp_module_corpse_esp_max_distance_name"),
+                        DispName = "cfg_esp_module_corpse_esp_max_distance_name".i18n(),
                         IsAdvanced = false,
                         Order = 148
                     }
@@ -131,8 +131,8 @@ namespace Oracle.ESP
                 var value = EnableCorpseESP.Value;
                 OracleNotify.Message(
                     string.Format(
-                        LocaleManager.Get("message_esp_corpse_enable"),
-                        value ? LocaleManager.Get("text_enable") : LocaleManager.Get("text_disable")
+                        "message_esp_corpse_enable".i18n(),
+                        value ? "text_enable".i18n() : "text_disable".i18n()
                     ),
                     value ? ENotificationIconType.Default : ENotificationIconType.Alert,
                     GlobalCfg.MuteNotice.Value

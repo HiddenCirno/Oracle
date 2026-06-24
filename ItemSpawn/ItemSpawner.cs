@@ -236,7 +236,7 @@ namespace Oracle.ItemSpawn
             catch (Exception ex)
             {
                 //捕获
-                OracleNotify.Warning(LocaleManager.Get("text_spawn_item_error"));
+                OracleNotify.Warning("text_spawn_item_error".i18n());
                 OracleCommon.ShowError(ex);
             }
         }
@@ -257,7 +257,7 @@ namespace Oracle.ItemSpawn
             catch (Exception ex)
             {
                 //捕获
-                OracleNotify.Warning(LocaleManager.Get("text_spawn_item_error"));
+                OracleNotify.Warning("text_spawn_item_error".i18n());
                 OracleCommon.ShowError(ex);
             }
         }
@@ -315,11 +315,11 @@ namespace Oracle.ItemSpawn
                 "物品 Template ID",
                 "59faff1d86f7746c51718c9c",
                 new ConfigDescription(
-                    LocaleManager.Get("cfg_creation_module_item_id_desc"),
+                    "cfg_creation_module_item_id_desc".i18n(),
                     null,
                     new ConfigurationManagerAttributes
                     {
-                        DispName = LocaleManager.Get("cfg_creation_module_item_id_name"),
+                        DispName = "cfg_creation_module_item_id_name".i18n(),
                         IsAdvanced = false,
                         Order = 129
                     }
@@ -330,11 +330,11 @@ namespace Oracle.ItemSpawn
                 "创建实例",
                 KeyCode.KeypadDivide,
                 new ConfigDescription(
-                    LocaleManager.Get("cfg_creation_module_item_create_key_desc"),
+                    "cfg_creation_module_item_create_key_desc".i18n(),
                     null,
                     new ConfigurationManagerAttributes
                     {
-                        DispName = LocaleManager.Get("cfg_creation_module_item_create_key_name"),
+                        DispName = "cfg_creation_module_item_create_key_name".i18n(),
                         IsAdvanced = false,
                         Order = 128
                     }
@@ -345,11 +345,11 @@ namespace Oracle.ItemSpawn
                 "保存物品",
                 new KeyboardShortcut(KeyCode.C, KeyCode.LeftShift),
                 new ConfigDescription(
-                    LocaleManager.Get("cfg_creation_module_item_copy_key_desc"),
+                    "cfg_creation_module_item_copy_key_desc".i18n(),
                     null,
                     new ConfigurationManagerAttributes
                     {
-                        DispName = LocaleManager.Get("cfg_creation_module_itemm_copy_key_name"),
+                        DispName = "cfg_creation_module_itemm_copy_key_name".i18n(),
                         IsAdvanced = false,
                         Order = 127
                     }
@@ -360,11 +360,11 @@ namespace Oracle.ItemSpawn
                 "复制物品",
                 KeyCode.Keypad5,
                 new ConfigDescription(
-                    LocaleManager.Get("cfg_creation_module_item_drop_key_desc"),
+                    "cfg_creation_module_item_drop_key_desc".i18n(),
                     null,
                     new ConfigurationManagerAttributes
                     {
-                        DispName = LocaleManager.Get("cfg_creation_module_itemm_drop_key_name"),
+                        DispName = "cfg_creation_module_itemm_drop_key_name".i18n(),
                         IsAdvanced = false,
                         Order = 126
                     }

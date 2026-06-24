@@ -106,11 +106,11 @@ namespace Oracle.Combat
                 "无限子弹",
                 false,
                 new ConfigDescription(
-                    LocaleManager.Get("cfg_combat_module_infinity_ammo_desc"),
+                    "cfg_combat_module_infinity_ammo_desc".i18n(),
                     null,
                     new ConfigurationManagerAttributes
                     {
-                        DispName = LocaleManager.Get("cfg_combat_module_infinity_ammo_name"),
+                        DispName = "cfg_combat_module_infinity_ammo_name".i18n(),
                         IsAdvanced = false,
                         Order = 260
                     }

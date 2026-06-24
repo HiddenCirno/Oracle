@@ -67,7 +67,7 @@ namespace Oracle.Data
         /// 格式化输出结果
         /// </summary>
         /// <returns></returns>
-        public string ToEspString() => string.Format(LocaleManager.Get("text_esp_player"), LevelText, SideText, OracleColorManager.Distance, Distance).Trim();
+        public string ToEspString() => string.Format("text_esp_player".i18n(), LevelText, SideText, OracleColorManager.Distance, Distance).Trim();
     }
 
     /// <summary>

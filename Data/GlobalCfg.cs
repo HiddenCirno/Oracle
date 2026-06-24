@@ -33,8 +33,8 @@ namespace Oracle.Data
                 var value = UniGUI.Value;
                 OracleNotify.Message(
                     string.Format(
-                        LocaleManager.Get("message_uni_gui_enable"),
-                        value ? LocaleManager.Get("text_enable") : LocaleManager.Get("text_disable")
+                        "message_uni_gui_enable".i18n(),
+                        value ? "text_enable".i18n() : "text_disable".i18n()
                     ), 
                     value ? ENotificationIconType.Default : ENotificationIconType.Alert, 
                     MuteNotice.Value
@@ -54,11 +54,11 @@ namespace Oracle.Data
                 "启用绘制",
                 true,
                 new ConfigDescription(
-                    LocaleManager.Get("cfg_global_module_uni_gui_enable_desc"),
+                    "cfg_global_module_uni_gui_enable_desc".i18n(),
                     null,
                     new ConfigurationManagerAttributes
                     {
-                        DispName = LocaleManager.Get("cfg_global_module_uni_gui_enable_name"),
+                        DispName = "cfg_global_module_uni_gui_enable_name".i18n(),
                         IsAdvanced = false,
                         Order = 400
                     }
@@ -69,11 +69,11 @@ namespace Oracle.Data
                 "切换全局绘制",
                 KeyCode.Insert,
                 new ConfigDescription(
-                    LocaleManager.Get("cfg_global_module_uni_gui_enable_key_desc"),
+                    "cfg_global_module_uni_gui_enable_key_desc".i18n(),
                     null,
                     new ConfigurationManagerAttributes
                     {
-                        DispName = LocaleManager.Get("cfg_global_module_uni_gui_enable_key_name"),
+                        DispName = "cfg_global_module_uni_gui_enable_key_name".i18n(),
                         IsAdvanced = false,
                         Order = 399
                     }
@@ -84,11 +84,11 @@ namespace Oracle.Data
                 "静默提示",
                 false,
                 new ConfigDescription(
-                    LocaleManager.Get("cfg_global_module_mute_notice_enable_desc"),
+                    "cfg_global_module_mute_notice_enable_desc".i18n(),
                     null,
                     new ConfigurationManagerAttributes
                     {
-                        DispName = LocaleManager.Get("cfg_global_module_mute_notice_enable_name"),
+                        DispName = "cfg_global_module_mute_notice_enable_name".i18n(),
                         IsAdvanced = false,
                         Order = 398
                     }
@@ -99,11 +99,11 @@ namespace Oracle.Data
                 "开启帧数限制",
                 true,
                 new ConfigDescription(
-                    LocaleManager.Get("cfg_global_module_overlay_fps_limit_enable_desc"),
+                    "cfg_global_module_overlay_fps_limit_enable_desc".i18n(),
                     null,
                     new ConfigurationManagerAttributes
                     {
-                        DispName = LocaleManager.Get("cfg_global_module_overlay_fps_limit_enable_name"),
+                        DispName = "cfg_global_module_overlay_fps_limit_enable_name".i18n(),
                         IsAdvanced = false,
                         Order = 396
                     }

@@ -74,7 +74,7 @@ namespace Oracle.ESP
                 {
                     int dist = Mathf.RoundToInt(Vector3.Distance(playerPos, trap.CenterPos));
                     
-                    string text = string.Format(LocaleManager.Get("text_esp_tripwire"), OracleColorManager.Tripwire, OracleColorManager.Distance, dist);
+                    string text = string.Format("text_esp_tripwire".i18n(), OracleColorManager.Tripwire, OracleColorManager.Distance, dist);
 
                     float screenX = screenCenter.x;
                     float screenY = Screen.height - screenCenter.y;
@@ -105,11 +105,11 @@ namespace Oracle.ESP
                 "启用绊雷透视",
                 true,
                 new ConfigDescription(
-                    LocaleManager.Get("cfg_esp_module_tripwire_esp_enable_desc"),
+                    "cfg_esp_module_tripwire_esp_enable_desc".i18n(),
                     null,
                     new ConfigurationManagerAttributes
                     {
-                        DispName = LocaleManager.Get("cfg_esp_module_tripwire_esp_enable_name"),
+                        DispName = "cfg_esp_module_tripwire_esp_enable_name".i18n(),
                         IsAdvanced = false,
                         Order = 140
                     }

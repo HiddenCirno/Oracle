@@ -123,11 +123,11 @@ namespace Oracle.Ability
                 "念力解锁", 
                 false,
                 new ConfigDescription(
-                    LocaleManager.Get("cfg_ability_module_telekinisis_unlock_desc"),
+                    "cfg_ability_module_telekinisis_unlock_desc".i18n(),
                     null,
                     new ConfigurationManagerAttributes
                     {
-                        DispName = LocaleManager.Get("cfg_ability_module_telekinisis_unlock_name"),
+                        DispName = "cfg_ability_module_telekinisis_unlock_name".i18n(),
                         IsAdvanced = false,
                         Order = 190
                     }

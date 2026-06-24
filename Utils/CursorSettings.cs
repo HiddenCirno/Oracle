@@ -6,7 +6,7 @@ using System.Reflection;
 namespace Oracle.Utils
 {
     /// <summary>
-    /// 用于调用塔科夫底层鼠标样式的反射工具类
+    /// 调用塔科夫的鼠标样式
     /// </summary>
     public static class CursorSettings
     {

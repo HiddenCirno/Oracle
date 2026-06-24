@@ -29,7 +29,7 @@ namespace Oracle.RaidManager
         public void DrawPanel()
         {
             //全部杀死按钮
-            if (GUI.Button(new Rect(RaidManagerGUI._windowRect.width - 135, 4, 85, 20), LocaleManager.Get("text_button_ai_manager_kill_all"), UIStyleManager.RedButtonStyle))
+            if (GUI.Button(new Rect(RaidManagerGUI._windowRect.width - 135, 4, 85, 20), "text_button_ai_manager_kill_all".i18n(), UIStyleManager.RedButtonStyle))
             {
                 if (PluginsCore.CorrectGameWorld != null && PluginsCore.CorrectGameWorld.AllAlivePlayersList != null)
                 {
@@ -60,7 +60,7 @@ namespace Oracle.RaidManager
             // 防御：确保游戏世界和玩家列表已加载
             if (PluginsCore.CorrectGameWorld == null || PluginsCore.CorrectGameWorld.AllAlivePlayersList == null)
             {
-                GUILayout.Label(LocaleManager.Get("text_button_ai_manager_no_result"), UIStyleManager.BoxStyle);
+                GUILayout.Label("text_button_ai_manager_no_result".i18n(), UIStyleManager.BoxStyle);
             }
             else
             {
@@ -93,7 +93,7 @@ namespace Oracle.RaidManager
                     }
                     else
                     {
-                        GUILayout.Box(LocaleManager.Get("text_button_ai_manager_avatar_generating"), UIStyleManager.NormalButtonStyle, GUILayout.Width(64), GUILayout.Height(64));
+                        GUILayout.Box("text_button_ai_manager_avatar_generating".i18n(), UIStyleManager.NormalButtonStyle, GUILayout.Width(64), GUILayout.Height(64));
                     }
 
                     GUILayout.BeginVertical();
@@ -101,7 +101,7 @@ namespace Oracle.RaidManager
                     //结构体字段
                     GUILayout.Label($"<b>{entityInfo.Name}</b>  {entityInfo.LevelText}");
                     
-                    GUILayout.Label(string.Format(LocaleManager.Get("text_ai_manager_ai_info"), OracleColorManager.TextGray, entityInfo.SideText, OracleColorManager.Distance, entityInfo.Distance));
+                    GUILayout.Label(string.Format("text_ai_manager_ai_info".i18n(), OracleColorManager.TextGray, entityInfo.SideText, OracleColorManager.Distance, entityInfo.Distance));
                     GUILayout.EndVertical();
 
                     //绘制按钮
@@ -112,11 +112,11 @@ namespace Oracle.RaidManager
                     //传送/搜索
                     GUILayout.BeginHorizontal();
 
-                    if (GUILayout.Button(LocaleManager.Get("text_button_ai_manager_teleport"), UIStyleManager.BlueButtonStyle, GUILayout.Height(30), GUILayout.MinWidth(60)))
+                    if (GUILayout.Button("text_button_ai_manager_teleport".i18n(), UIStyleManager.BlueButtonStyle, GUILayout.Height(30), GUILayout.MinWidth(60)))
                     {
                         TeleportBotToMe(player);
                     }
-                    if (GUILayout.Button(LocaleManager.Get("text_button_ai_manager_search"), UIStyleManager.BlueButtonStyle, GUILayout.Height(30), GUILayout.MinWidth(60)))
+                    if (GUILayout.Button("text_button_ai_manager_search".i18n(), UIStyleManager.BlueButtonStyle, GUILayout.Height(30), GUILayout.MinWidth(60)))
                     {
                         RemoteSearchPlayer(player);
                     }
@@ -130,10 +130,10 @@ namespace Oracle.RaidManager
                     GUI.enabled = false;
                     //直接禁用按钮得了
                     //修不好, 已弃用
-                    if (GUILayout.Button(LocaleManager.Get("text_button_ai_manager_freeze"), UIStyleManager.BlueButtonStyle, GUILayout.Height(30), GUILayout.MinWidth(60))){}
+                    if (GUILayout.Button("text_button_ai_manager_freeze".i18n(), UIStyleManager.BlueButtonStyle, GUILayout.Height(30), GUILayout.MinWidth(60))){}
                     GUI.enabled = true;
 
-                    if (GUILayout.Button(LocaleManager.Get("text_button_ai_manager_kill"), UIStyleManager.RedButtonStyle, GUILayout.Height(30), GUILayout.MinWidth(60)))
+                    if (GUILayout.Button("text_button_ai_manager_kill".i18n(), UIStyleManager.RedButtonStyle, GUILayout.Height(30), GUILayout.MinWidth(60)))
                     {
                         player.KillMe(EBodyPartColliderType.HeadCommon, 99999999);
                         player?.OnDead(EDamageType.Environment);
@@ -146,7 +146,7 @@ namespace Oracle.RaidManager
 
                 if (aliveCount == 0)
                 {
-                    GUILayout.Label(LocaleManager.Get("text_ai_manager_no_target"), UIStyleManager.BoxStyle);
+                    GUILayout.Label("text_ai_manager_no_target".i18n(), UIStyleManager.BoxStyle);
                 }
             }
 

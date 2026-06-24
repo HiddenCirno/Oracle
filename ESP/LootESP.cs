@@ -123,11 +123,11 @@ namespace Oracle.ESP
                 "启用松散物资透视",
                 true,
                 new ConfigDescription(
-                    LocaleManager.Get("cfg_esp_module_looseloot_esp_enable_desc"),
+                    "cfg_esp_module_looseloot_esp_enable_desc".i18n(),
                     null,
                     new ConfigurationManagerAttributes
                     {
-                        DispName = LocaleManager.Get("cfg_esp_module_looseloot_esp_enable_name"),
+                        DispName = "cfg_esp_module_looseloot_esp_enable_name".i18n(),
                         IsAdvanced = false,
                         Order = 180
                     }
@@ -138,11 +138,11 @@ namespace Oracle.ESP
                 "散落物资透视快捷键",
                 KeyCode.F3,
                 new ConfigDescription(
-                    LocaleManager.Get("cfg_esp_module_looseloot_esp_enable_key_desc"),
+                    "cfg_esp_module_looseloot_esp_enable_key_desc".i18n(),
                     null,
                     new ConfigurationManagerAttributes
                     {
-                        DispName = LocaleManager.Get("cfg_esp_module_looseloot_esp_enable_key_name"),
+                        DispName = "cfg_esp_module_looseloot_esp_enable_key_name".i18n(),
                         IsAdvanced = false,
                         Order = 179
                     }
@@ -153,11 +153,11 @@ namespace Oracle.ESP
                 "启用容器物资透视",
                 true,
                 new ConfigDescription(
-                    LocaleManager.Get("cfg_esp_module_staticloot_esp_enable_desc"),
+                    "cfg_esp_module_staticloot_esp_enable_desc".i18n(),
                     null,
                     new ConfigurationManagerAttributes
                     {
-                        DispName = LocaleManager.Get("cfg_esp_module_staticloot_esp_enable_name"),
+                        DispName = "cfg_esp_module_staticloot_esp_enable_name".i18n(),
                         IsAdvanced = false,
                         Order = 178
                     }
@@ -168,11 +168,11 @@ namespace Oracle.ESP
                 "容器物资透视快捷键",
                 KeyCode.F4,
                new ConfigDescription(
-                    LocaleManager.Get("cfg_esp_module_staticloot_esp_enable_key_desc"),
+                    "cfg_esp_module_staticloot_esp_enable_key_desc".i18n(),
                     null,
                     new ConfigurationManagerAttributes
                     {
-                        DispName = LocaleManager.Get("cfg_esp_module_staticloot_esp_enable_key_name"),
+                        DispName = "cfg_esp_module_staticloot_esp_enable_key_name".i18n(),
                         IsAdvanced = false,
                         Order = 177
                     }
@@ -183,11 +183,11 @@ namespace Oracle.ESP
                 "显示物品全名",
                 false,
                 new ConfigDescription(
-                    LocaleManager.Get("cfg_esp_module_loot_esp_show_full_name_desc"),
+                    "cfg_esp_module_loot_esp_show_full_name_desc".i18n(),
                     null,
                     new ConfigurationManagerAttributes
                     {
-                        DispName = LocaleManager.Get("cfg_esp_module_loot_esp_show_full_name_name"),
+                        DispName = "cfg_esp_module_loot_esp_show_full_name_name".i18n(),
                         IsAdvanced = false,
                         Order = 176
                     }
@@ -198,11 +198,11 @@ namespace Oracle.ESP
                 "透视范围",
                 200,
                 new ConfigDescription(
-                    LocaleManager.Get("cfg_esp_module_loot_esp_max_distance_desc"),
+                    "cfg_esp_module_loot_esp_max_distance_desc".i18n(),
                     new AcceptableValueRange<int>(50, 1000),
                     new ConfigurationManagerAttributes
                     {
-                        DispName = LocaleManager.Get("cfg_esp_module_loot_esp_max_distance_name"),
+                        DispName = "cfg_esp_module_loot_esp_max_distance_name".i18n(),
                         IsAdvanced = false,
                         Order = 175
                     }
@@ -213,11 +213,11 @@ namespace Oracle.ESP
                 "价格过滤",
                 15000,
                 new ConfigDescription(
-                    LocaleManager.Get("cfg_esp_module_loot_esp_min_price_desc"),
+                    "cfg_esp_module_loot_esp_min_price_desc".i18n(),
                     new AcceptableValueRange<int>(1, 1000000),
                     new ConfigurationManagerAttributes
                     {
-                        DispName = LocaleManager.Get("cfg_esp_module_loot_esp_min_price_name"),
+                        DispName = "cfg_esp_module_loot_esp_min_price_name".i18n(),
                         IsAdvanced = false,
                         Order = 174
                     }
@@ -228,11 +228,11 @@ namespace Oracle.ESP
                 "启用约束透视",
                 true,
                 new ConfigDescription(
-                    LocaleManager.Get("cfg_esp_module_loot_esp_fov_enable_desc"),
+                    "cfg_esp_module_loot_esp_fov_enable_desc".i18n(),
                     null,
                     new ConfigurationManagerAttributes
                     {
-                        DispName = LocaleManager.Get("cfg_esp_module_loot_esp_fov_enable_name"),
+                        DispName = "cfg_esp_module_loot_esp_fov_enable_name".i18n(),
                         IsAdvanced = false,
                         Order = 173
                     }
@@ -243,11 +243,11 @@ namespace Oracle.ESP
                 "显示约束透视范围",
                 true,
                 new ConfigDescription(
-                    LocaleManager.Get("cfg_esp_module_loot_esp_show_fov_enable_desc"),
+                    "cfg_esp_module_loot_esp_show_fov_enable_desc".i18n(),
                     null,
                     new ConfigurationManagerAttributes
                     {
-                        DispName = LocaleManager.Get("cfg_esp_module_loot_esp_show_fov_enable_name"),
+                        DispName = "cfg_esp_module_loot_esp_show_fov_enable_name".i18n(),
                         IsAdvanced = false,
                         Order = 172
                     }
@@ -258,11 +258,11 @@ namespace Oracle.ESP
                 "约束透视范围",
                 100,
                 new ConfigDescription(
-                    LocaleManager.Get("cfg_esp_module_loot_esp_fov_radius_desc"),
+                    "cfg_esp_module_loot_esp_fov_radius_desc".i18n(),
                     new AcceptableValueRange<int>(0, 1000),
                     new ConfigurationManagerAttributes
                     {
-                        DispName = LocaleManager.Get("cfg_esp_module_loot_esp_fov_radius_name"),
+                        DispName = "cfg_esp_module_loot_esp_fov_radius_name".i18n(),
                         IsAdvanced = false,
                         Order = 171
                     }
@@ -273,11 +273,11 @@ namespace Oracle.ESP
                 "约束透视白名单价格",
                 150000,
                 new ConfigDescription(
-                    LocaleManager.Get("cfg_esp_module_loot_esp_fov_min_price_desc"),
+                    "cfg_esp_module_loot_esp_fov_min_price_desc".i18n(),
                     new AcceptableValueRange<int>(1000, 10000000),
                     new ConfigurationManagerAttributes
                     {
-                        DispName = LocaleManager.Get("cfg_esp_module_loot_esp_fov_min_price_name"),
+                        DispName = "cfg_esp_module_loot_esp_fov_min_price_name".i18n(),
                         IsAdvanced = false,
                         Order = 170
                     }
@@ -288,11 +288,11 @@ namespace Oracle.ESP
                 "高亮愿望单物品",
                 true,
                 new ConfigDescription(
-                    LocaleManager.Get("cfg_esp_module_loot_esp_highlight_wishlist_item_desc"),
+                    "cfg_esp_module_loot_esp_highlight_wishlist_item_desc".i18n(),
                     null,
                     new ConfigurationManagerAttributes
                     {
-                        DispName = LocaleManager.Get("cfg_esp_module_loot_esp_highlight_wishlist_item_name"),
+                        DispName = "cfg_esp_module_loot_esp_highlight_wishlist_item_name".i18n(),
                         IsAdvanced = false,
                         Order = 169
                     }
@@ -303,11 +303,11 @@ namespace Oracle.ESP
                 "高亮任务物品",
                 true,
                 new ConfigDescription(
-                    LocaleManager.Get("cfg_esp_module_loot_esp_highlight_quest_item_desc"),
+                    "cfg_esp_module_loot_esp_highlight_quest_item_desc".i18n(),
                     null,
                     new ConfigurationManagerAttributes
                     {
-                        DispName = LocaleManager.Get("cfg_esp_module_loot_esp_highlight_quest_item_name"),
+                        DispName = "cfg_esp_module_loot_esp_highlight_quest_item_name".i18n(),
                         IsAdvanced = false,
                         Order = 168
                     }
@@ -318,11 +318,11 @@ namespace Oracle.ESP
                 "透视迷宫道具",
                 true,
                 new ConfigDescription(
-                    LocaleManager.Get("cfg_esp_module_loot_esp_highlight_labyrinth_item_desc"),
+                    "cfg_esp_module_loot_esp_highlight_labyrinth_item_desc".i18n(),
                     null,
                     new ConfigurationManagerAttributes
                     {
-                        DispName = LocaleManager.Get("cfg_esp_module_loot_esp_highlight_labyrinth_item_name"),
+                        DispName = "cfg_esp_module_loot_esp_highlight_labyrinth_item_name".i18n(),
                         IsAdvanced = false,
                         Order = 167
                     }
@@ -333,11 +333,11 @@ namespace Oracle.ESP
                 "透视血色钥匙",
                 true,
                 new ConfigDescription(
-                    LocaleManager.Get("cfg_esp_module_loot_esp_highlight_bloody_key_desc"),
+                    "cfg_esp_module_loot_esp_highlight_bloody_key_desc".i18n(),
                     null,
                     new ConfigurationManagerAttributes
                     {
-                        DispName = LocaleManager.Get("cfg_esp_module_loot_esp_highlight_bloody_key_name"),
+                        DispName = "cfg_esp_module_loot_esp_highlight_bloody_key_name".i18n(),
                         IsAdvanced = false,
                         Order = 166
                     }
@@ -356,8 +356,8 @@ namespace Oracle.ESP
                 var value = EnableLooseLootESP.Value;
                 OracleNotify.Message(
                     string.Format(
-                        LocaleManager.Get("message_loot_esp_looseloot_enable"),
-                        value ? LocaleManager.Get("text_enable") : LocaleManager.Get("text_disable")
+                        "message_loot_esp_looseloot_enable".i18n(),
+                        value ? "text_enable".i18n() : "text_disable".i18n()
                     ),
                     value ? ENotificationIconType.Default : ENotificationIconType.Alert,
                     GlobalCfg.MuteNotice.Value
@@ -369,8 +369,8 @@ namespace Oracle.ESP
                 var value = EnableContainerLootESP.Value;
                 OracleNotify.Message(
                     string.Format(
-                        LocaleManager.Get("message_loot_esp_staticloot_enable"),
-                        value ? LocaleManager.Get("text_enable") : LocaleManager.Get("text_disable")
+                        "message_loot_esp_staticloot_enable".i18n(),
+                        value ? "text_enable".i18n() : "text_disable".i18n()
                     ),
                     value ? ENotificationIconType.Default : ENotificationIconType.Alert,
                     GlobalCfg.MuteNotice.Value

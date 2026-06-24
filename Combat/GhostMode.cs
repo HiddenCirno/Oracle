@@ -47,11 +47,11 @@ namespace Oracle.Combat
                 "隐身模式",
                 false,
                 new ConfigDescription(
-                    LocaleManager.Get("cfg_combat_module_ghost_mode_enable_desc"),
+                    "cfg_combat_module_ghost_mode_enable_desc".i18n(),
                     null,
                     new ConfigurationManagerAttributes
                     {
-                        DispName = LocaleManager.Get("cfg_combat_module_ghost_mode_enable_name"),
+                        DispName = "cfg_combat_module_ghost_mode_enable_name".i18n(),
                         IsAdvanced = false,
                         Order = 280
                     }
@@ -62,11 +62,11 @@ namespace Oracle.Combat
                 "隐身快捷键",
                 KeyCode.F11,
                 new ConfigDescription(
-                    LocaleManager.Get("cfg_combat_module_ghost_mode_enable_key_desc"),
+                    "cfg_combat_module_ghost_mode_enable_key_desc".i18n(),
                     null,
                     new ConfigurationManagerAttributes
                     {
-                        DispName = LocaleManager.Get("cfg_combat_module_ghost_mode_enable_key_name"),
+                        DispName = "cfg_combat_module_ghost_mode_enable_key_name".i18n(),
                         IsAdvanced = false,
                         Order = 279
                     }
@@ -89,8 +89,8 @@ namespace Oracle.Combat
                 var value = EnableGhostMode.Value;
                 OracleNotify.Message(
                     string.Format(
-                        LocaleManager.Get("message_ghost_mode_enable"),
-                        value ? LocaleManager.Get("text_enable") : LocaleManager.Get("text_disable")
+                        "message_ghost_mode_enable".i18n(),
+                        value ? "text_enable".i18n() : "text_disable".i18n()
                     ),
                     value ? ENotificationIconType.Default : ENotificationIconType.Alert,
                     GlobalCfg.MuteNotice.Value

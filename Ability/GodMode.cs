@@ -102,11 +102,11 @@ namespace Oracle.Ability
                 "无敌", 
                 false,
                 new ConfigDescription(
-                    LocaleManager.Get("cfg_ability_module_gode_mode_desc"),
+                    "cfg_ability_module_gode_mode_desc".i18n(),
                     null,
                     new ConfigurationManagerAttributes
                     {
-                        DispName = LocaleManager.Get("cfg_ability_module_gode_mode_name"),
+                        DispName = "cfg_ability_module_gode_mode_name".i18n(),
                         IsAdvanced = false,
                         Order = 220
                     }
@@ -117,11 +117,11 @@ namespace Oracle.Ability
                 "锁血", 
                 false,
                 new ConfigDescription(
-                    LocaleManager.Get("cfg_ability_module_health_lock_desc"),
+                    "cfg_ability_module_health_lock_desc".i18n(),
                     null,
                     new ConfigurationManagerAttributes
                     {
-                        DispName = LocaleManager.Get("cfg_ability_module_health_lock_name"),
+                        DispName = "cfg_ability_module_health_lock_name".i18n(),
                         IsAdvanced = false,
                         Order = 219
                     }
@@ -132,11 +132,11 @@ namespace Oracle.Ability
                 "不死", 
                 false,
                 new ConfigDescription(
-                    LocaleManager.Get("cfg_ability_module_undead_desc"),
+                    "cfg_ability_module_undead_desc".i18n(),
                     null,
                     new ConfigurationManagerAttributes
                     {
-                        DispName = LocaleManager.Get("cfg_ability_module_undead_name"),
+                        DispName = "cfg_ability_module_undead_name".i18n(),
                         IsAdvanced = false,
                         Order = 218
                     }

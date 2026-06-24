@@ -398,11 +398,11 @@ namespace Oracle.ESP
                 "启用玩家透视",
                 true,
                 new ConfigDescription(
-                    LocaleManager.Get("cfg_esp_module_player_esp_enable_desc"),
+                    "cfg_esp_module_player_esp_enable_desc".i18n(),
                     null,
                     new ConfigurationManagerAttributes
                     {
-                        DispName = LocaleManager.Get("cfg_esp_module_player_esp_enable_name"),
+                        DispName = "cfg_esp_module_player_esp_enable_name".i18n(),
                         IsAdvanced = false,
                         Order = 160
                     }
@@ -413,11 +413,11 @@ namespace Oracle.ESP
                 "玩家透视快捷键",
                 KeyCode.F2,
                 new ConfigDescription(
-                    LocaleManager.Get("cfg_esp_module_player_esp_enable_key_desc"),
+                    "cfg_esp_module_player_esp_enable_key_desc".i18n(),
                     null,
                     new ConfigurationManagerAttributes
                     {
-                        DispName = LocaleManager.Get("cfg_esp_module_player_esp_enable_key_name"),
+                        DispName = "cfg_esp_module_player_esp_enable_key_name".i18n(),
                         IsAdvanced = false,
                         Order = 159
                     }
@@ -428,11 +428,11 @@ namespace Oracle.ESP
                 "透视范围",
                 200,
                 new ConfigDescription(
-                    LocaleManager.Get("cfg_esp_module_player_esp_max_distance_desc"),
+                    "cfg_esp_module_player_esp_max_distance_desc".i18n(),
                     new AcceptableValueRange<int>(50, 2000),
                     new ConfigurationManagerAttributes
                     {
-                        DispName = LocaleManager.Get("cfg_esp_module_player_esp_max_distance_name"),
+                        DispName = "cfg_esp_module_player_esp_max_distance_name".i18n(),
                         IsAdvanced = false,
                         Order = 158
                     }
@@ -443,11 +443,11 @@ namespace Oracle.ESP
                 "启用玩家信息透视",
                 true,
                 new ConfigDescription(
-                    LocaleManager.Get("cfg_esp_module_player_esp_show_info_desc"),
+                    "cfg_esp_module_player_esp_show_info_desc".i18n(),
                     null,
                     new ConfigurationManagerAttributes
                     {
-                        DispName = LocaleManager.Get("cfg_esp_module_player_esp_show_info_name"),
+                        DispName = "cfg_esp_module_player_esp_show_info_name".i18n(),
                         IsAdvanced = false,
                         Order = 157
                     }
@@ -458,11 +458,11 @@ namespace Oracle.ESP
                 "启用玩家血条透视",
                 true,
                 new ConfigDescription(
-                    LocaleManager.Get("cfg_esp_module_player_esp_show_health_bar_desc"),
+                    "cfg_esp_module_player_esp_show_health_bar_desc".i18n(),
                     null,
                     new ConfigurationManagerAttributes
                     {
-                        DispName = LocaleManager.Get("cfg_esp_module_player_esp_show_health_bar_name"),
+                        DispName = "cfg_esp_module_player_esp_show_health_bar_name".i18n(),
                         IsAdvanced = false,
                         Order = 156
                     }
@@ -473,11 +473,11 @@ namespace Oracle.ESP
                 "启用玩家骨骼透视",
                 true,
                 new ConfigDescription(
-                    LocaleManager.Get("cfg_esp_module_player_esp_show_bone_desc"),
+                    "cfg_esp_module_player_esp_show_bone_desc".i18n(),
                     null,
                     new ConfigurationManagerAttributes
                     {
-                        DispName = LocaleManager.Get("cfg_esp_module_player_esp_show_bone_name"),
+                        DispName = "cfg_esp_module_player_esp_show_bone_name".i18n(),
                         IsAdvanced = false,
                         Order = 155
                     }
@@ -488,11 +488,11 @@ namespace Oracle.ESP
                 "启用玩家骨骼透视血量叠加",
                 true,
                 new ConfigDescription(
-                    LocaleManager.Get("cfg_esp_module_player_esp_show_bone_color_overlay_desc"),
+                    "cfg_esp_module_player_esp_show_bone_color_overlay_desc".i18n(),
                     null,
                     new ConfigurationManagerAttributes
                     {
-                        DispName = LocaleManager.Get("cfg_esp_module_player_esp_show_bone_color_overlay_name"),
+                        DispName = "cfg_esp_module_player_esp_show_bone_color_overlay_name".i18n(),
                         IsAdvanced = false,
                         Order = 154
                     }
@@ -513,8 +513,8 @@ namespace Oracle.ESP
                 var value = EnablePlayerESP.Value;
                 OracleNotify.Message(
                     string.Format(
-                        LocaleManager.Get("message_player_esp_enable"),
-                        value ? LocaleManager.Get("text_enable") : LocaleManager.Get("text_disable")
+                        "message_player_esp_enable".i18n(),
+                        value ? "text_enable".i18n() : "text_disable".i18n()
                     ),
                     value ? ENotificationIconType.Default : ENotificationIconType.Alert,
                     GlobalCfg.MuteNotice.Value

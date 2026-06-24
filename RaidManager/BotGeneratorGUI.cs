@@ -48,7 +48,7 @@ namespace Oracle.RaidManager
             GUILayout.BeginVertical(UIStyleManager.BoxStyle);
 
             GUILayout.BeginHorizontal();
-            GUILayout.Label(LocaleManager.Get("text_bot_generator_generate_count"), GUILayout.Width(110));
+            GUILayout.Label("text_bot_generator_generate_count".i18n(), GUILayout.Width(110));
             _spawnAmountStr = GUILayout.TextField(_spawnAmountStr, UIStyleManager.TextFieldStyle, GUILayout.Width(80));
             GUILayout.EndHorizontal();
 
@@ -56,7 +56,7 @@ namespace Oracle.RaidManager
             GUILayout.Space(10);
 
             //AI选择
-            GUILayout.Label(string.Format(LocaleManager.Get("text_bot_generator_generate_type"), _allAvailableRoles.Count));
+            GUILayout.Label(string.Format("text_bot_generator_generate_type".i18n(), _allAvailableRoles.Count));
 
             GUIStyle origScroll = GUI.skin.verticalScrollbar;
             GUIStyle origThumb = GUI.skin.verticalScrollbarThumb;
@@ -98,7 +98,7 @@ namespace Oracle.RaidManager
             //生成按钮
             GUI.enabled = !_isSpawning;
 
-            string spawnBtnText = _isSpawning ? LocaleManager.Get("text_button_bot_generator_generating") : string.Format(LocaleManager.Get("text_button_bot_generator_generate"), _selectedRole);
+            string spawnBtnText = _isSpawning ? "text_button_bot_generator_generating".i18n() : string.Format("text_button_bot_generator_generate".i18n(), _selectedRole);
             if (GUILayout.Button(spawnBtnText, UIStyleManager.BlueButtonStyle, GUILayout.Height(40)))
             {
                 //DebugBotData.UseDebugData.MustBeTrue();
@@ -144,7 +144,7 @@ namespace Oracle.RaidManager
             catch (Exception ex)
             {
                 Debug.LogError($"[Oracle]:Bot生成失败!\n {ex.Message}\n{ex.StackTrace}");
-                OracleNotify.Message(LocaleManager.Get("text_bot_generator_generate_failed"), EFT.Communications.ENotificationIconType.Alert, GlobalCfg.MuteNotice.Value);
+                OracleNotify.Message("text_bot_generator_generate_failed".i18n(), EFT.Communications.ENotificationIconType.Alert, GlobalCfg.MuteNotice.Value);
             }
             finally
             {

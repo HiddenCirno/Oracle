@@ -82,11 +82,11 @@ namespace Oracle.Ability
                 "阻止摔落伤害",
                 true,
                 new ConfigDescription(
-                    LocaleManager.Get("cfg_ability_module_feather_fall_desc"),
+                    "cfg_ability_module_feather_fall_desc".i18n(),
                     null,
                     new ConfigurationManagerAttributes
                     {
-                        DispName = LocaleManager.Get("cfg_ability_module_feather_fall_name"),
+                        DispName = "cfg_ability_module_feather_fall_name".i18n(),
                         IsAdvanced = false,
                         Order = 200
                     }

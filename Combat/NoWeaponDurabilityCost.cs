@@ -51,11 +51,11 @@ namespace Oracle.Combat
                 "无限耐久",
                 false,
                 new ConfigDescription(
-                    LocaleManager.Get("cfg_combat_module_infinity_durability_desc"),
+                    "cfg_combat_module_infinity_durability_desc".i18n(),
                     null,
                     new ConfigurationManagerAttributes
                     {
-                        DispName = LocaleManager.Get("cfg_combat_module_infinity_durability_name"),
+                        DispName = "cfg_combat_module_infinity_durability_name".i18n(),
                         IsAdvanced = false,
                         Order = 250
                     }

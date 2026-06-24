@@ -1,7 +1,5 @@
 ﻿using BepInEx.Configuration;
-using EFT;
 using Oracle.Data;
-using Oracle.ESP;
 using Oracle.Utils;
 using UnityEngine;
 using static Oracle.Data.OracleInterface;
@@ -15,7 +13,7 @@ namespace Oracle.RaidManager
     {
         //全局唯一主菜单开关
         public static bool _isMenuOpen = false;
-        public static Rect _windowRect = new Rect(480, 20, 550, 650);
+        public static Rect _windowRect = new Rect(570, 20, 550, 650);
 
         private int _selectedTab = 0;
         //只读存key
@@ -56,7 +54,7 @@ namespace Oracle.RaidManager
 
             for (int i = 0; i < _tabKeys.Length; i++)
             {
-                _tabs[i] = LocaleManager.Get(_tabKeys[i]);
+                _tabs[i] = _tabKeys[i].i18n();
             }
         }
 
@@ -76,16 +74,16 @@ namespace Oracle.RaidManager
             if (!_isMenuOpen) return;
 
             UIStyleManager.EnsureInitialized();
-            GUI.backgroundColor = Color.white;
+            GUI.backgroundColor = OracleColorManager.ManagerGUIBackground;
 
             //绘制窗口
-            _windowRect = GUI.Window(8855, _windowRect, DrawWindow, "Oracle 战局综合控制台 (按 F8 隐藏)", UIStyleManager.WindowStyle);
+            _windowRect = GUI.Window(8855, _windowRect, DrawWindow, "text_raid_manager_title".i18n(), UIStyleManager.WindowStyle);
         }
 
         public void DrawWindow(int windowID)
         {
             //关闭按钮
-            if (GUI.Button(new Rect(_windowRect.width - 45, 4, 40, 20), "关闭", UIStyleManager.RedButtonStyle))
+            if (GUI.Button(new Rect(_windowRect.width - 45, 4, 40, 20), "text_button_manger_close".i18n(), UIStyleManager.RedButtonStyle))
             {
                 _isMenuOpen = false;
                 MouseManager.ToggleCursor();
@@ -133,11 +131,11 @@ namespace Oracle.RaidManager
                 "打开战局综合控制台",
                 KeyCode.F8,
                 new ConfigDescription(
-                    LocaleManager.Get("cfg_raid_manage_module_open_manager_key_desc"),
+                    "cfg_raid_manage_module_open_manager_key_desc".i18n(),
                     null,
                     new ConfigurationManagerAttributes
                     {
-                        DispName = LocaleManager.Get("cfg_raid_manage_module_open_manager_key_name"),
+                        DispName = "cfg_raid_manage_module_open_manager_key_name".i18n(),
                         IsAdvanced = false,
                         Order = 120
                     }

@@ -85,37 +85,37 @@ namespace Oracle.Data
                 //取角色
                 var role = info.Settings?.Role.ToString().ToLower() ?? "assault";
 
-                string roleLabel = LocaleManager.Get("text_esp_player_tag_scav");
+                string roleLabel = "text_esp_player_tag_scav".i18n();
                 string colorHex = OracleColorManager.Scav;
 
                 //这里是不是可以加上多角色适配？
                 // 核心优先级逻辑
-                if (role.Contains("boss") || IsSpecialBoss(role)) { roleLabel = LocaleManager.Get("text_esp_player_tag_boss"); colorHex = OracleColorManager.Boss; }
-                else if (role == "bossboarsniper" || role == "marksman") { roleLabel = LocaleManager.Get("text_esp_player_tag_sniper"); colorHex = OracleColorManager.Sniper; }
-                else if (role == "pmcbot") { roleLabel = LocaleManager.Get("text_esp_player_tag_raider"); colorHex = OracleColorManager.Raider; }
-                else if (role == "exusec") { roleLabel = LocaleManager.Get("text_esp_player_tag_rogue"); colorHex = OracleColorManager.Raider; }
-                else if (role.Contains("follower") || role == "tagillahelperagro") { roleLabel = LocaleManager.Get("text_esp_player_tag_follower"); colorHex = OracleColorManager.Follower; }
-                else if (role.Contains("sectant")) { roleLabel = LocaleManager.Get("text_esp_player_tag_sectant"); colorHex = OracleColorManager.Sectant; }
-                else if (role == "gifter") { roleLabel = LocaleManager.Get("text_esp_player_tag_santa"); colorHex = OracleColorManager.Santa; }
-                else if (role.Contains("btr")) { roleLabel = LocaleManager.Get("text_esp_player_tag_btr"); colorHex = OracleColorManager.BTR; }
-                else if (role.Contains("black")) { roleLabel = LocaleManager.Get("text_esp_player_tag_bd"); colorHex = OracleColorManager.BlackDiv; }
+                if (role.Contains("boss") || IsSpecialBoss(role)) { roleLabel = "text_esp_player_tag_boss".i18n(); colorHex = OracleColorManager.Boss; }
+                else if (role == "bossboarsniper" || role == "marksman") { roleLabel = "text_esp_player_tag_sniper".i18n(); colorHex = OracleColorManager.Sniper; }
+                else if (role == "pmcbot") { roleLabel = "text_esp_player_tag_raider".i18n(); colorHex = OracleColorManager.Raider; }
+                else if (role == "exusec") { roleLabel = "text_esp_player_tag_rogue".i18n(); colorHex = OracleColorManager.Raider; }
+                else if (role.Contains("follower") || role == "tagillahelperagro") { roleLabel = "text_esp_player_tag_follower".i18n(); colorHex = OracleColorManager.Follower; }
+                else if (role.Contains("sectant")) { roleLabel = "text_esp_player_tag_sectant".i18n(); colorHex = OracleColorManager.Sectant; }
+                else if (role == "gifter") { roleLabel = "text_esp_player_tag_santa".i18n(); colorHex = OracleColorManager.Santa; }
+                else if (role.Contains("btr")) { roleLabel = "text_esp_player_tag_btr".i18n(); colorHex = OracleColorManager.BTR; }
+                else if (role.Contains("black")) { roleLabel = "text_esp_player_tag_bd".i18n(); colorHex = OracleColorManager.BlackDiv; }
 
                 // 组合名称部分
                 string displayString = includeName ? $"{roleLabel} {name}" : roleLabel;
                 string finalRes = $"<color={colorHex}>{displayString}</color>";
 
                 // 组合友军部分
-                sideText = isTeammate ? $"<color={OracleColorManager.AllyPlayer}>{LocaleManager.Get("text_esp_player_tag_teammate")} </color>{finalRes}" : finalRes;
+                sideText = isTeammate ? $"<color={OracleColorManager.AllyPlayer}>{"text_esp_player_tag_teammate".i18n()} </color>{finalRes}" : finalRes;
             }
             else
             {
-                levelText = string.Format(LocaleManager.Get("text_esp_player_level"), OracleColorManager.PlayerLevel, info.Level);
+                levelText = string.Format("text_esp_player_level".i18n(), OracleColorManager.PlayerLevel, info.Level);
                 string color = info.Side.ToString() == "Usec" ? OracleColorManager.PMCUSEC : OracleColorManager.PMCBEAR;
 
                 string displayContent = includeName ? $"{info.Side} {name}" : info.Side.ToString();
                 string baseText = $"<color={color}>{displayContent}</color>";
 
-                sideText = isTeammate ? $"<color={OracleColorManager.AllyPlayer}>{LocaleManager.Get("text_esp_player_tag_teammate")} </color>{baseText}" : baseText;
+                sideText = isTeammate ? $"<color={OracleColorManager.AllyPlayer}>{"text_esp_player_tag_teammate".i18n()} </color>{baseText}" : baseText;
             }
         }
 

@@ -47,7 +47,7 @@ namespace Oracle.ItemSpawn
                 //.CleanAndResetItem(ItemSpawnerCfg.ForcedFiR.Value);//这里不能清洗状态, 它涉及到带勾机制, 由玩家自己决定
                 SavedItems.Add(savedItem);
                 //游戏内通知
-                OracleNotify.Message(string.Format(LocaleManager.Get("text_item_instance_manager_item_saved"), itemName, itemID),  ENotificationIconType.Default, GlobalCfg.MuteNotice.Value);
+                OracleNotify.Message(string.Format("text_item_instance_manager_item_saved".i18n(), itemName, itemID),  ENotificationIconType.Default, GlobalCfg.MuteNotice.Value);
             }
         }
     }

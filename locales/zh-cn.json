@@ -173,6 +173,8 @@
         "text_esp_player_level": "<color={0}>{1}级</color>",
         "text_esp_player": "{0} {1} <color={2}>{3}米</color>",
         "text_item_instance_manager_item_saved": "物品{0}已存储至内存区域: {1}",
+        "text_button_manger_close": "关闭",
+        "text_raid_manager_title": "战局管理面板",
         "text_tab_loot_manager_title": "物资管理",
         "text_tab_ai_manager_title": "Bot管理",
         "text_tab_bot_generator_title": "Bot生成",
@@ -190,8 +192,18 @@
         "text_bot_generator_generate_type": "<b>选择要生成的实体类型 (共{0}种):</b>",
         "text_button_bot_generator_generate":"生成 {0}",
         "text_button_bot_generator_generating":"正在生成...",
-        "text_bot_generator_generate_failed":"生成失败！可能是AI类型未定义或数据不存在，请检查控制台日志！"
-
+        "text_bot_generator_generate_failed":"生成失败！可能是AI类型未定义或数据不存在，请检查控制台日志！",
+        "text_item_instance_manager_title":"物品实例管理面板",
+        "text_item_instance_manager_no_result":"当前内存中没有暂存的物品。",
+        "text_item_instance_manager_item_info":"<color={0}>物品ID: {1}</color>",
+        "text_item_instance_manager_item_stack":"<color={0}>堆叠数:</color>",
+        "text_item_instance_manager_no_icon":"无图标",
+        "text_button_item_instance_manager_fir":"带勾",
+        "text_button_item_instance_manager_spawn":"生成",
+        "text_button_item_instance_manager_select":"选择",
+        "text_button_item_instance_manager_selected":"当前",
+        "text_button_item_instance_manager_drop":"掉落",
+        "text_button_item_instance_manager_delete":"删除"
 
     }
 }

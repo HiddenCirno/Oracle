@@ -1,9 +1,7 @@
 ﻿using BepInEx.Configuration;
 using EFT;
 using EFT.InventoryLogic;
-using EFT.UI;
-using EFT.UI.DragAndDrop; // 包含 ItemViewFactory
-using Oracle.Combat;
+using EFT.UI.DragAndDrop;
 using Oracle.Data;
 using Oracle.ItemSpawn;
 using Oracle.Utils;
@@ -13,22 +11,27 @@ using static Oracle.Data.OracleInterface;
 
 namespace Oracle.RaidManager
 {
+    /// <summary>
+    /// 物品实例
+    /// </summary>
     public class ItemManagerGUI : IOracleManagerGUI
     {
-        // UI 状态
+        //UI状态
         public static bool _isMenuOpen = false;
-        public Rect _windowRect = new Rect(20, 20, 460, 600); // 初始窗口位置和大小
+        public Rect _windowRect = new Rect(20, 20, 550, 650);
         public Vector2 _scrollPos;
         public Vector2 itemScrollPos = Vector2.zero;
         public static bool SpawnedInSession = true;
-
-        // 图标缓存池
+        
+        //物品图标缓存
         public Dictionary<string, Texture2D> _iconCache = new Dictionary<string, Texture2D>();
+        
         public void SubscribeEvent()
         {
             OracleEvent.OnDrawManagerGUI += OnGUI;
             OracleEvent.OnUpdate += Update;
         }
+
         public void Update()
         {
             if (Input.GetKeyDown(ItemManagerGUICfg.ItemManagerKey.Value))
@@ -44,15 +47,13 @@ namespace Oracle.RaidManager
 
             UIStyleManager.EnsureInitialized();
 
-            GUI.backgroundColor = Color.white;
+            GUI.backgroundColor = OracleColorManager.ManagerGUIBackground;
 
-            _windowRect = GUI.Window(8848, _windowRect, DrawWindow, "虚空造物 - 内存实例管理器 (按 F10 隐藏)", UIStyleManager.WindowStyle);
+            _windowRect = GUI.Window(8848, _windowRect, DrawWindow, "text_item_instance_manager_title".i18n(), UIStyleManager.WindowStyle);
         }
 
         public void DrawWindow(int windowID)
-        {
-            //SpawnedInSession = GUI.Toggle(new Rect(_windowRect.width - 165, 4, 115, 20), SpawnedInSession, "战局内寻找(FIR)");
-
+        {   
             //你妈个逼我用你妈的复选框
             //深色 按钮 方块 文本
             //按钮是按钮文本是文本按钮按了变透明
@@ -60,12 +61,14 @@ namespace Oracle.RaidManager
             //真该死
             //总之他妈的把按钮和文本分开
             //早该这么干了 ◪※
-            if (GUI.Button(new Rect(_windowRect.width - 90, 4, 40, 20), "带勾", SpawnedInSession ? UIStyleManager.BlueButtonStyle : UIStyleManager.RedButtonStyle))
+            //带勾
+            if (GUI.Button(new Rect(_windowRect.width - 90, 4, 40, 20), "text_button_item_instance_manager_fir".i18n(), SpawnedInSession ? UIStyleManager.BlueButtonStyle : UIStyleManager.RedButtonStyle))
             {
                 SpawnedInSession = !SpawnedInSession;
             }
-            // ---- 右上角关闭按钮 (使用统一的 redButtonStyle) ----
-            if (GUI.Button(new Rect(_windowRect.width - 45, 4, 40, 20), "关闭", UIStyleManager.RedButtonStyle))
+
+            //关闭
+            if (GUI.Button(new Rect(_windowRect.width - 45, 4, 40, 20), "text_button_manger_close".i18n(), UIStyleManager.RedButtonStyle))
             {
                 _isMenuOpen = false;
                 MouseManager.ToggleCursor();
@@ -83,7 +86,7 @@ namespace Oracle.RaidManager
 
             if (ItemCatcher.SavedItems.Count == 0)
             {
-                GUILayout.Label("当前内存中没有暂存的物品。", UIStyleManager.BoxStyle);
+                GUILayout.Label("text_item_instance_manager_no_result".i18n(), UIStyleManager.BoxStyle);
             }
             else
             {
@@ -94,18 +97,18 @@ namespace Oracle.RaidManager
 
                     GUILayout.BeginHorizontal(isCurrent ? UIStyleManager.SelectedBoxStyle : UIStyleManager.BoxStyle);
 
-                    // 1. 图标
+                    //物品图标
                     Texture2D icon = GetCachedIcon(item);
                     if (icon != null) GUILayout.Label(icon, GUILayout.Width(64), GUILayout.Height(64));
-                    else GUILayout.Label("无图标", GUILayout.Width(64), GUILayout.Height(64));
+                    else GUILayout.Label("text_item_instance_manager_no_icon".i18n(), GUILayout.Width(64), GUILayout.Height(64));
 
-                    // 2. 信息与输入框
+                    //信息栏
                     GUILayout.BeginVertical();
                     GUILayout.Label($"<b>{item.Name.Localized()}</b>");
-                    GUILayout.Label($"<color=grey>Tpl: {item.TemplateId}</color>");
+                    GUILayout.Label(string.Format("text_item_instance_manager_item_info".i18n(), OracleColorManager.TextGray, item.TemplateId));
 
                     GUILayout.BeginHorizontal();
-                    GUILayout.Label("<color=grey>堆叠数:</color>", GUILayout.Width(45));
+                    GUILayout.Label(string.Format("text_item_instance_manager_item_stack".i18n(), OracleColorManager.TextGray), GUILayout.Width(45));
                     string currentStackStr = item.StackObjectsCount.ToString();
                     string newStackStr = GUILayout.TextField(currentStackStr, 7, UIStyleManager.TextFieldStyle, GUILayout.Width(60));
                     if (newStackStr != currentStackStr)
@@ -115,46 +118,42 @@ namespace Oracle.RaidManager
                     }
                     GUILayout.EndHorizontal();
                     GUILayout.EndVertical();
+                    
+                    //按钮
+                    GUILayout.BeginVertical();
 
-                    // 3. 按钮区域：2x2 网格
-                    GUILayout.BeginVertical();   // 不固定宽度，自适应内容
-
-                    // 第一行：生成 + 设为当前
                     GUILayout.BeginHorizontal();
-                    // 生成按钮
-                    if (GUILayout.Button("生成", UIStyleManager.BlueButtonStyle, GUILayout.Height(22), GUILayout.MinWidth(70)))
+
+                    //生成和选择
+                    if (GUILayout.Button("text_button_item_instance_manager_spawn".i18n(), UIStyleManager.BlueButtonStyle, GUILayout.Height(22), GUILayout.MinWidth(70)))
                     {
                         if (item.StackObjectsCount <= 0) item.StackObjectsCount = 1;
                         Player mainPlayer = PluginsCore.CorrectPlayer;
                         if (mainPlayer != null) ItemSpawner.CloneAndSpawnItemIntoInventory(mainPlayer, item);
                     }
-                    // 设为当前 / 当前选中 按钮
+
                     GUI.enabled = !isCurrent;
-                    if (GUILayout.Button(isCurrent ? "当前" : "选择", UIStyleManager.BlueButtonStyle, GUILayout.Height(22), GUILayout.MinWidth(70)))
+                    if (GUILayout.Button(isCurrent ? "text_button_item_instance_manager_selected".i18n() : "text_button_item_instance_manager_select".i18n(), UIStyleManager.BlueButtonStyle, GUILayout.Height(22), GUILayout.MinWidth(70)))
                     {
                         ItemCatcher.savedItem = item;
                     }
                     GUI.enabled = true;
                     GUILayout.EndHorizontal();
 
-                    // 第二行：掉落世界 + 清除
+                    //掉落和删除
                     GUILayout.BeginHorizontal();
-                    // 新增：掉落世界按钮
-                    if (GUILayout.Button("掉落", UIStyleManager.BlueButtonStyle, GUILayout.Height(22), GUILayout.MinWidth(70)))
+
+                    if (GUILayout.Button("text_button_item_instance_manager_drop".i18n(), UIStyleManager.BlueButtonStyle, GUILayout.Height(22), GUILayout.MinWidth(70)))
                     {
                         if (item.StackObjectsCount <= 0) item.StackObjectsCount = 1;
                         Player mainPlayer = PluginsCore.CorrectPlayer;
                         if (mainPlayer != null)
                         {
-                            // 请在此处实现将物品掉落到世界的逻辑
-                            // 例如：ItemSpawner.DropItemToWorld(mainPlayer, item);
-                            // 或者：mainPlayer.DropItem(item, item.StackObjectsCount);
-                            //Debug.LogWarning("需要实现掉落世界的方法");
                             ItemSpawner.CloneAndDropItem(mainPlayer, item);
                         }
                     }
-                    // 清除按钮（红色）
-                    if (GUILayout.Button("删除", UIStyleManager.RedButtonStyle, GUILayout.Height(22), GUILayout.MinWidth(70)))
+
+                    if (GUILayout.Button("text_button_item_instance_manager_delete".i18n(), UIStyleManager.RedButtonStyle, GUILayout.Height(22), GUILayout.MinWidth(70)))
                     {
                         ItemCatcher.SavedItems.RemoveAt(i);
                         if (isCurrent) ItemCatcher.savedItem = null;
@@ -174,13 +173,20 @@ namespace Oracle.RaidManager
             GUI.DragWindow(new Rect(0, 0, _windowRect.width - 50, 25));
         }
 
+        /// <summary>
+        /// 获取物品图标
+        /// </summary>
+        /// <param name="item"></param>
+        /// <returns></returns>
         public Texture2D GetCachedIcon(Item item)
         {
             if (item == null) return null;
+            //缓存优先
             if (_iconCache.TryGetValue(item.TemplateId, out Texture2D cachedTex)) return cachedTex;
 
             try
             {
+                //生成图标
                 var iconData = ItemViewFactory.LoadItemIcon(item, 1, false);
                 if (iconData != null && iconData.Sprite != null && iconData.Sprite.texture != null)
                 {
@@ -194,6 +200,10 @@ namespace Oracle.RaidManager
         }
 
     }
+
+    /// <summary>
+    /// 配置项定义
+    /// </summary>
     public class ItemManagerGUICfg : IOracleCfg
     {
         internal static ConfigEntry<KeyCode> ItemManagerKey { get; set; }
@@ -209,11 +219,11 @@ namespace Oracle.RaidManager
                 "打开物品管理器",
                 KeyCode.F10,
                 new ConfigDescription(
-                    LocaleManager.Get("cfg_creation_module_item_open_manager_key_desc"),
+                    "cfg_creation_module_item_open_manager_key_desc".i18n(),
                     null,
                     new ConfigurationManagerAttributes
                     {
-                        DispName = LocaleManager.Get("cfg_creation_module_item_open_manager_key_name"),
+                        DispName = "cfg_creation_module_item_open_manager_key_name".i18n(),
                         IsAdvanced = false,
                         Order = 130
                     }

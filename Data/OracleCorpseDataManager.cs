@@ -97,7 +97,7 @@ namespace Oracle.Data
                             }
                         }
                         
-                        string formattedText = string.Format(LocaleManager.Get("text_esp_corpse_format"), OracleColorManager.Corpse, LocaleManager.Get("text_esp_corpse_dead_tag"), result);
+                        string formattedText = string.Format("text_esp_corpse_format".i18n(), OracleColorManager.Corpse, "text_esp_corpse_dead_tag".i18n(), result);
 
                         //写入后台缓存
                         backBuffer.Add(new CorpseData
