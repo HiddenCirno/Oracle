@@ -106,7 +106,7 @@ namespace Oracle.ESP
             CorpseESPMaxDistance = config.Bind<int>(
                 "3. 巡天星轨 / ESP Module",
                 "尸体透视最大距离",
-                300,
+                200,
                 new ConfigDescription(
                     "cfg_esp_module_corpse_esp_max_distance_desc".i18n(),
                     new AcceptableValueRange<int>(50, 1000),

@@ -1,6 +1,7 @@
 ﻿using BepInEx.Configuration;
 using EFT.Communications;
 using Oracle.Utils;
+using System;
 using UnityEngine;
 using static Oracle.Data.OracleInterface;
 
@@ -17,6 +18,7 @@ namespace Oracle.Data
         internal static ConfigEntry<bool> UniGUI { get; set; }
         internal static ConfigEntry<bool> MuteNotice { get; set; }
         internal static ConfigEntry<bool> FPSLimit { get; set; }
+
         public void RegisterKeyUpdate()
         {
             OracleEvent.OnUpdate += KeyUpdate;
@@ -35,12 +37,12 @@ namespace Oracle.Data
                     string.Format(
                         "message_uni_gui_enable".i18n(),
                         value ? "text_enable".i18n() : "text_disable".i18n()
-                    ), 
-                    value ? ENotificationIconType.Default : ENotificationIconType.Alert, 
+                    ),
+                    value ? ENotificationIconType.Default : ENotificationIconType.Alert,
                     MuteNotice.Value
                 );
             }
-            
+
         }
 
         /// <summary>
