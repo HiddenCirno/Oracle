@@ -172,7 +172,20 @@
         "text_esp_player_tag_teammate": "友军",
         "text_esp_player_level": "<color={0}>{1}级</color>",
         "text_esp_player": "{0} {1} <color={2}>{3}米</color>",
-        "text_item_instance_manager_item_saved": "物品{0}已存储至内存区域: {1}"
+        "text_item_instance_manager_item_saved": "物品{0}已存储至内存区域: {1}",
+        "text_tab_loot_manager_title": "物资管理",
+        "text_tab_ai_manager_title": "Bot管理",
+        "text_tab_bot_generator_title": "Bot生成",
+        "text_tab_skill_manager_title": "技能管理",
+        "text_button_ai_manager_kill_all": "全部杀死",
+        "text_ai_manager_no_result": "未进入战局或AI列表未初始化。",
+        "text_button_ai_manager_avatar_generating": "生成中",
+        "text_ai_manager_ai_info": "<color={0}>{1} | 距离: <color={2}>{3} 米</color></color>",
+        "text_button_ai_manager_teleport": "传送",
+        "text_button_ai_manager_search": "搜索",
+        "text_button_ai_manager_freeze": "冻结",
+        "text_button_ai_manager_kill": "杀死",
+        "text_ai_manager_no_target": "当前战局中没有可用的非友军实体。"
 
 
     }

@@ -1,6 +1,7 @@
 ﻿using BepInEx.Configuration;
 using EFT;
 using Oracle.Data;
+using Oracle.ESP;
 using Oracle.Utils;
 using UnityEngine;
 using static Oracle.Data.OracleInterface;
@@ -11,12 +12,21 @@ namespace Oracle.RaidManager
     {
         // 全局唯一主菜单开关
         public static bool _isMenuOpen = false;
-        public Rect _windowRect = new Rect(480, 20, 550, 650);
+        public static Rect _windowRect = new Rect(480, 20, 550, 650);
 
         private int _selectedTab = 0;
-        private readonly string[] _tabs = { "物资管理", "Bot管理", "Bot生成", "技能管理" };
+        //只读存key
+        private readonly string[] _tabKeys = {
+            "text_tab_loot_manager_title",
+            "text_tab_ai_manager_title",
+            "text_tab_bot_generator_title",
+            "text_tab_skill_manager_title"
+        };
 
-        // 实例化各子面板，用于维持它们各自的滚动条和内部UI状态
+        //渲染section组
+        private string[] _tabs;
+
+        //实例化子面板
         private readonly LootManagerGUI _lootPanel = new LootManagerGUI();
         private readonly AIManagerGUI _aiPanel = new AIManagerGUI();
         private readonly BotGeneratorGUI _botGenPanel = new BotGeneratorGUI();
@@ -26,23 +36,35 @@ namespace Oracle.RaidManager
         {
             OracleEvent.OnDrawManagerGUI += OnGUI;
             OracleEvent.OnUpdate += Update;
+            LocaleManager.CurrentLanguage.SettingChanged += (sender, args) => RefreshLocalizedCache();
+
+            //初始化时刷新一次语言
+            //事件总线在意外的地方派上了用场....
+            RefreshLocalizedCache();
+        }
+
+        //更新语言
+        public void RefreshLocalizedCache()
+        {
+            if (_tabs == null || _tabs.Length != _tabKeys.Length)
+            {
+                _tabs = new string[_tabKeys.Length];
+            }
+
+            for (int i = 0; i < _tabKeys.Length; i++)
+            {
+                _tabs[i] = LocaleManager.Get(_tabKeys[i]);
+            }
         }
 
         public void Update()
         {
             if (PluginsCore.CorrectGameWorld == null || PluginsCore.CorrectPlayer == null) return;
 
-            // 唯一的总快捷键 (F8)
             if (Input.GetKeyDown(RaidManagerGUICfg.RaidManagerKey.Value))
             {
                 _isMenuOpen = !_isMenuOpen;
                 MouseManager.ToggleCursor();
-
-                // 菜单打开时，通知需要刷新的子面板（例如技能面板需要重新抓取最新等级）
-                if (_isMenuOpen)
-                {
-                    //_skillPanel.RefreshCache();
-                }
             }
         }
 
@@ -53,13 +75,13 @@ namespace Oracle.RaidManager
             UIStyleManager.EnsureInitialized();
             GUI.backgroundColor = Color.white;
 
-            // 统一弹出战局管理器主窗口
+            //绘制窗口
             _windowRect = GUI.Window(8855, _windowRect, DrawWindow, "Oracle 战局综合控制台 (按 F8 隐藏)", UIStyleManager.WindowStyle);
         }
 
         public void DrawWindow(int windowID)
         {
-            // ---- 右上角关闭按钮 ----
+            //关闭按钮
             if (GUI.Button(new Rect(_windowRect.width - 45, 4, 40, 20), "关闭", UIStyleManager.RedButtonStyle))
             {
                 _isMenuOpen = false;
@@ -68,17 +90,17 @@ namespace Oracle.RaidManager
 
             GUILayout.Space(10);
 
-            // ---- 统一渲染高度定制的扁平化 Tab 栏 ----
+            //tab绘制
             _selectedTab = GUILayout.Toolbar(_selectedTab, _tabs, UIStyleManager.TabStyle, GUILayout.Height(30));
             GUILayout.Space(10);
 
-            // 劫持并统一滚动条皮肤
+            //滚动条
             GUIStyle origScroll = GUI.skin.verticalScrollbar;
             GUIStyle origThumb = GUI.skin.verticalScrollbarThumb;
             GUI.skin.verticalScrollbar = UIStyleManager.ScrollbarStyle;
             GUI.skin.verticalScrollbarThumb = UIStyleManager.ScrollbarThumbStyle;
 
-            // ⭐ 核心解耦点：根据选中的标签页，将绘制权分发给各自独立的类实例
+            //切换tab
             switch (_selectedTab)
             {
                 case 0: _lootPanel.DrawPanel(); break;

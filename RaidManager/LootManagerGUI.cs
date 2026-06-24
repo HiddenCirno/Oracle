@@ -112,8 +112,8 @@ namespace Oracle.RaidManager
                         GUILayout.BeginVertical();
                         // 这里为了 UI 干净，直接调用物品的 Localized 名字，而不是 ESP 里的全尺寸富文本
                         GUILayout.Label($"<b><color={loot.ItemColor}>{loot.ItemRef.Name.Localized()}</color></b>");
-                        GUILayout.Label($"<color={OracleColorManager.LootTextGray}>价值: {loot.Price} 卢布 | 距离: {loot.Distance}米</color>");
-                        GUILayout.Label($"<color={OracleColorManager.LootTextGray}>{OracleLootDataManager.GetContainerName(loot.Container)} 数量: {loot.StackCount}</color>");
+                        GUILayout.Label($"<color={OracleColorManager.TextGray}>价值: {loot.Price} 卢布 | 距离: {loot.Distance}米</color>");
+                        GUILayout.Label($"<color={OracleColorManager.TextGray}>{OracleLootDataManager.GetContainerName(loot.Container)} 数量: {loot.StackCount}</color>");
                         GUILayout.EndVertical();
 
                         // 3. 操作按钮 (宽度稍微加宽一点适应文字)

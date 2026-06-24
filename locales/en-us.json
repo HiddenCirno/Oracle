@@ -171,6 +171,20 @@
         "text_esp_player_tag_bd": "B.D.",
         "text_esp_player_tag_teammate": "Teammate",
         "text_esp_player_level": "<color={0}>Lv.{1}</color>",
-        "text_esp_player": "{0} {1} <color={2}>{3}m</color>"
+        "text_esp_player": "{0} {1} <color={2}>{3}m</color>",
+        "text_item_instance_manager_item_saved": "Item {0} saved to memory block: {1}",
+        "text_tab_loot_manager_title": "Loot",
+        "text_tab_ai_manager_title": "Bot",
+        "text_tab_bot_generator_title": "Bot Gen",
+        "text_tab_skill_manager_title": "Skills",
+        "text_button_ai_manager_kill_all": "Kill All",
+        "text_ai_manager_no_result": "Not in raid or AI list uninitialized.",
+        "text_button_ai_manager_avatar_generating": "Loading",
+        "text_ai_manager_ai_info": "<color={0}>{1} | Dist: <color={2}>{3}m</color></color>",
+        "text_button_ai_manager_teleport": "Teleport",
+        "text_button_ai_manager_search": "Search",
+        "text_button_ai_manager_freeze": "Freeze",
+        "text_button_ai_manager_kill": "Kill",
+        "text_ai_manager_no_target": "No valid non-friendly entities in the current raid."
     }
 }
