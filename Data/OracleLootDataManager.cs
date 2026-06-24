@@ -228,9 +228,9 @@ namespace Oracle.Data
         /// <returns></returns>
         public static string GetContainerName(LootableContainer container)
         {
-            if (container == null) return "地面";
+            if (container == null) return "text_esp_loot_on_the_ground".i18n();
             string containerName = container.ItemOwner.RootItem.ShortName.Localized();
-            return string.IsNullOrEmpty(containerName) ? "容器" : containerName;
+            return string.IsNullOrEmpty(containerName) ? "text_esp_loot_in_the_container".i18n() : containerName;
         }
 
         /// <summary>

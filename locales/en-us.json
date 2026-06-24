@@ -203,6 +203,14 @@
         "text_button_item_instance_manager_select": "Select",
         "text_button_item_instance_manager_selected": "Selected",
         "text_button_item_instance_manager_drop": "Drop",
-        "text_button_item_instance_manager_delete": "Delete"
+        "text_button_item_instance_manager_delete": "Delete",
+        "text_button_loot_manager_ground": "Ground",
+        "text_button_loot_manager_container": "Container",
+        "text_button_loot_manager_no_result": "No valid loot found within scan range.",
+        "text_loot_manager_no_icon": "Loading",
+        "text_loot_manager_loot_item_info": "<color={0}>Value: {1} RUB | Dist: {2}m</color>",
+        "text_loot_manager_loot_item_status": "<color={0}>{1} Qty: {2}</color>",
+        "text_button_loot_manager_pick": "Pick",
+        "text_button_loot_manager_copy": "Copy Instance"
     }
 }

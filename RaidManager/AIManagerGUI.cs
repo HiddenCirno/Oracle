@@ -29,7 +29,7 @@ namespace Oracle.RaidManager
         public void DrawPanel()
         {
             //全部杀死按钮
-            if (GUI.Button(new Rect(RaidManagerGUI._windowRect.width - 135, 4, 85, 20), "text_button_ai_manager_kill_all".i18n(), UIStyleManager.RedButtonStyle))
+            if (GUI.Button(new Rect(RaidManagerGUI._windowRect.width - 145, 4, 85, 20), "text_button_ai_manager_kill_all".i18n(), UIStyleManager.RedButtonStyle))
             {
                 if (PluginsCore.CorrectGameWorld != null && PluginsCore.CorrectGameWorld.AllAlivePlayersList != null)
                 {

@@ -1,77 +1,54 @@
-﻿using BepInEx.Configuration;
-using Comfort.Common;
-using Diz.LanguageExtensions;
+﻿using Diz.LanguageExtensions;
 using EFT;
-using EFT.InputSystem;
 using EFT.Interactive;
 using EFT.InventoryLogic;
-using EFT.UI;
 using EFT.UI.DragAndDrop;
-using GPUInstancer;
 using HarmonyLib;
 using Oracle.Data;
-using Oracle.ESP;
 using Oracle.ItemSpawn;
 using Oracle.Utils;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
-using System.Runtime.Serialization;
 using UnityEngine;
 using static GetActionsClass;
-using static MoveOperationClass;
-using static Oracle.Data.OracleInterface;
-using static RootMotion.FinalIK.InteractionTrigger.Range;
 
 namespace Oracle.RaidManager
 {
+    /// <summary>
+    /// 战利品管理器
+    /// </summary>
     public class LootManagerGUI
     {
-        public static bool _isMenuOpen = false;
-        public Rect _windowRect = new Rect(480, 20, 550, 650); // 默认位置
         public Vector2 _scrollPos;
         public static bool ShowLooseLoot = true;
         public static bool ShowStaticLoot = true;
 
+        //图标缓存
         public Dictionary<string, Texture2D> _iconCache = new Dictionary<string, Texture2D>();
 
-
-
+        //远程搜索的Patch
         [HarmonyPatch(typeof(InteractionsHandlerClass), "smethod_14")]
         public class InteractionsHandlerClassPatch
         {
-            // ⭐ 修复点1：去掉 __instance，因为这是静态方法！
-            // ⭐ 修复点2：必须传入 (Item item, out Error error) 来完美对齐原方法的签名
             public static bool Prefix(Item item, out Error error, ref bool __result)
             {
-                // 强行欺骗系统：没有任何错误，这个容器是“合法、已解锁、可触及”的
                 error = null;
                 __result = false;
 
-                // 返回 false，拦截尼基塔原本的检测逻辑
                 return false;
             }
         }
 
-        public void OnGUI()
-        {
-            if (!_isMenuOpen) return;
-
-            UIStyleManager.EnsureInitialized();
-
-            GUI.backgroundColor = Color.white;
-
-            //_windowRect = GUI.Window(8850, _windowRect, DrawWindow, "战局全图物资雷达 (按 F8 隐藏)", UIStyleManager.WindowStyle);
-        }
-
         public void DrawPanel()
         {
-            if (GUI.Button(new Rect(_windowRect.width - 100, 4, 50, 20), "地面", ShowLooseLoot ? UIStyleManager.BlueButtonStyle : UIStyleManager.RedButtonStyle))
+            UIStyleManager.EnsureInitialized();
+
+            if (GUI.Button(new Rect(RaidManagerGUI._windowRect.width - 130, 4, 70, 20), "text_button_loot_manager_ground".i18n(), ShowLooseLoot ? UIStyleManager.BlueButtonStyle : UIStyleManager.RedButtonStyle))
             {
                 ShowLooseLoot = !ShowLooseLoot;
             }
-            if (GUI.Button(new Rect(_windowRect.width - 155, 4, 50, 20), "容器", ShowStaticLoot ? UIStyleManager.BlueButtonStyle : UIStyleManager.RedButtonStyle))
+            if (GUI.Button(new Rect(RaidManagerGUI._windowRect.width - 205, 4, 70, 20), "text_button_loot_manager_container".i18n(), ShowStaticLoot ? UIStyleManager.BlueButtonStyle : UIStyleManager.RedButtonStyle))
             {
                 ShowStaticLoot = !ShowStaticLoot;
             }
@@ -87,11 +64,11 @@ namespace Oracle.RaidManager
 
             if (OracleLootDataManager.CachedLootList == null || OracleLootDataManager.CachedLootList.Count == 0)
             {
-                GUILayout.Label("当前扫描范围内没有符合价值条件的物资。", UIStyleManager.BoxStyle);
+                GUILayout.Label("text_button_loot_manager_no_result".i18n(), UIStyleManager.BoxStyle);
             }
             else
             {
-                // ⭐ 按照价格从高到低排序，防止好东西被淹没在垃圾堆里
+                //等级和价格排序
                 var sortedLoot = OracleLootDataManager.CachedLootList
                     .OrderByDescending(l => l.ItemLevel)
                     .ThenByDescending(l => l.Price)
@@ -99,29 +76,28 @@ namespace Oracle.RaidManager
 
                 foreach (LootData loot in sortedLoot)
                 {
-                    //if (loot.LootableItem == null) continue; //哎, 白写
+                    //遍历
                     if ((ShowStaticLoot && loot.Container != null) || (ShowLooseLoot && loot.Container == null))
                     {
                         GUILayout.BeginHorizontal(UIStyleManager.BoxStyle);
-                        // 1. 物品图标
+                        
+                        //物品图标
                         Texture2D icon = GetCachedIcon(loot.ItemRef);
                         if (icon != null) GUILayout.Label(icon, GUILayout.Width(64), GUILayout.Height(64));
-                        else GUILayout.Label("加载中", GUILayout.Width(64), GUILayout.Height(64));
+                        else GUILayout.Label("text_loot_manager_no_icon".i18n(), GUILayout.Width(64), GUILayout.Height(64));
 
-                        // 2. 物品信息 (过滤掉你富文本里的颜色标签，或者直接用原始名字)
                         GUILayout.BeginVertical();
-                        // 这里为了 UI 干净，直接调用物品的 Localized 名字，而不是 ESP 里的全尺寸富文本
+
+                        //物品信息
                         GUILayout.Label($"<b><color={loot.ItemColor}>{loot.ItemRef.Name.Localized()}</color></b>");
-                        GUILayout.Label($"<color={OracleColorManager.TextGray}>价值: {loot.Price} 卢布 | 距离: {loot.Distance}米</color>");
-                        GUILayout.Label($"<color={OracleColorManager.TextGray}>{OracleLootDataManager.GetContainerName(loot.Container)} 数量: {loot.StackCount}</color>");
+                        GUILayout.Label(string.Format("text_loot_manager_loot_item_info".i18n(), OracleColorManager.TextGray, loot.Price, loot.Distance));
+                        GUILayout.Label(string.Format("text_loot_manager_loot_item_status".i18n(), OracleColorManager.TextGray, OracleLootDataManager.GetContainerName(loot.Container), loot.StackCount));
                         GUILayout.EndVertical();
 
-                        // 3. 操作按钮 (宽度稍微加宽一点适应文字)
+                        //按钮
                         GUILayout.BeginVertical(GUILayout.Width(110));
 
-                        // --- 新增：隔空取物按钮 ---
-                        // 使用之前统一的红色或默认按钮样式皆可，这里用红色表示“破坏平衡”的超能力
-                        if (GUILayout.Button("隔空拾取", UIStyleManager.BlueButtonStyle, GUILayout.Height(30)))
+                        if (GUILayout.Button("text_button_loot_manager_pick".i18n(), UIStyleManager.BlueButtonStyle, GUILayout.Height(30)))
                         {
                             Player mainPlayer = PluginsCore.CorrectPlayer;
                             if (mainPlayer != null)
@@ -130,19 +106,14 @@ namespace Oracle.RaidManager
                             }
                         }
 
-                        // 加一点间距让它们不要贴得太死
                         GUILayout.Space(4);
 
-                        // --- 原有的：捕获元数据按钮 ---
-                        if (GUILayout.Button("复制实例", UIStyleManager.BlueButtonStyle, GUILayout.Height(30)))
+                        if (GUILayout.Button("text_button_loot_manager_copy".i18n(), UIStyleManager.BlueButtonStyle, GUILayout.Height(30)))
                         {
                             Item clonedItem = loot.ItemRef.CloneItem().ReassignAllIds();
                             ItemCatcher.SavedItems.Add(clonedItem);
                             ItemCatcher.savedItem = clonedItem;
-
-                            NotificationManagerClass.DisplayMessageNotification(
-                                $"已捕获 {loot.ItemRef.Name.Localized()} 的元数据！"
-                            );
+                            //OracleNotify.Message($"已捕获 {loot.ItemRef.Name.Localized()} 的元数据！", EFT.Communications.ENotificationIconType.Default, GlobalCfg.MuteNotice.Value);
                         }
 
                         GUILayout.EndVertical();
@@ -157,6 +128,11 @@ namespace Oracle.RaidManager
             GUI.skin.verticalScrollbarThumb = origThumb;
         }
 
+        /// <summary>
+        /// 获取物品图标
+        /// </summary>
+        /// <param name="item"></param>
+        /// <returns></returns>
         public Texture2D GetCachedIcon(Item item)
         {
             if (item == null) return null;
@@ -176,26 +152,29 @@ namespace Oracle.RaidManager
             return null;
         }
 
-
+        /// <summary>
+        /// 远程捡起物品
+        /// </summary>
+        /// <param name="player"></param>
+        /// <param name="lootItem"></param>
         public static void PickupLootItem(Player player, LootItem lootItem)
         {
             if (player == null || lootItem == null) return;
 
             try
             {
-                // 1. 获取物品实体
                 Item item = lootItem.Item;
 
-                // 2. 检查玩家背包空间 (复用你现有的逻辑)
                 ItemAddress targetLocation = ItemSpawner.FindEmptyLocation(player, item);
 
                 if (targetLocation == null)
                 {
-                    NotificationManagerClass.DisplayWarningNotification("背包空间不足！");
+                    //NotificationManagerClass.DisplayWarningNotification("背包空间不足！");
                     return;
                 }
                 var controller = player.InventoryController;
 
+                //组包
                 var pickUpResult =
                     InteractionsHandlerClass.QuickFindAppropriatePlace(
                     item,
@@ -207,7 +186,7 @@ namespace Oracle.RaidManager
 
                 if (pickUpResult.Succeeded && controller.CanExecute(pickUpResult.Value))
                 {
-                    // ⭐ 关键：直接复用原版执行路径
+                    //发包
                     controller.RunNetworkTransaction(
                         pickUpResult.Value,
                         result =>
@@ -227,18 +206,22 @@ namespace Oracle.RaidManager
             }
             catch (Exception ex)
             {
-                Debug.LogError($"[拾取失败]: {ex.Message}\n{ex.StackTrace}");
+                OracleCommon.ShowError(ex);
             }
         }
 
-        //道爷我成了!!!!!
+        /// <summary>
+        /// 远程拾取+容器
+        /// </summary>
+        /// <param name="player"></param>
+        /// <param name="loot"></param>
         public static void PickupLootItemEx(Player player, LootData loot)
         {
             if (player == null) return;
 
             if (loot.LootableItem != null)
             {
-                // LooseLoot，直接走你已经调好的逻辑
+                //looseloot直接拾起
                 PickupLootItem(player, loot.LootableItem);
                 return;
             }
@@ -246,60 +229,41 @@ namespace Oracle.RaidManager
             {
                 try
                 {
-                    // 找到包含这个物品的容器根节点
+                    //查找容器
                     Item containerItem = loot.Container.ItemOwner.RootItem;
 
                     Player mainPlayer = PluginsCore.CorrectPlayer;
                     if (mainPlayer == null) return;
-                    // 获取 Owner (你已经写得很熟练了)
+
                     GamePlayerOwner myOwner = mainPlayer.GetComponent<GamePlayerOwner>();
                     if (myOwner == null)
                     {
-                        NotificationManagerClass.DisplayWarningNotification("无法获取本地 UI 控制器 (GamePlayerOwner)");
+                        //NotificationManagerClass.DisplayWarningNotification("无法获取本地 UI 控制器 (GamePlayerOwner)");
                         return;
                     }
                     if (myOwner == null) return;
 
-                    // 构造上下文
+                    //在内存中构建交互行为
                     Class1748 context = new Class1748
                     {
                         owner = myOwner,
-                        rootItem = containerItem, // 注意：我们要打开的是容器，而不是里面的单个物品
+                        rootItem = containerItem,
                         lootItemOwner = containerItem.Owner as TraderControllerClass,
                         controller = player.InventoryController
                     };
-                    //context.lootItemLastOwner = myOwner?.iPlayer;
 
-                    // 关键：欺骗视线
+                    //射线伪造
                     player.SaveInteractionRayInfo();
 
-                    // 关键：远程触发“搜索/打开”动作，这会调用原生 UI 弹出
+                    //触发交互
                     context.method_3();
-
-                    NotificationManagerClass.DisplayMessageNotification($"已远程打开: {containerItem.Name.Localized()}");
+                    //NotificationManagerClass.DisplayMessageNotification($"已远程打开: {containerItem.Name.Localized()}");
                 }
                 catch (Exception ex)
                 {
-                    Debug.LogError($"[远程打开容器异常]: {ex.Message}");
+                    OracleCommon.ShowError(ex);
                 }
             }
-        }
-    }
-    public class LootManagerGUICfg : IOracleCfg
-    {
-        internal static ConfigEntry<KeyCode> LootManagerKey { get; set; }
-        /// <summary>
-        /// 配置项初始化
-        /// </summary>
-        /// <param name="config">传入配置实例</param>
-        public void Initialize(ConfigFile config)
-        {
-            LootManagerKey = config.Bind(
-                "快捷键设置",
-                "打开战利品管理器",
-                KeyCode.F8,
-                "打开战局战利品管理器"
-            );
         }
     }
 }
