@@ -2,6 +2,9 @@
 
 namespace Oracle.RaidManager
 {
+    /// <summary>
+    /// 全局UI样式
+    /// </summary>
     public static class UIStyleManager
     {
         // 窗口样式
@@ -29,6 +32,9 @@ namespace Oracle.RaidManager
 
         private static bool _initialized = false;
 
+        /// <summary>
+        /// 初始化
+        /// </summary>
         public static void EnsureInitialized()
         {
             if (_initialized && WindowStyle?.normal.background != null)
@@ -138,6 +144,13 @@ namespace Oracle.RaidManager
             _initialized = true;
         }
 
+        /// <summary>
+        /// 材质方法
+        /// </summary>
+        /// <param name="width"></param>
+        /// <param name="height"></param>
+        /// <param name="col"></param>
+        /// <returns></returns>
         private static Texture2D MakeTex(int width, int height, Color col)
         {
             Color[] pix = new Color[width * height];

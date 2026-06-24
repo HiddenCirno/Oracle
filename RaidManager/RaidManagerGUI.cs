@@ -56,6 +56,7 @@ namespace Oracle.RaidManager
             {
                 _tabs[i] = _tabKeys[i].i18n();
             }
+            _skillPanel.RefreshLocalizedCache();
         }
 
         public void Update()

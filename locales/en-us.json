@@ -211,6 +211,17 @@
         "text_loot_manager_loot_item_info": "<color={0}>Value: {1} RUB | Dist: {2}m</color>",
         "text_loot_manager_loot_item_status": "<color={0}>{1} Qty: {2}</color>",
         "text_button_loot_manager_pick": "Pick",
-        "text_button_loot_manager_copy": "Copy Instance"
+        "text_button_loot_manager_copy": "Copy Instance",
+        "text_skill_manager_skill_title": "Skills",
+        "text_skill_manager_mastering_title": "Mastering",
+        "text_skill_manager_no_result": "Player skill data not found.",
+        "text_skill_manager_skill_level_input": "<b>Target Level (0-51):</b>",
+        "text_skill_manager_skill_level_set": "Modify Skill {0}",
+        "text_skill_manager_skill_level_select": "Select a skill first",
+        "text_skill_manager_mastering_level_select": "Select a mastering first",
+        "text_skill_manager_mastering_level_set_1": "Reset to Lv.1",
+        "text_skill_manager_mastering_level_set_2": "Upgrade to Lv.2",
+        "text_skill_manager_mastering_level_set_3": "Max Out (Lv.3)",
+        "text_skill_manager_show_level": "{0}\n(Lv.{1})"
     }
 }

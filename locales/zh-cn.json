@@ -211,7 +211,20 @@
         "text_loot_manager_loot_item_info": "<color={0}>价值: {1} 卢布 | 距离: {2}米</color>",
         "text_loot_manager_loot_item_status": "<color={0}>{1} 数量: {2}</color>",
         "text_button_loot_manager_pick":"隔空拾取",
-        "text_button_loot_manager_copy":"复制实例"
+        "text_button_loot_manager_copy":"复制实例",
+        "text_skill_manager_skill_title": "技能",
+        "text_skill_manager_mastering_title": "专精",
+        "text_skill_manager_no_result": "未获取到玩家技能数据。",
+        "text_skill_manager_skill_level_input": "<b>目标等级 (0-51):</b>",
+        "text_skill_manager_skill_level_set": "修改技能 {0}",
+        "text_skill_manager_skill_level_select": "请先选择一项技能",
+        "text_skill_manager_mastering_leve_select": "请先选择一项专精",
+        "text_skill_manager_mastering_level_set_1": "降至1级 (重置)",
+        "text_skill_manager_mastering_level_set_2": "升至2级",
+        "text_skill_manager_mastering_level_set_3": "升至3级 (满级)",
+        "text_skill_manager_show_level": "{0}\n({1}级)"
+
+
 
 
     }
