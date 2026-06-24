@@ -146,7 +146,7 @@ namespace Oracle.RaidManager
             {
                 bool isSelected = (_selectedSkill == skill);
                 GUIStyle btnStyle = isSelected ? UIStyleManager.BlueButtonStyle : UIStyleManager.NormalButtonStyle;
-                string btnText = string.Format("text_skill_manager_show_level", skill.Id.ToString().Localized(), skill.Level);
+                string btnText = string.Format("text_skill_manager_show_level".i18n(), skill.Id.ToString().Localized(), skill.Level);
 
                 if (GUILayout.Button(btnText, btnStyle, GUILayout.Height(40), GUILayout.Width(140)))
                 {
@@ -182,7 +182,7 @@ namespace Oracle.RaidManager
             {
                 bool isSelected = (_selectedMastering == mastering);
                 GUIStyle btnStyle = isSelected ? UIStyleManager.BlueButtonStyle : UIStyleManager.NormalButtonStyle;
-                string btnText = string.Format("text_skill_manager_show_level", mastering.MasteringGroup.Id, mastering.Level);
+                string btnText = string.Format("text_skill_manager_show_level".i18n(), mastering.MasteringGroup.Id, mastering.Level);
 
                 if (GUILayout.Button(btnText, btnStyle, GUILayout.Height(40), GUILayout.Width(140)))
                 {

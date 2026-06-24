@@ -219,9 +219,9 @@
         "text_skill_manager_skill_level_set": "修改技能 {0}",
         "text_skill_manager_skill_level_select": "请先选择一项技能",
         "text_skill_manager_mastering_leve_select": "请先选择一项专精",
-        "text_skill_manager_mastering_level_set_1": "降至1级 (重置)",
-        "text_skill_manager_mastering_level_set_2": "升至2级",
-        "text_skill_manager_mastering_level_set_3": "升至3级 (满级)",
+        "text_skill_manager_mastering_level_set_1": "降至0级 (重置)",
+        "text_skill_manager_mastering_level_set_2": "升至1级",
+        "text_skill_manager_mastering_level_set_3": "升至2级 (满级)",
         "text_skill_manager_show_level": "{0}\n({1}级)"
 
 
