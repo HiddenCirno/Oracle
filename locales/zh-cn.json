@@ -185,7 +185,12 @@
         "text_button_ai_manager_search": "搜索",
         "text_button_ai_manager_freeze": "冻结",
         "text_button_ai_manager_kill": "杀死",
-        "text_ai_manager_no_target": "当前战局中没有可用的非友军实体。"
+        "text_ai_manager_no_target": "当前战局中没有可用的非友军实体。",
+        "text_bot_generator_generate_count": "<b>生成数量 (1-20):</b>",
+        "text_bot_generator_generate_type": "<b>选择要生成的实体类型 (共{0}种):</b>",
+        "text_button_bot_generator_generate":"生成 {0}",
+        "text_button_bot_generator_generating":"正在生成...",
+        "text_bot_generator_generate_failed":"生成失败！可能是AI类型未定义或数据不存在，请检查控制台日志！"
 
 
     }

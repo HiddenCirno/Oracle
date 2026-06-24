@@ -185,6 +185,11 @@
         "text_button_ai_manager_search": "Search",
         "text_button_ai_manager_freeze": "Freeze",
         "text_button_ai_manager_kill": "Kill",
-        "text_ai_manager_no_target": "No valid non-friendly entities in the current raid."
+        "text_ai_manager_no_target": "No valid non-friendly entities in the current raid.",
+        "text_bot_generator_generate_count": "<b>Spawn Count (1-20):</b>",
+        "text_bot_generator_generate_type": "<b>Select Entity Type to Spawn ({0} total):</b>",
+        "text_button_bot_generator_generate": "Spawn {0}",
+        "text_button_bot_generator_generating": "Spawning...",
+        "text_bot_generator_generate_failed": "Spawn failed! AI type may be undefined or data is missing, please check the console log!"
     }
 }

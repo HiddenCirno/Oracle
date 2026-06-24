@@ -10,6 +10,9 @@ using System;
 
 namespace Oracle.RaidManager
 {
+    /// <summary>
+    /// AI管理
+    /// </summary>
     public class AIManagerGUI
     {
         public Vector2 _scrollPos;

@@ -8,9 +8,12 @@ using static Oracle.Data.OracleInterface;
 
 namespace Oracle.RaidManager
 {
+    /// <summary>
+    /// 战局管理器
+    /// </summary>
     public class RaidManagerGUI : IOracleManagerGUI
     {
-        // 全局唯一主菜单开关
+        //全局唯一主菜单开关
         public static bool _isMenuOpen = false;
         public static Rect _windowRect = new Rect(480, 20, 550, 650);
 
