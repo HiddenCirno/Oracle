@@ -1,18 +1,15 @@
 ﻿using BepInEx;
-using BepInEx.Configuration;
 using EFT;
 using HarmonyLib;
 using Newtonsoft.Json;
 using Oracle.Data;
 using Oracle.Utils;
-using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
 using UnityEngine;
 using static Oracle.Ability.InfinityStamina;
-using static Oracle.Data.OracleInterface;
 
 namespace Oracle
 {
@@ -31,16 +28,12 @@ namespace Oracle
         //价格字典定义
         public static Dictionary<string, int> HandbookDict;
 
-        //叠加层材质和图像流缓存
+        //叠加层材质
         public RenderTexture espRT;
-        private byte[] pixelBuffer;
 
         //帧率限制
         private float espRefreshRate = 1f / 50f;
         private float lastEspDrawTime = 0f;
-
-        //叠加层状态
-        private static bool isOverlayInitialized = false;
 
         public void Awake()
         {
@@ -51,7 +44,7 @@ namespace Oracle
             //配置初始化
             //永远先初始化语言部分
             LocaleManager.Initialize(Config);
-            InitializeConfigs(Config);
+            OracleEvent.InitializeConfigs(Config);
 
             //价格字典拉取. 初始化
             var rawHandbookData = Data.HandbookClass.GetHandbookData("白昼和黑夜等同吗？义人和罪人等同吗？倘若人生来软弱，弱者们又该从哪位神明处寻求安宁？现在，我赐予各位直视太阳的权利，此时此地，尔等只需静听，此处再无神明，创造乐园的，乃是人之君王！");
@@ -65,8 +58,6 @@ namespace Oracle
             //叠加层材质初始化
             espRT = new RenderTexture(Screen.width, Screen.height, 0, RenderTextureFormat.ARGB32);
             espRT.Create();
-            //预分配缓存, 高效GC
-            pixelBuffer = new byte[Screen.width * Screen.height * 4];
             //启动叠加层
             NativeOverlay.Initialize(Screen.width, Screen.height);
 
@@ -78,10 +69,10 @@ namespace Oracle
             StartCoroutine(OracleCorpseDataManager.CorpseScannerCoroutine());
 
             //初始化按键监听事件
-            InitializeKeyUpdate();
+            OracleEvent.InitializeKeyUpdate();
 
             //初始化事件订阅
-            InitializeEventSubscribe();
+            OracleEvent.InitializeEventSubscribe();
 
             //初始化绘制样式
             OracleRendering.Initialize();
@@ -93,36 +84,7 @@ namespace Oracle
             OracleEvent.Update();
             
             //更新叠加层
-            UpdateNativeOverlay();
-        }
-
-        /// <summary>
-        /// 更新叠加层状态
-        /// </summary>
-        public static void UpdateNativeOverlay()
-        {
-            if (NativeOverlayCfg.EnableNativeOverlay.Value)
-            {
-                //重新初始化
-                if (!isOverlayInitialized)
-                {
-                    NativeOverlay.Initialize(Screen.width, Screen.height);
-                    isOverlayInitialized = true;
-                }
-
-                //叠加层显隐1
-                bool shouldShowOverlay = Application.isFocused && GlobalCfg.UniGUI.Value;
-                NativeOverlay.SetVisible(shouldShowOverlay);
-            }
-            else
-            {
-                //摧毁叠加层
-                if (isOverlayInitialized)
-                {
-                    NativeOverlay.Destroy();
-                    isOverlayInitialized = false;
-                }
-            }
+            NativeOverlay.UpdateNativeOverlay();
         }
         
         //文本绘制
@@ -185,122 +147,7 @@ namespace Oracle
             RenderTexture.active = prevRT;
 
             //将图像流异步传输给窗口
-            UnityEngine.Rendering.AsyncGPUReadback.Request(espRT, 0, TextureFormat.BGRA32, OnReadbackComplete);
-
-        }
-
-        /// <summary>
-        /// 图像流传输
-        /// </summary>
-        /// <param name="req"></param>
-        private void OnReadbackComplete(UnityEngine.Rendering.AsyncGPUReadbackRequest req)
-        {
-            if (req.hasError || pixelBuffer == null) return;
-            //GPU数据传输
-            req.GetData<byte>().CopyTo(pixelBuffer);
-            //将图像流传输给窗口
-            NativeOverlay.UpdateFrame(pixelBuffer);
-        }
-
-        /// <summary>
-        /// 配置项初始化
-        /// </summary>
-        /// <param name="config"></param>
-
-        private void InitializeConfigs(ConfigFile config)
-        {
-            //查找所有配置接口
-            Type targetInterface = typeof(IOracleCfg);
-
-            Type[] allTypes = Assembly.GetExecutingAssembly().GetTypes();
-
-            //通过标签排序
-            var ordered = allTypes
-                .Where(t => typeof(IOracleCfg).IsAssignableFrom(t) && !t.IsAbstract && !t.IsInterface)
-                .Select(t => new
-                    {
-                        Type = t,
-                        Order = t.GetCustomAttribute<OracleCfgOrderAttribute>()?.Order ?? 100
-                    }
-                )
-                .OrderBy(x => x.Order)
-                .Select(x => (IOracleCfg)Activator.CreateInstance(x.Type));
-
-            //遍历并实例化, 初始化配置项
-            foreach (var cfg in ordered)
-            {
-                try
-                {
-                    cfg.Initialize(config);
-                    Debug.Log($"[Oracle] 初始化配置: {cfg.GetType().Name}");
-                }
-                catch (Exception ex)
-                {
-                    Debug.LogError($"[Oracle] 初始化失败 {cfg.GetType().Name}: {ex}");
-                }
-            }
-        }
-
-        /// <summary>
-        /// 初始化按键监听
-        /// </summary>
-        private void InitializeKeyUpdate()
-        {
-            //查找所有按键监听接口
-            Type targetInterface = typeof(IOracleKeyUpdate);
-
-            Type[] allTypes = Assembly.GetExecutingAssembly().GetTypes();
-
-            //全部实例化并初始化
-            foreach (Type type in allTypes)
-            {
-                if (targetInterface.IsAssignableFrom(type) && !type.IsInterface && !type.IsAbstract)
-                {
-                    try
-                    {
-                        IOracleKeyUpdate configInstance = (IOracleKeyUpdate)Activator.CreateInstance(type);
-                        configInstance.RegisterKeyUpdate();
-
-                        Debug.Log($"[Oracle] 成功挂载监听: {type.Name}");
-                    }
-                    catch (Exception ex)
-                    {
-                        Debug.LogError($"[Oracle] 挂载监听 {type.Name} 失败: {ex.Message}");
-                    }
-                }
-            }
-        }
-
-        /// <summary>
-        /// 初始化事件订阅器
-        /// </summary>
-        private void InitializeEventSubscribe()
-        {
-            //查找接口
-            Type targetInterface = typeof(IOracleEventSubscribe);
-
-            Type[] allTypes = Assembly.GetExecutingAssembly().GetTypes();
-
-            foreach (Type type in allTypes)
-            {
-                if (targetInterface.IsAssignableFrom(type) && !type.IsInterface && !type.IsAbstract)
-                {
-                    try
-                    {
-                        // 实例化它
-                        IOracleEventSubscribe configInstance = (IOracleEventSubscribe)Activator.CreateInstance(type);
-
-                        // 调用初始化方法
-                        configInstance.SubscribeEvent();
-
-                        Debug.Log($"[Oracle] 成功挂载事件: {type.Name}");
-                    }
-                    catch (Exception ex)
-                    {
-                        Debug.LogError($"[Oracle] 挂载事件 {type.Name} 失败: {ex.Message}");
-                    }
-                }
-            }
+            UnityEngine.Rendering.AsyncGPUReadback.Request(espRT, 0, TextureFormat.BGRA32, NativeOverlay.OnReadbackComplete);
         }
     }
 
