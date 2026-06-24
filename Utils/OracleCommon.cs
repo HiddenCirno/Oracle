@@ -1,19 +1,10 @@
-﻿using CommonAssets.Scripts.Game.LabyrinthEvent;
-using EFT;
-using EFT.Interactive;
-using EFT.SynchronizableObjects;
-using Oracle.ESP;
-using System;
-using System.Collections.Generic;
-using System.Reflection;
+﻿using System;
 using UnityEngine;
 
 namespace Oracle.Utils
 {
-    
-
     /// <summary>
-    /// 玩家/实体数据引擎：处理所有的状态读取、射线检测、位置换算
+    /// 通用工具类
     /// </summary>
     public static class OracleCommon
     {
@@ -28,6 +19,12 @@ namespace Oracle.Utils
         {
             return (p1 - p2).sqrMagnitude <= maxDistance * maxDistance;
         }
+
+        /// <summary>
+        /// 全英文名判断
+        /// </summary>
+        /// <param name="str"></param>
+        /// <returns></returns>
         public static bool IsAllEnglish(string str)
         {
             for (int i = 0; i < str.Length; i++)
@@ -40,6 +37,11 @@ namespace Oracle.Utils
             return true;
         }
         
+        /// <summary>
+        /// 错误报告
+        /// </summary>
+        /// <param name="err"></param>
+        /// <param name="message"></param>
         public static void ShowError(Exception err, string message = "")
         {
 

@@ -62,13 +62,13 @@ namespace Oracle.RaidManager
             //总之他妈的把按钮和文本分开
             //早该这么干了 ◪※
             //带勾
-            if (GUI.Button(new Rect(_windowRect.width - 90, 4, 40, 20), "text_button_item_instance_manager_fir".i18n(), SpawnedInSession ? UIStyleManager.BlueButtonStyle : UIStyleManager.RedButtonStyle))
+            if (GUI.Button(new Rect(_windowRect.width - 100, 4, 50, 20), "text_button_item_instance_manager_fir".i18n(), SpawnedInSession ? UIStyleManager.BlueButtonStyle : UIStyleManager.RedButtonStyle))
             {
                 SpawnedInSession = !SpawnedInSession;
             }
 
             //关闭
-            if (GUI.Button(new Rect(_windowRect.width - 45, 4, 40, 20), "text_button_manger_close".i18n(), UIStyleManager.RedButtonStyle))
+            if (GUI.Button(new Rect(_windowRect.width - 45, 4, 50, 20), "text_button_manger_close".i18n(), UIStyleManager.RedButtonStyle))
             {
                 _isMenuOpen = false;
                 MouseManager.ToggleCursor();

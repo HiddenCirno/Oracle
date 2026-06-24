@@ -1,11 +1,11 @@
 ﻿using EFT.Communications;
 using Oracle.Data;
-using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace Oracle.Utils
 {
+    /// <summary>
+    /// 二次封装的游戏内提示方法
+    /// </summary>
     internal class OracleNotify
     {
         /// <summary>

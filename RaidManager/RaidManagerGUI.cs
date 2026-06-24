@@ -83,7 +83,7 @@ namespace Oracle.RaidManager
         public void DrawWindow(int windowID)
         {
             //关闭按钮
-            if (GUI.Button(new Rect(_windowRect.width - 45, 4, 40, 20), "text_button_manger_close".i18n(), UIStyleManager.RedButtonStyle))
+            if (GUI.Button(new Rect(_windowRect.width - 45, 4, 50, 20), "text_button_manger_close".i18n(), UIStyleManager.RedButtonStyle))
             {
                 _isMenuOpen = false;
                 MouseManager.ToggleCursor();

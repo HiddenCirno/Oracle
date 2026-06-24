@@ -67,11 +67,11 @@ namespace Oracle.RaidManager
 
         public void DrawPanel()
         {
-            if (GUI.Button(new Rect(_windowRect.width - 90, 4, 40, 20), "地面", ShowLooseLoot ? UIStyleManager.BlueButtonStyle : UIStyleManager.RedButtonStyle))
+            if (GUI.Button(new Rect(_windowRect.width - 100, 4, 50, 20), "地面", ShowLooseLoot ? UIStyleManager.BlueButtonStyle : UIStyleManager.RedButtonStyle))
             {
                 ShowLooseLoot = !ShowLooseLoot;
             }
-            if (GUI.Button(new Rect(_windowRect.width - 135, 4, 40, 20), "容器", ShowStaticLoot ? UIStyleManager.BlueButtonStyle : UIStyleManager.RedButtonStyle))
+            if (GUI.Button(new Rect(_windowRect.width - 155, 4, 50, 20), "容器", ShowStaticLoot ? UIStyleManager.BlueButtonStyle : UIStyleManager.RedButtonStyle))
             {
                 ShowStaticLoot = !ShowStaticLoot;
             }
