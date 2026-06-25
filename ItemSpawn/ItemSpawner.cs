@@ -56,7 +56,7 @@ namespace Oracle.ItemSpawn
             //带勾
             //异步读取物品资产, 防止出现问题
             await LoadItemBundlesAsync(item);
-            Item clonedItem = item.CloneItem().ReassignAllIds().CleanAndResetItem(ItemManagerGUI.SpawnedInSession); ;
+            Item clonedItem = item.CloneItem().ReassignAllIds().CleanAndResetItem(ItemManagerGUI.SpawnedInSession);
             //自定义寻址
             ItemAddress targetLocation = FindEmptyLocation(player, clonedItem);
             //有效地址, 尝试发包

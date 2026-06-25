@@ -132,7 +132,7 @@
         "cfg_esp_module_corpse_esp_enable_key_desc": "设置切换尸体透视功能开关的快捷键。",
         "cfg_esp_module_corpse_esp_max_distance_name": "尸体透视最大距离",
         "cfg_esp_module_corpse_esp_max_distance_desc": "尸体透视的最大距离限制，超过此距离的尸体将被忽略。",
-        "message_corpse_esp_enable": "尸体透视已{0}",
+        "message_esp_corpse_enable": "尸体透视已{0}",
         "cfg_esp_module_tripwire_esp_enable_name": "启用绊雷透视",
         "cfg_esp_module_tripwire_esp_enable_desc": "透视附近的绊雷陷阱。",
         "cfg_creation_module_item_open_manager_key_name": "打开物品管理面板",

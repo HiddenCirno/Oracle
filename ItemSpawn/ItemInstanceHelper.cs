@@ -83,17 +83,15 @@ namespace Oracle.ItemSpawn
         /// <summary>
         /// 拓展方法, 清洗物品状态, 耐久度, 带勾....
         /// </summary>
-        public static Item CleanAndResetItem(this Item clonedItem, bool forceFiR)
+        public static Item CleanAndResetItem(this Item clonedItem, bool fir)
         {
             //遍历物品树, 对整个树进行操作
             foreach (var item in clonedItem.GetAllItems())
             {
                 //每个节点都要带勾
                 //子弹会在游戏内部处理, 因此无需特殊处理
-                if (forceFiR)
-                {
-                    item.SpawnedInSession = true;
-                }
+                //同步带勾状态而不是只有fir带勾非fir不同步
+                item.SpawnedInSession = fir;
                 //武器, 护甲....(可维修物品)
                 if (item.TryGetItemComponent<RepairableComponent>(out var repairable))
                 {
@@ -133,7 +131,7 @@ namespace Oracle.ItemSpawn
                     weapon.MalfState.State = Weapon.EMalfunctionState.None;
                 }
                 //重新为维修包充能
-                if(item.TryGetItemComponent<RepairKitComponent>(out var repairKit))
+                if (item.TryGetItemComponent<RepairKitComponent>(out var repairKit))
                 {
                     repairKit.Resource = repairKit.RepairKitsTemplateClass.MaxRepairResource;
                 }
