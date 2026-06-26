@@ -54,7 +54,7 @@ namespace Oracle.Combat
             EnableNoMalfunction = config.Bind(
                 "1. 天堂支点 / Combat Module",
                 "武器无故障",
-                false,
+                true,
                 new ConfigDescription(
                     "cfg_combat_module_no_malfunction_desc".i18n(),
                     null,
