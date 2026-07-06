@@ -8,26 +8,36 @@ using Oracle.Utils;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
+using System.Text.RegularExpressions;
 using UnityEngine;
 using static Oracle.Data.OracleInterface;
 
 namespace Oracle.RaidManager
 {
     /// <summary>
-    /// 物品实例
+    /// 物品实例管理器
     /// </summary>
     public class ItemManagerGUI : IOracleManagerGUI
     {
         //UI状态
         public static bool _isMenuOpen = false;
-        public Rect _windowRect = new Rect(20, 20, 550, 650);
-        public Vector2 _scrollPos;
-        public Vector2 itemScrollPos = Vector2.zero;
+        public Rect _windowRect = new Rect(20, 20, 800, 650);
+        public Vector2 _scrollPos; // 右侧物品列表滚动
+        public Vector2 _fileScrollPos = Vector2.zero; // 左侧文件列表滚动
         public static bool SpawnedInSession = true;
-        
+
+        // ================== 多文件与视图状态 ==================
+        public const string CURRENT_SESSION_ID = "::CURRENT_SESSION::"; // 标识当前战局实例的特殊ID
+        public string _selectedView = CURRENT_SESSION_ID; // 当前左侧选中的高亮项
+        public string _inputFileName = "Default"; // 顶部输入框中的文件名
+        public List<string> _savedFiles = new List<string>();
+
+        // ⭐ 独立缓存列表，用于读取和预览预设，实现数据隔离
+        public List<Item> _cachedPresetItems = new List<Item>();
+
         //物品图标缓存
         public Dictionary<string, Texture2D> _iconCache = new Dictionary<string, Texture2D>();
-        
+
         public void SubscribeEvent()
         {
             OracleEvent.OnDrawManagerGUI += OnGUI;
@@ -40,6 +50,13 @@ namespace Oracle.RaidManager
             {
                 _isMenuOpen = !_isMenuOpen;
                 MouseManager.ToggleCursor();
+
+                if (_isMenuOpen)
+                {
+                    RefreshFileList();
+                    // 每次打开强制默认回到当前实例视图
+                    _selectedView = CURRENT_SESSION_ID;
+                }
             }
         }
 
@@ -56,6 +73,8 @@ namespace Oracle.RaidManager
 
         public void DrawWindow(int windowID)
         {
+            // ================== 顶部全局状态栏 ==================
+
             //你妈个逼我用你妈的复选框
             //深色 按钮 方块 文本
             //按钮是按钮文本是文本按钮按了变透明
@@ -64,16 +83,6 @@ namespace Oracle.RaidManager
             //总之他妈的把按钮和文本分开
             //早该这么干了 ◪※
             //带勾
-            if (GUI.Button(new Rect(_windowRect.width - 220, 4, 50, 20), "text_button_item_instance_manager_load_items".i18n(), UIStyleManager.BlueButtonStyle))
-            {
-                LoadSavedItemsFromFile();
-            }
-
-            if (GUI.Button(new Rect(_windowRect.width - 165, 4, 50, 20), "text_button_item_instance_manager_save_items".i18n(), UIStyleManager.BlueButtonStyle))
-            {
-                SaveSavedItemsToFile();
-            }
-
             if (GUI.Button(new Rect(_windowRect.width - 110, 4, 50, 20), "text_button_item_instance_manager_fir".i18n(), SpawnedInSession ? UIStyleManager.BlueButtonStyle : UIStyleManager.RedButtonStyle))
             {
                 SpawnedInSession = !SpawnedInSession;
@@ -86,25 +95,121 @@ namespace Oracle.RaidManager
                 MouseManager.ToggleCursor();
             }
 
+            GUILayout.Space(15);
+
+            // ================== 文件操作次顶栏 ==================
+            GUILayout.BeginHorizontal(UIStyleManager.BoxStyle);
+
+            GUILayout.Label("text_item_instance_manager_file_name".i18n(), GUILayout.Width(60));
+
+            string rawInput = GUILayout.TextField(_inputFileName, UIStyleManager.TextFieldStyle, GUILayout.ExpandWidth(true));
+            if (rawInput != _inputFileName)
+            {
+                _inputFileName = SanitizeFileName(rawInput);
+            }
+
+            if (GUILayout.Button("text_button_item_instance_manager_refresh".i18n(), UIStyleManager.BlueButtonStyle, GUILayout.Width(60)))
+            {
+                RefreshFileList();
+            }
+            if (GUILayout.Button("text_button_item_instance_manager_load_items".i18n(), UIStyleManager.BlueButtonStyle, GUILayout.Width(50)))
+            {
+                LoadPresetIntoCache(_inputFileName);
+            }
+            if (GUILayout.Button("text_button_item_instance_manager_save_items".i18n(), UIStyleManager.BlueButtonStyle, GUILayout.Width(50)))
+            {
+                SaveSavedItemsToFile(_inputFileName);
+            }
+
+            GUILayout.EndHorizontal();
+
+            GUILayout.Space(5);
+
             GUIStyle origScroll = GUI.skin.verticalScrollbar;
             GUIStyle origThumb = GUI.skin.verticalScrollbarThumb;
             GUI.skin.verticalScrollbar = UIStyleManager.ScrollbarStyle;
             GUI.skin.verticalScrollbarThumb = UIStyleManager.ScrollbarThumbStyle;
 
-            GUILayout.Space(10);
+            // ================== 左右分栏区域 ==================
+            GUILayout.BeginHorizontal();
 
-            _scrollPos = GUILayout.BeginScrollView(_scrollPos);
+            // ------- 左侧：本地文件列表 -------
+            GUIStyle origHScroll = GUI.skin.horizontalScrollbar;
+            GUIStyle origHThumb = GUI.skin.horizontalScrollbarThumb;
 
+            GUI.skin.horizontalScrollbar = UIStyleManager.HScrollbarStyle;
+            GUI.skin.horizontalScrollbarThumb = UIStyleManager.HScrollbarThumbStyle;
 
-            if (ItemCatcher.SavedItems.Count == 0)
+            _fileScrollPos = GUILayout.BeginScrollView(_fileScrollPos, UIStyleManager.BoxStyle, GUILayout.Width(200));
+
+            // ⭐ 1. 永远在最顶部绘制【当前实例】
+            bool isCurrentView = (_selectedView == CURRENT_SESSION_ID);
+            GUILayout.BeginHorizontal(isCurrentView ? UIStyleManager.SelectedBoxStyle : UIStyleManager.BoxStyle);
+
+            // "text_item_instance_manager_current_session" 可以在多语言配成 ">>> 当前获取项 <<<" 之类的
+            if (GUILayout.Button("text_item_instance_manager_current_session".i18n(), isCurrentView ? UIStyleManager.BlueButtonStyle : UIStyleManager.NormalButtonStyle, GUILayout.ExpandWidth(true)))
+            {
+                _selectedView = CURRENT_SESSION_ID;
+                _inputFileName = "Default"; // 切换回当前时重置下输入框
+            }
+            // 当前实例不允许删除，所以这里不绘制 X 按钮
+            GUILayout.EndHorizontal();
+
+            GUILayout.Space(5);
+
+            // ⭐ 2. 绘制从文件夹读取的预设
+            for (int i = 0; i < _savedFiles.Count; i++)
+            {
+                string fileName = _savedFiles[i];
+                bool isThisFileSelected = (_selectedView == fileName);
+
+                GUILayout.BeginHorizontal(isThisFileSelected ? UIStyleManager.SelectedBoxStyle : UIStyleManager.BoxStyle);
+
+                // 点击预设，将其加载进缓存列表进行预览
+                if (GUILayout.Button(fileName, isThisFileSelected ? UIStyleManager.BlueButtonStyle : UIStyleManager.NormalButtonStyle, GUILayout.ExpandWidth(true)))
+                {
+                    _selectedView = fileName;
+                    _inputFileName = fileName;
+                    LoadPresetIntoCache(fileName);
+                }
+
+                if (GUILayout.Button("X", UIStyleManager.RedButtonStyle, GUILayout.Width(25)))
+                {
+                    string pathToDelete = Path.Combine(GetSaveDirectory(), fileName + ".json");
+                    if (File.Exists(pathToDelete))
+                    {
+                        File.Delete(pathToDelete);
+                        RefreshFileList();
+                        if (isThisFileSelected)
+                        {
+                            // 如果删掉了当前正在看的，强制切回【当前实例】防错
+                            _selectedView = CURRENT_SESSION_ID;
+                            _inputFileName = "Default";
+                        }
+                    }
+                }
+                GUILayout.EndHorizontal();
+            }
+
+            GUILayout.EndScrollView();
+            GUI.skin.horizontalScrollbar = origHScroll;
+            GUI.skin.horizontalScrollbarThumb = origHThumb;
+
+            // ------- 右侧：物品实例列表 -------
+            _scrollPos = GUILayout.BeginScrollView(_scrollPos, UIStyleManager.BoxStyle);
+
+            // ⭐ 核心逻辑：根据左侧的选中状态，决定右边渲染哪个列表
+            List<Item> activeList = (_selectedView == CURRENT_SESSION_ID) ? ItemCatcher.SavedItems : _cachedPresetItems;
+
+            if (activeList.Count == 0)
             {
                 GUILayout.Label("text_item_instance_manager_no_result".i18n(), UIStyleManager.BoxStyle);
             }
             else
             {
-                for (int i = ItemCatcher.SavedItems.Count - 1; i >= 0; i--)
+                for (int i = activeList.Count - 1; i >= 0; i--)
                 {
-                    Item item = ItemCatcher.SavedItems[i];
+                    Item item = activeList[i];
                     bool isCurrent = ItemCatcher.savedItem == item;
 
                     GUILayout.BeginHorizontal(isCurrent ? UIStyleManager.SelectedBoxStyle : UIStyleManager.BoxStyle);
@@ -130,10 +235,9 @@ namespace Oracle.RaidManager
                     }
                     GUILayout.EndHorizontal();
                     GUILayout.EndVertical();
-                    
+
                     //按钮
                     GUILayout.BeginVertical();
-
                     GUILayout.BeginHorizontal();
 
                     //生成和选择
@@ -167,7 +271,8 @@ namespace Oracle.RaidManager
 
                     if (GUILayout.Button("text_button_item_instance_manager_delete".i18n(), UIStyleManager.RedButtonStyle, GUILayout.Height(22), GUILayout.MinWidth(70)))
                     {
-                        ItemCatcher.SavedItems.RemoveAt(i);
+                        // ⭐ 从当前活跃列表中移除
+                        activeList.RemoveAt(i);
                         if (isCurrent) ItemCatcher.savedItem = null;
                     }
                     GUILayout.EndHorizontal();
@@ -178,6 +283,7 @@ namespace Oracle.RaidManager
             }
 
             GUILayout.EndScrollView();
+            GUILayout.EndHorizontal();
 
             GUI.skin.verticalScrollbar = origScroll;
             GUI.skin.verticalScrollbarThumb = origThumb;
@@ -185,81 +291,108 @@ namespace Oracle.RaidManager
             GUI.DragWindow(new Rect(0, 0, _windowRect.width - 50, 25));
         }
 
-        private void LoadSavedItemsFromFile()
+        private string GetSaveDirectory()
         {
-            string savePath = Path.Combine(PluginsCore.pluginDir, "SavedItems.json");
+            string dir = Path.Combine(PluginsCore.pluginDir, "itemsaves");
+            if (!Directory.Exists(dir))
+            {
+                Directory.CreateDirectory(dir);
+            }
+            return dir;
+        }
+
+        private void RefreshFileList()
+        {
+            _savedFiles.Clear();
+            string dir = GetSaveDirectory();
+            string[] files = Directory.GetFiles(dir, "*.json");
+            foreach (string file in files)
+            {
+                _savedFiles.Add(Path.GetFileNameWithoutExtension(file));
+            }
+        }
+
+        private string SanitizeFileName(string fileName)
+        {
+            if (string.IsNullOrEmpty(fileName)) return "";
+            string invalidChars = new string(Path.GetInvalidFileNameChars());
+            string regexSearch = string.Format("[{0}]", Regex.Escape(invalidChars));
+            return Regex.Replace(fileName, regexSearch, "");
+        }
+
+        /// <summary>
+        /// 将文件读取并隔离存入 Cache 列表
+        /// </summary>
+        private void LoadPresetIntoCache(string fileName)
+        {
+            if (string.IsNullOrEmpty(fileName) || fileName == CURRENT_SESSION_ID) return;
+
+            string savePath = Path.Combine(GetSaveDirectory(), fileName + ".json");
             if (!File.Exists(savePath))
             {
-                Debug.LogError("Save file not found!");
+                Debug.LogError($"Save file not found at: {savePath}");
                 return;
             }
 
             try
             {
-                // 1. 读取 JSON 字符串
                 string json = File.ReadAllText(savePath, Encoding.UTF8);
-
-                // 2. 将 JSON 解析为 DTO 数组 (FlatItemsDataClass[])
-                // 这里使用你的 JsonParserClass 工具
                 var flatItems = json.ParseJsonTo<FlatItemsDataClass[]>();
 
                 if (flatItems == null) return;
 
-                // 3. 覆盖清空当前实例管理器中的物品
-                ItemCatcher.SavedItems.Clear();
+                // ⭐ 仅清理并填充缓存列表
+                _cachedPresetItems.Clear();
 
-                // 4. 使用 ItemFactoryClass 重建物品树
-                // FlatItemsToTree 会返回一个包含所有已生成 Item 的字典
                 var result = Comfort.Common.Singleton<ItemFactoryClass>.Instance.FlatItemsToTree(flatItems, false, null);
 
-                // 5. 将生成的 Item 实例重新加入到你的管理器列表中
                 if (result.Items != null)
                 {
                     foreach (var item in result.Items.Values)
                     {
-                        // 这里要过滤掉 Stash 根节点本身，只保留其中的物品
                         if (!(item is StashItemClass))
                         {
-                            ItemCatcher.SavedItems.Add(item);
+                            _cachedPresetItems.Add(item);
                         }
                     }
                 }
 
-                Debug.Log($"Loaded {ItemCatcher.SavedItems.Count} items successfully.");
+                _selectedView = fileName;
+                Debug.Log($"Loaded {_cachedPresetItems.Count} items into cache from {fileName}.");
             }
             catch (System.Exception ex)
             {
-                Debug.LogError($"Failed to load items: {ex.Message}");
+                Debug.LogError($"Failed to load items into cache: {ex.Message}");
             }
         }
 
-        private void SaveSavedItemsToFile()
+        /// <summary>
+        /// 保存当前正在浏览的列表 (当前抓取 or 当前预览的预设)
+        /// </summary>
+        private void SaveSavedItemsToFile(string fileName)
         {
+            if (string.IsNullOrEmpty(fileName)) return;
+
             try
             {
-                // 1. 获取所有已保存的物品列表
-                var itemsToSave = ItemCatcher.SavedItems;
+                // ⭐ 根据当前视图状态判断要保存的是哪个列表
+                var itemsToSave = (_selectedView == CURRENT_SESSION_ID) ? ItemCatcher.SavedItems : _cachedPresetItems;
+
                 if (itemsToSave == null || itemsToSave.Count == 0)
                 {
                     Debug.Log("No items to save.");
                     return;
                 }
 
-                // 2. 使用 ItemFactoryClass 提供的链路转换
-                // 注意：你需要一个 ItemFactoryClass 的实例。
-                // 如果你的代码中没有直接引用，通常可以通过 Singleton<ItemFactoryClass>.Instance 获取（如果原项目有单例）
-                // 或者直接调用你在 ItemFactoryClass 中找到的 TreeToFlatItems 方法
                 var flatItems = Comfort.Common.Singleton<ItemFactoryClass>.Instance.TreeToFlatItems(itemsToSave);
-
-                // 3. 序列化为 JSON
-                // 使用你确认过的 JsonParserClass 工具
                 string json = flatItems.ToPrettyJson();
 
-                // 4. 写入文件
-                string savePath = Path.Combine(PluginsCore.pluginDir, "SavedItems.json");
+                string savePath = Path.Combine(GetSaveDirectory(), fileName + ".json");
                 File.WriteAllText(savePath, json, Encoding.UTF8);
 
                 Debug.Log($"Items saved to: {savePath}");
+
+                RefreshFileList();
             }
             catch (System.Exception ex)
             {
@@ -292,7 +425,6 @@ namespace Oracle.RaidManager
             catch { }
             return null;
         }
-
     }
 
     /// <summary>

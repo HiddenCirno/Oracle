@@ -23,11 +23,16 @@ namespace Oracle.RaidManager
         public static GUIStyle CloseButtonStyle => RedButtonStyle;
         // 输入框样式
         public static GUIStyle TextFieldStyle { get; private set; }
-        // 滚动条背景
+
+        // 纵向滚动条背景与滑块
         public static GUIStyle ScrollbarStyle { get; private set; }
-        // 滚动条滑块
         public static GUIStyle ScrollbarThumbStyle { get; private set; }
-        // ⭐ 顶部选项卡样式
+
+        // ⭐ 新增：横向滚动条背景与滑块
+        public static GUIStyle HScrollbarStyle { get; private set; }
+        public static GUIStyle HScrollbarThumbStyle { get; private set; }
+
+        // 顶部选项卡样式
         public static GUIStyle TabStyle { get; private set; }
 
         private static bool _initialized = false;
@@ -40,7 +45,7 @@ namespace Oracle.RaidManager
             if (_initialized && WindowStyle?.normal.background != null)
                 return;
 
-            // ----- 1. 窗口样式（原 AIManagerGUI.flatWindowStyle）-----
+            // ----- 1. 窗口样式 -----
             WindowStyle = new GUIStyle(GUI.skin.window);
             WindowStyle.normal.background = MakeTex(1, 1, new Color(0.15f, 0.16f, 0.18f, 1f));
             WindowStyle.focused.background = WindowStyle.normal.background;
@@ -48,46 +53,51 @@ namespace Oracle.RaidManager
             WindowStyle.normal.textColor = Color.white;
             WindowStyle.border = new RectOffset(1, 1, 20, 1);
 
-            // ----- 2. 普通容器背景（原 AIManagerGUI.flatBoxStyle）-----
+            // ----- 2. 普通容器背景 -----
             BoxStyle = new GUIStyle(GUI.skin.box);
             BoxStyle.normal.background = MakeTex(1, 1, new Color(0.20f, 0.21f, 0.23f, 1f));
-            BoxStyle.normal.textColor = new Color(0.9f, 0.9f, 0.9f, 1f); 
+            BoxStyle.normal.textColor = new Color(0.9f, 0.9f, 0.9f, 1f);
             BoxStyle.border = new RectOffset(0, 0, 0, 0);
 
-            // ----- 3. 选中容器背景（原 ItemManagerGUI.flatBoxStyleActive）-----
+            // ----- 3. 选中容器背景 -----
             SelectedBoxStyle = new GUIStyle(GUI.skin.box);
             SelectedBoxStyle.normal.background = MakeTex(1, 1, new Color(0.28f, 0.32f, 0.38f, 1f));
             SelectedBoxStyle.normal.textColor = Color.white;
             SelectedBoxStyle.border = new RectOffset(0, 0, 0, 0);
 
-            // ----- 4. 普通按钮（原 AIManagerGUI.flatButtonStyle）-----
+            // ----- 4. 普通按钮 -----
             NormalButtonStyle = new GUIStyle(GUI.skin.button);
-            NormalButtonStyle.normal.background = MakeTex(1, 1, new Color(0.25f, 0.26f, 0.28f, 1f)); 
-            NormalButtonStyle.hover.background = MakeTex(1, 1, new Color(0.35f, 0.36f, 0.39f, 1f)); 
-            NormalButtonStyle.active.background = MakeTex(1, 1, new Color(0.12f, 0.13f, 0.15f, 1f)); 
+            NormalButtonStyle.normal.background = MakeTex(1, 1, new Color(0.25f, 0.26f, 0.28f, 1f));
+            NormalButtonStyle.hover.background = MakeTex(1, 1, new Color(0.35f, 0.36f, 0.39f, 1f));
+            NormalButtonStyle.active.background = MakeTex(1, 1, new Color(0.12f, 0.13f, 0.15f, 1f));
             NormalButtonStyle.normal.textColor = Color.white;
             NormalButtonStyle.hover.textColor = Color.white;
             NormalButtonStyle.active.textColor = Color.gray;
             NormalButtonStyle.border = new RectOffset(0, 0, 0, 0);
             NormalButtonStyle.margin = new RectOffset(2, 2, 2, 2);
 
-            // ----- 5. 红色按钮（原 AIManagerGUI.redButtonStyle）-----
+            // ----- 5. 红色按钮 -----
             RedButtonStyle = new GUIStyle(NormalButtonStyle);
-            RedButtonStyle.normal.background = MakeTex(1, 1, new Color(0.5f, 0.2f, 0.2f)); 
-            RedButtonStyle.hover.background = MakeTex(1, 1, new Color(0.7f, 0.3f, 0.3f)); 
-            RedButtonStyle.active.background = MakeTex(1, 1, new Color(0.3f, 0.2f, 0.2f)); 
+            RedButtonStyle.normal.background = MakeTex(1, 1, new Color(0.5f, 0.2f, 0.2f));
+            RedButtonStyle.hover.background = MakeTex(1, 1, new Color(0.7f, 0.3f, 0.3f));
+            RedButtonStyle.active.background = MakeTex(1, 1, new Color(0.3f, 0.2f, 0.2f));
             RedButtonStyle.alignment = TextAnchor.MiddleCenter;
 
-            // ----- 6. 蓝色按钮（原 AIManagerGUI.blueButtonStyle）-----
+            // ----- 6. 蓝色按钮 -----
             BlueButtonStyle = new GUIStyle(NormalButtonStyle);
-            BlueButtonStyle.normal.background = MakeTex(1, 1, new Color(0.2f, 0.3f, 0.5f)); 
-            BlueButtonStyle.hover.background = MakeTex(1, 1, new Color(0.3f, 0.4f, 0.6f)); 
-            BlueButtonStyle.active.background = MakeTex(1, 1, new Color(0.1f, 0.2f, 0.3f)); 
+            BlueButtonStyle.normal.background = MakeTex(1, 1, new Color(0.2f, 0.3f, 0.5f));
+            BlueButtonStyle.hover.background = MakeTex(1, 1, new Color(0.3f, 0.4f, 0.6f));
+            BlueButtonStyle.active.background = MakeTex(1, 1, new Color(0.1f, 0.2f, 0.3f));
             BlueButtonStyle.alignment = TextAnchor.MiddleCenter;
 
-            // ----- 7. 输入框样式（原 ItemManagerGUI.flatTextFieldStyle）-----
+            // ----- 7. 输入框样式 -----
             TextFieldStyle = new GUIStyle(GUI.skin.textField);
             TextFieldStyle.normal.background = MakeTex(1, 1, new Color(0.12f, 0.13f, 0.15f, 1f));
+
+            // ⭐ 修复：增加 hover 悬停状态，颜色介于 normal 和 focused 之间
+            TextFieldStyle.hover.background = MakeTex(1, 1, new Color(0.15f, 0.16f, 0.18f, 1f));
+            TextFieldStyle.hover.textColor = Color.white;
+
             TextFieldStyle.focused.background = MakeTex(1, 1, new Color(0.18f, 0.20f, 0.22f, 1f));
             TextFieldStyle.normal.textColor = Color.white;
             TextFieldStyle.focused.textColor = Color.white;
@@ -95,7 +105,7 @@ namespace Oracle.RaidManager
             TextFieldStyle.margin = new RectOffset(2, 2, 2, 2);
             TextFieldStyle.alignment = TextAnchor.MiddleLeft;
 
-            // ----- 8. 滚动条样式（原 AIManagerGUI.flatScrollbarStyle / flatScrollbarThumbStyle）-----
+            // ----- 8. 纵向滚动条样式 -----
             ScrollbarStyle = new GUIStyle(GUI.skin.verticalScrollbar);
             ScrollbarStyle.normal.background = MakeTex(1, 1, new Color(0.12f, 0.13f, 0.15f, 1f));
             ScrollbarStyle.fixedWidth = 10f;
@@ -108,35 +118,36 @@ namespace Oracle.RaidManager
             ScrollbarThumbStyle.fixedWidth = 10f;
             ScrollbarThumbStyle.border = new RectOffset(0, 0, 0, 0);
 
-            // ⭐ ----- 9. 选项卡样式 (TabStyle) -----
+            // ⭐ ----- 9. 新增：横向滚动条样式 -----
+            HScrollbarStyle = new GUIStyle(GUI.skin.horizontalScrollbar);
+            HScrollbarStyle.normal.background = MakeTex(1, 1, new Color(0.12f, 0.13f, 0.15f, 1f));
+            HScrollbarStyle.fixedHeight = 10f; // 横向滚动条需要锁定高度
+            HScrollbarStyle.border = new RectOffset(0, 0, 0, 0);
+
+            HScrollbarThumbStyle = new GUIStyle(GUI.skin.horizontalScrollbarThumb);
+            HScrollbarThumbStyle.normal.background = MakeTex(1, 1, new Color(0.3f, 0.31f, 0.33f, 1f));
+            HScrollbarThumbStyle.hover.background = MakeTex(1, 1, new Color(0.4f, 0.41f, 0.43f, 1f));
+            HScrollbarThumbStyle.active.background = MakeTex(1, 1, new Color(0.5f, 0.51f, 0.53f, 1f));
+            HScrollbarThumbStyle.fixedHeight = 10f; // 滑块同样锁定高度
+            HScrollbarThumbStyle.border = new RectOffset(0, 0, 0, 0);
+
+            // ----- 10. 选项卡样式 (TabStyle) -----
             TabStyle = new GUIStyle(GUI.skin.button);
             TabStyle.fontSize = 13;
             TabStyle.fontStyle = FontStyle.Bold;
             TabStyle.alignment = TextAnchor.MiddleCenter;
-
-            // [未选中] 颜色偏暗，字发灰
             TabStyle.normal.background = MakeTex(1, 1, new Color(0.18f, 0.19f, 0.21f, 1f));
             TabStyle.normal.textColor = new Color(0.6f, 0.6f, 0.6f, 1f);
-
-            // [未选中悬停] 稍微亮一点
             TabStyle.hover.background = MakeTex(1, 1, new Color(0.25f, 0.26f, 0.28f, 1f));
             TabStyle.hover.textColor = Color.white;
-
-            // [选中(onNormal)] 继承你的 BlueButtonStyle 配色
             TabStyle.onNormal.background = MakeTex(1, 1, new Color(0.2f, 0.3f, 0.5f, 1f));
             TabStyle.onNormal.textColor = Color.white;
-
-            // [选中悬停(onHover)]
             TabStyle.onHover.background = MakeTex(1, 1, new Color(0.3f, 0.4f, 0.6f, 1f));
             TabStyle.onHover.textColor = Color.white;
-            // [按下瞬间(active)] 未选中状态被点击时的反馈，比 normal 更暗
             TabStyle.active.background = MakeTex(1, 1, new Color(0.12f, 0.13f, 0.15f, 1f));
             TabStyle.active.textColor = new Color(0.5f, 0.5f, 0.5f, 1f);
-
-            // [选中按下瞬间(onActive)] 已选中状态再次被点击时的反馈，深蓝色
             TabStyle.onActive.background = MakeTex(1, 1, new Color(0.1f, 0.2f, 0.3f, 1f));
             TabStyle.onActive.textColor = new Color(0.8f, 0.8f, 0.8f, 1f);
-            // 取消 margin，让 Toolbar 连成一片毫无缝隙的整体
             TabStyle.margin = new RectOffset(0, 0, 0, 0);
             TabStyle.padding = new RectOffset(5, 5, 5, 5);
             TabStyle.border = new RectOffset(0, 0, 0, 0);
@@ -144,13 +155,6 @@ namespace Oracle.RaidManager
             _initialized = true;
         }
 
-        /// <summary>
-        /// 材质方法
-        /// </summary>
-        /// <param name="width"></param>
-        /// <param name="height"></param>
-        /// <param name="col"></param>
-        /// <returns></returns>
         private static Texture2D MakeTex(int width, int height, Color col)
         {
             Color[] pix = new Color[width * height];
