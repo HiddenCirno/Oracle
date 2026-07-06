@@ -35,7 +35,8 @@ namespace Oracle.ItemSpawn
             string newId = MongoID.Generate();
             Item newItem = itemFactory.CreateItem(newId, templateId, null);
             if (newItem == null) return;
-            ItemCatcher.SavedItems.Add(newItem);
+            ItemManagerGUI.ActiveList.Add(newItem);
+            //ItemCatcher.SavedItems.Add(newItem);
         }
 
         /// <summary>

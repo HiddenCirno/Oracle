@@ -5,8 +5,10 @@ using EFT.UI.DragAndDrop;
 using Oracle.Data;
 using Oracle.ItemSpawn;
 using Oracle.Utils;
+using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using UnityEngine;
@@ -22,18 +24,34 @@ namespace Oracle.RaidManager
         //UI状态
         public static bool _isMenuOpen = false;
         public Rect _windowRect = new Rect(20, 20, 800, 650);
-        public Vector2 _scrollPos; // 右侧物品列表滚动
-        public Vector2 _fileScrollPos = Vector2.zero; // 左侧文件列表滚动
+        public Vector2 _scrollPos;
+        public Vector2 _fileScrollPos = Vector2.zero;
         public static bool SpawnedInSession = true;
 
-        // ================== 多文件与视图状态 ==================
-        public const string CURRENT_SESSION_ID = "::CURRENT_SESSION::"; // 标识当前战局实例的特殊ID
-        public string _selectedView = CURRENT_SESSION_ID; // 当前左侧选中的高亮项
-        public string _inputFileName = "Default"; // 顶部输入框中的文件名
-        public List<string> _savedFiles = new List<string>();
+        // ================== 多文件与多工作区状态 ==================
+        public const string CURRENT_SESSION_ID = "::CURRENT_SESSION::";
 
-        // ⭐ 独立缓存列表，用于读取和预览预设，实现数据隔离
-        public List<Item> _cachedPresetItems = new List<Item>();
+        public static string _selectedView = CURRENT_SESSION_ID;
+        public static string _inputFileName = "Default";
+        public static List<string> _savedFiles = new List<string>();
+
+        // ⭐ 终极进化：多工作区缓存池！每个预设都有自己独立的内存房间
+        public static Dictionary<string, List<Item>> _workspaces = new Dictionary<string, List<Item>>();
+
+        // ⭐ 核心指针：根据当前选中的视图，智能返回对应的列表
+        public static List<Item> ActiveList
+        {
+            get
+            {
+                if (_selectedView == CURRENT_SESSION_ID) return ItemCatcher.SavedItems;
+                // 如果内存池里没有，就初始化一个空房间
+                if (!_workspaces.ContainsKey(_selectedView))
+                {
+                    _workspaces[_selectedView] = new List<Item>();
+                }
+                return _workspaces[_selectedView];
+            }
+        }
 
         //物品图标缓存
         public Dictionary<string, Texture2D> _iconCache = new Dictionary<string, Texture2D>();
@@ -54,8 +72,14 @@ namespace Oracle.RaidManager
                 if (_isMenuOpen)
                 {
                     RefreshFileList();
-                    // 每次打开强制默认回到当前实例视图
-                    _selectedView = CURRENT_SESSION_ID;
+
+                    // 仅当选中的预设文件在后台被物理删除时，才安全回退到内存表
+                    if (_selectedView != CURRENT_SESSION_ID && !_savedFiles.Contains(_selectedView))
+                    {
+                        ItemCatcher.savedItem = null; // 失焦
+                        _selectedView = CURRENT_SESSION_ID;
+                        _inputFileName = "Default";
+                    }
                 }
             }
         }
@@ -108,12 +132,22 @@ namespace Oracle.RaidManager
                 _inputFileName = SanitizeFileName(rawInput);
             }
 
-            if (GUILayout.Button("text_button_item_instance_manager_refresh".i18n(), UIStyleManager.BlueButtonStyle, GUILayout.Width(60)))
+            // 新增：清空按钮 (Clear) - 用于一键清空当前正在查看的表
+            if (GUILayout.Button("text_button_item_instance_manager_clear".i18n(), UIStyleManager.RedButtonStyle, GUILayout.Width(50)))
+            {
+                // 清空当前活跃的列表，并立刻失焦
+                ItemCatcher.savedItem = null;
+                ActiveList.Clear();
+            }
+
+            if (GUILayout.Button("text_button_item_instance_manager_refresh".i18n(), UIStyleManager.BlueButtonStyle, GUILayout.Width(50)))
             {
                 RefreshFileList();
             }
             if (GUILayout.Button("text_button_item_instance_manager_load_items".i18n(), UIStyleManager.BlueButtonStyle, GUILayout.Width(50)))
             {
+                // 强制读取硬盘覆盖当前缓存
+                ItemCatcher.savedItem = null;
                 LoadPresetIntoCache(_inputFileName);
             }
             if (GUILayout.Button("text_button_item_instance_manager_save_items".i18n(), UIStyleManager.BlueButtonStyle, GUILayout.Width(50)))
@@ -142,22 +176,19 @@ namespace Oracle.RaidManager
 
             _fileScrollPos = GUILayout.BeginScrollView(_fileScrollPos, UIStyleManager.BoxStyle, GUILayout.Width(200));
 
-            // ⭐ 1. 永远在最顶部绘制【当前实例】
             bool isCurrentView = (_selectedView == CURRENT_SESSION_ID);
             GUILayout.BeginHorizontal(isCurrentView ? UIStyleManager.SelectedBoxStyle : UIStyleManager.BoxStyle);
 
-            // "text_item_instance_manager_current_session" 可以在多语言配成 ">>> 当前获取项 <<<" 之类的
             if (GUILayout.Button("text_item_instance_manager_current_session".i18n(), isCurrentView ? UIStyleManager.BlueButtonStyle : UIStyleManager.NormalButtonStyle, GUILayout.ExpandWidth(true)))
             {
+                ItemCatcher.savedItem = null; // 切表失焦，丢掉旧指针
                 _selectedView = CURRENT_SESSION_ID;
-                _inputFileName = "Default"; // 切换回当前时重置下输入框
+                _inputFileName = "Default";
             }
-            // 当前实例不允许删除，所以这里不绘制 X 按钮
             GUILayout.EndHorizontal();
 
             GUILayout.Space(5);
 
-            // ⭐ 2. 绘制从文件夹读取的预设
             for (int i = 0; i < _savedFiles.Count; i++)
             {
                 string fileName = _savedFiles[i];
@@ -165,12 +196,17 @@ namespace Oracle.RaidManager
 
                 GUILayout.BeginHorizontal(isThisFileSelected ? UIStyleManager.SelectedBoxStyle : UIStyleManager.BoxStyle);
 
-                // 点击预设，将其加载进缓存列表进行预览
                 if (GUILayout.Button(fileName, isThisFileSelected ? UIStyleManager.BlueButtonStyle : UIStyleManager.NormalButtonStyle, GUILayout.ExpandWidth(true)))
                 {
+                    ItemCatcher.savedItem = null; // 切表即失焦
                     _selectedView = fileName;
                     _inputFileName = fileName;
-                    LoadPresetIntoCache(fileName);
+
+                    // 仅当缓存池中没有这个表时，才去读硬盘
+                    if (!_workspaces.ContainsKey(fileName))
+                    {
+                        LoadPresetIntoCache(fileName);
+                    }
                 }
 
                 if (GUILayout.Button("X", UIStyleManager.RedButtonStyle, GUILayout.Width(25)))
@@ -180,9 +216,14 @@ namespace Oracle.RaidManager
                     {
                         File.Delete(pathToDelete);
                         RefreshFileList();
+
+                        // 从内存池里彻底销毁它
+                        if (_workspaces.ContainsKey(fileName))
+                            _workspaces.Remove(fileName);
+
                         if (isThisFileSelected)
                         {
-                            // 如果删掉了当前正在看的，强制切回【当前实例】防错
+                            ItemCatcher.savedItem = null;
                             _selectedView = CURRENT_SESSION_ID;
                             _inputFileName = "Default";
                         }
@@ -198,8 +239,7 @@ namespace Oracle.RaidManager
             // ------- 右侧：物品实例列表 -------
             _scrollPos = GUILayout.BeginScrollView(_scrollPos, UIStyleManager.BoxStyle);
 
-            // ⭐ 核心逻辑：根据左侧的选中状态，决定右边渲染哪个列表
-            List<Item> activeList = (_selectedView == CURRENT_SESSION_ID) ? ItemCatcher.SavedItems : _cachedPresetItems;
+            List<Item> activeList = ActiveList;
 
             if (activeList.Count == 0)
             {
@@ -271,7 +311,6 @@ namespace Oracle.RaidManager
 
                     if (GUILayout.Button("text_button_item_instance_manager_delete".i18n(), UIStyleManager.RedButtonStyle, GUILayout.Height(22), GUILayout.MinWidth(70)))
                     {
-                        // ⭐ 从当前活跃列表中移除
                         activeList.RemoveAt(i);
                         if (isCurrent) ItemCatcher.savedItem = null;
                     }
@@ -320,17 +359,17 @@ namespace Oracle.RaidManager
             return Regex.Replace(fileName, regexSearch, "");
         }
 
-        /// <summary>
-        /// 将文件读取并隔离存入 Cache 列表
-        /// </summary>
         private void LoadPresetIntoCache(string fileName)
         {
-            if (string.IsNullOrEmpty(fileName) || fileName == CURRENT_SESSION_ID) return;
+            if (string.IsNullOrEmpty(fileName) || fileName == CURRENT_SESSION_ID)
+                return;
 
             string savePath = Path.Combine(GetSaveDirectory(), fileName + ".json");
+
             if (!File.Exists(savePath))
             {
-                Debug.LogError($"Save file not found at: {savePath}");
+                _workspaces[fileName] = new List<Item>();
+                _selectedView = fileName;
                 return;
             }
 
@@ -339,50 +378,51 @@ namespace Oracle.RaidManager
                 string json = File.ReadAllText(savePath, Encoding.UTF8);
                 var flatItems = json.ParseJsonTo<FlatItemsDataClass[]>();
 
-                if (flatItems == null) return;
+                if (flatItems == null)
+                    return;
 
-                // ⭐ 仅清理并填充缓存列表
-                _cachedPresetItems.Clear();
+                // 保存时没有 parentId 的就是根节点
+                HashSet<MongoID> rootIds = flatItems
+                    .Where(x => !x.parentId.HasValue)
+                    .Select(x => x._id)
+                    .ToHashSet();
 
-                var result = Comfort.Common.Singleton<ItemFactoryClass>.Instance.FlatItemsToTree(flatItems, false, null);
+                var result = Comfort.Common.Singleton<ItemFactoryClass>
+                    .Instance
+                    .FlatItemsToTree(flatItems, false, null);
+
+                List<Item> loadedItems = new List<Item>();
 
                 if (result.Items != null)
                 {
-                    foreach (var item in result.Items.Values)
+                    foreach (string id in rootIds)
                     {
-                        if (!(item is StashItemClass))
+                        if (result.Items.TryGetValue(id, out Item item) &&
+                            !(item is StashItemClass))
                         {
-                            _cachedPresetItems.Add(item);
+                            loadedItems.Add(item);
                         }
                     }
                 }
 
+                _workspaces[fileName] = loadedItems;
                 _selectedView = fileName;
-                Debug.Log($"Loaded {_cachedPresetItems.Count} items into cache from {fileName}.");
             }
-            catch (System.Exception ex)
+            catch (Exception ex)
             {
-                Debug.LogError($"Failed to load items into cache: {ex.Message}");
+                Debug.LogError($"Failed to load items into cache: {ex}");
             }
         }
 
-        /// <summary>
-        /// 保存当前正在浏览的列表 (当前抓取 or 当前预览的预设)
-        /// </summary>
         private void SaveSavedItemsToFile(string fileName)
         {
             if (string.IsNullOrEmpty(fileName)) return;
 
             try
             {
-                // ⭐ 根据当前视图状态判断要保存的是哪个列表
-                var itemsToSave = (_selectedView == CURRENT_SESSION_ID) ? ItemCatcher.SavedItems : _cachedPresetItems;
+                var itemsToSave = ActiveList;
 
-                if (itemsToSave == null || itemsToSave.Count == 0)
-                {
-                    Debug.Log("No items to save.");
-                    return;
-                }
+                if (itemsToSave == null) return;
 
                 var flatItems = Comfort.Common.Singleton<ItemFactoryClass>.Instance.TreeToFlatItems(itemsToSave);
                 string json = flatItems.ToPrettyJson();
@@ -390,9 +430,14 @@ namespace Oracle.RaidManager
                 string savePath = Path.Combine(GetSaveDirectory(), fileName + ".json");
                 File.WriteAllText(savePath, json, Encoding.UTF8);
 
-                Debug.Log($"Items saved to: {savePath}");
-
                 RefreshFileList();
+
+                if (_selectedView != fileName)
+                {
+                    ItemCatcher.savedItem = null;
+                    LoadPresetIntoCache(fileName);
+                    _inputFileName = fileName;
+                }
             }
             catch (System.Exception ex)
             {

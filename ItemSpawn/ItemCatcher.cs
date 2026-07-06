@@ -36,8 +36,7 @@ namespace Oracle.ItemSpawn
         /// </summary>
         public void KeyUpdate()
         {
-            if (selectedItem == null)
-                return;
+            if (selectedItem == null) return;
             if (ItemSpawnerCfg.CopyItemKey.Value.IsDown())
             {
                 string itemID = selectedItem.TemplateId;
@@ -45,7 +44,8 @@ namespace Oracle.ItemSpawn
                 //复制-清洗Id-清洗状态, 使用两个拓展方法一步搞定
                 savedItem = selectedItem.CloneItem().ReassignAllIds();
                 //.CleanAndResetItem(ItemSpawnerCfg.ForcedFiR.Value);//这里不能清洗状态, 它涉及到带勾机制, 由玩家自己决定
-                SavedItems.Add(savedItem);
+                RaidManager.ItemManagerGUI.ActiveList.Add(savedItem);
+                //SavedItems.Add(savedItem);
                 //游戏内通知
                 OracleNotify.Message(string.Format("text_item_instance_manager_item_saved".i18n(), itemName, itemID),  ENotificationIconType.Default, GlobalCfg.MuteNotice.Value);
             }
