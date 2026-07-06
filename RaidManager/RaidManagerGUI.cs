@@ -13,7 +13,7 @@ namespace Oracle.RaidManager
     {
         //全局唯一主菜单开关
         public static bool _isMenuOpen = false;
-        public static Rect _windowRect = new Rect(570, 20, 550, 650);
+        public static Rect _windowRect = new Rect(820, 20, 550, 650);
 
         private int _selectedTab = 0;
         //只读存key
