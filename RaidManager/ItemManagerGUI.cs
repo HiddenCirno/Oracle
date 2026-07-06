@@ -6,6 +6,8 @@ using Oracle.Data;
 using Oracle.ItemSpawn;
 using Oracle.Utils;
 using System.Collections.Generic;
+using System.IO;
+using System.Text;
 using UnityEngine;
 using static Oracle.Data.OracleInterface;
 
@@ -53,7 +55,7 @@ namespace Oracle.RaidManager
         }
 
         public void DrawWindow(int windowID)
-        {   
+        {
             //你妈个逼我用你妈的复选框
             //深色 按钮 方块 文本
             //按钮是按钮文本是文本按钮按了变透明
@@ -62,6 +64,16 @@ namespace Oracle.RaidManager
             //总之他妈的把按钮和文本分开
             //早该这么干了 ◪※
             //带勾
+            if (GUI.Button(new Rect(_windowRect.width - 220, 4, 50, 20), "text_button_item_instance_manager_load_items".i18n(), UIStyleManager.BlueButtonStyle))
+            {
+                LoadSavedItemsFromFile();
+            }
+
+            if (GUI.Button(new Rect(_windowRect.width - 165, 4, 50, 20), "text_button_item_instance_manager_save_items".i18n(), UIStyleManager.BlueButtonStyle))
+            {
+                SaveSavedItemsToFile();
+            }
+
             if (GUI.Button(new Rect(_windowRect.width - 110, 4, 50, 20), "text_button_item_instance_manager_fir".i18n(), SpawnedInSession ? UIStyleManager.BlueButtonStyle : UIStyleManager.RedButtonStyle))
             {
                 SpawnedInSession = !SpawnedInSession;
@@ -171,6 +183,88 @@ namespace Oracle.RaidManager
             GUI.skin.verticalScrollbarThumb = origThumb;
 
             GUI.DragWindow(new Rect(0, 0, _windowRect.width - 50, 25));
+        }
+
+        private void LoadSavedItemsFromFile()
+        {
+            string savePath = Path.Combine(PluginsCore.pluginDir, "SavedItems.json");
+            if (!File.Exists(savePath))
+            {
+                Debug.LogError("Save file not found!");
+                return;
+            }
+
+            try
+            {
+                // 1. 读取 JSON 字符串
+                string json = File.ReadAllText(savePath, Encoding.UTF8);
+
+                // 2. 将 JSON 解析为 DTO 数组 (FlatItemsDataClass[])
+                // 这里使用你的 JsonParserClass 工具
+                var flatItems = json.ParseJsonTo<FlatItemsDataClass[]>();
+
+                if (flatItems == null) return;
+
+                // 3. 覆盖清空当前实例管理器中的物品
+                ItemCatcher.SavedItems.Clear();
+
+                // 4. 使用 ItemFactoryClass 重建物品树
+                // FlatItemsToTree 会返回一个包含所有已生成 Item 的字典
+                var result = Comfort.Common.Singleton<ItemFactoryClass>.Instance.FlatItemsToTree(flatItems, false, null);
+
+                // 5. 将生成的 Item 实例重新加入到你的管理器列表中
+                if (result.Items != null)
+                {
+                    foreach (var item in result.Items.Values)
+                    {
+                        // 这里要过滤掉 Stash 根节点本身，只保留其中的物品
+                        if (!(item is StashItemClass))
+                        {
+                            ItemCatcher.SavedItems.Add(item);
+                        }
+                    }
+                }
+
+                Debug.Log($"Loaded {ItemCatcher.SavedItems.Count} items successfully.");
+            }
+            catch (System.Exception ex)
+            {
+                Debug.LogError($"Failed to load items: {ex.Message}");
+            }
+        }
+
+        private void SaveSavedItemsToFile()
+        {
+            try
+            {
+                // 1. 获取所有已保存的物品列表
+                var itemsToSave = ItemCatcher.SavedItems;
+                if (itemsToSave == null || itemsToSave.Count == 0)
+                {
+                    Debug.Log("No items to save.");
+                    return;
+                }
+
+                // 2. 使用 ItemFactoryClass 提供的链路转换
+                // 注意：你需要一个 ItemFactoryClass 的实例。
+                // 如果你的代码中没有直接引用，通常可以通过 Singleton<ItemFactoryClass>.Instance 获取（如果原项目有单例）
+                // 或者直接调用你在 ItemFactoryClass 中找到的 TreeToFlatItems 方法
+                var flatItems = Comfort.Common.Singleton<ItemFactoryClass>.Instance.TreeToFlatItems(itemsToSave);
+
+                // 3. 序列化为 JSON
+                // 使用你确认过的 JsonParserClass 工具
+                string json = flatItems.ToPrettyJson();
+
+                // 4. 写入文件
+                string savePath = Path.Combine(PluginsCore.pluginDir, "SavedItems.json");
+                File.WriteAllText(savePath, json, Encoding.UTF8);
+
+                Debug.Log($"Items saved to: {savePath}");
+            }
+            catch (System.Exception ex)
+            {
+                Debug.LogError($"Failed to save items: {ex.Message}");
+            }
         }
 
         /// <summary>
