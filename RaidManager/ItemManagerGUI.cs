@@ -133,24 +133,24 @@ namespace Oracle.RaidManager
             }
 
             // 新增：清空按钮 (Clear) - 用于一键清空当前正在查看的表
-            if (GUILayout.Button("text_button_item_instance_manager_clear".i18n(), UIStyleManager.RedButtonStyle, GUILayout.Width(50)))
+            if (GUILayout.Button("text_button_item_instance_manager_clear".i18n(), UIStyleManager.RedButtonStyle, GUILayout.Width(60)))
             {
                 // 清空当前活跃的列表，并立刻失焦
                 ItemCatcher.savedItem = null;
                 ActiveList.Clear();
             }
 
-            if (GUILayout.Button("text_button_item_instance_manager_refresh".i18n(), UIStyleManager.BlueButtonStyle, GUILayout.Width(50)))
+            if (GUILayout.Button("text_button_item_instance_manager_refresh".i18n(), UIStyleManager.BlueButtonStyle, GUILayout.Width(60)))
             {
                 RefreshFileList();
             }
-            if (GUILayout.Button("text_button_item_instance_manager_load_items".i18n(), UIStyleManager.BlueButtonStyle, GUILayout.Width(50)))
+            if (GUILayout.Button("text_button_item_instance_manager_load_items".i18n(), UIStyleManager.BlueButtonStyle, GUILayout.Width(60)))
             {
                 // 强制读取硬盘覆盖当前缓存
                 ItemCatcher.savedItem = null;
                 LoadPresetIntoCache(_inputFileName);
             }
-            if (GUILayout.Button("text_button_item_instance_manager_save_items".i18n(), UIStyleManager.BlueButtonStyle, GUILayout.Width(50)))
+            if (GUILayout.Button("text_button_item_instance_manager_save_items".i18n(), UIStyleManager.BlueButtonStyle, GUILayout.Width(60)))
             {
                 SaveSavedItemsToFile(_inputFileName);
             }
@@ -432,11 +432,26 @@ namespace Oracle.RaidManager
 
                 RefreshFileList();
 
+                // ⭐ 智能跳转逻辑：区分“快照导出”和“另存为”
                 if (_selectedView != fileName)
                 {
-                    ItemCatcher.savedItem = null;
-                    LoadPresetIntoCache(fileName);
-                    _inputFileName = fileName;
+                    // 场景 B：如果起点是“内存表”，说明玩家在做【战局快照备份】
+                    if (_selectedView == CURRENT_SESSION_ID)
+                    {
+                        // 不跳转！保留玩家在内存表里的视角，让他可以继续抓取新东西
+                        // 但为了防呆，我们可以把顶部的输入框重置一下，暗示刚才的文件已经出去了
+                        //_inputFileName = "Default";
+
+                        // 可选：在这里加个提示音或通知 "已导出快照"
+                    }
+                    // 场景 A：如果起点是其他“预设表”，说明玩家在做【另存为】
+                    else
+                    {
+                        // 执行标准的自动跳转，切换到新文件工作区
+                        ItemCatcher.savedItem = null;
+                        LoadPresetIntoCache(fileName);
+                        _inputFileName = fileName;
+                    }
                 }
             }
             catch (System.Exception ex)
