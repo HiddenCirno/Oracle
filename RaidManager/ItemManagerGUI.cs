@@ -28,23 +28,22 @@ namespace Oracle.RaidManager
         public Vector2 _fileScrollPos = Vector2.zero;
         public static bool SpawnedInSession = true;
 
-        // ================== 多文件与多工作区状态 ==================
+        //工作区状态
         public const string CURRENT_SESSION_ID = "::CURRENT_SESSION::";
 
         public static string _selectedView = CURRENT_SESSION_ID;
         public static string _inputFileName = "Default";
         public static List<string> _savedFiles = new List<string>();
 
-        // ⭐ 终极进化：多工作区缓存池！每个预设都有自己独立的内存房间
+        //工作区总表
         public static Dictionary<string, List<Item>> _workspaces = new Dictionary<string, List<Item>>();
 
-        // ⭐ 核心指针：根据当前选中的视图，智能返回对应的列表
+        //当前表指针
         public static List<Item> ActiveList
         {
             get
             {
                 if (_selectedView == CURRENT_SESSION_ID) return ItemCatcher.SavedItems;
-                // 如果内存池里没有，就初始化一个空房间
                 if (!_workspaces.ContainsKey(_selectedView))
                 {
                     _workspaces[_selectedView] = new List<Item>();
@@ -73,10 +72,11 @@ namespace Oracle.RaidManager
                 {
                     RefreshFileList();
 
-                    // 仅当选中的预设文件在后台被物理删除时，才安全回退到内存表
+                    //预设已经删除, 回到内存表
                     if (_selectedView != CURRENT_SESSION_ID && !_savedFiles.Contains(_selectedView))
                     {
-                        ItemCatcher.savedItem = null; // 失焦
+                        //切表失焦
+                        ItemCatcher.savedItem = null;
                         _selectedView = CURRENT_SESSION_ID;
                         _inputFileName = "Default";
                     }
@@ -132,24 +132,26 @@ namespace Oracle.RaidManager
                 _inputFileName = SanitizeFileName(rawInput);
             }
 
-            // 新增：清空按钮 (Clear) - 用于一键清空当前正在查看的表
+            //清空当前列表
             if (GUILayout.Button("text_button_item_instance_manager_clear".i18n(), UIStyleManager.RedButtonStyle, GUILayout.Width(60)))
             {
-                // 清空当前活跃的列表，并立刻失焦
                 ItemCatcher.savedItem = null;
                 ActiveList.Clear();
             }
 
+            //刷新文件
             if (GUILayout.Button("text_button_item_instance_manager_refresh".i18n(), UIStyleManager.BlueButtonStyle, GUILayout.Width(60)))
             {
                 RefreshFileList();
             }
+
+            //读写
             if (GUILayout.Button("text_button_item_instance_manager_load_items".i18n(), UIStyleManager.BlueButtonStyle, GUILayout.Width(60)))
             {
-                // 强制读取硬盘覆盖当前缓存
                 ItemCatcher.savedItem = null;
                 LoadPresetIntoCache(_inputFileName);
             }
+
             if (GUILayout.Button("text_button_item_instance_manager_save_items".i18n(), UIStyleManager.BlueButtonStyle, GUILayout.Width(60)))
             {
                 SaveSavedItemsToFile(_inputFileName);
@@ -167,7 +169,7 @@ namespace Oracle.RaidManager
             // ================== 左右分栏区域 ==================
             GUILayout.BeginHorizontal();
 
-            // ------- 左侧：本地文件列表 -------
+            //文件列表
             GUIStyle origHScroll = GUI.skin.horizontalScrollbar;
             GUIStyle origHThumb = GUI.skin.horizontalScrollbarThumb;
 
@@ -181,7 +183,8 @@ namespace Oracle.RaidManager
 
             if (GUILayout.Button("text_item_instance_manager_current_session".i18n(), isCurrentView ? UIStyleManager.BlueButtonStyle : UIStyleManager.NormalButtonStyle, GUILayout.ExpandWidth(true)))
             {
-                ItemCatcher.savedItem = null; // 切表失焦，丢掉旧指针
+                //切表自动失焦
+                ItemCatcher.savedItem = null;
                 _selectedView = CURRENT_SESSION_ID;
                 _inputFileName = "Default";
             }
@@ -198,17 +201,17 @@ namespace Oracle.RaidManager
 
                 if (GUILayout.Button(fileName, isThisFileSelected ? UIStyleManager.BlueButtonStyle : UIStyleManager.NormalButtonStyle, GUILayout.ExpandWidth(true)))
                 {
-                    ItemCatcher.savedItem = null; // 切表即失焦
+                    ItemCatcher.savedItem = null;
                     _selectedView = fileName;
                     _inputFileName = fileName;
 
-                    // 仅当缓存池中没有这个表时，才去读硬盘
                     if (!_workspaces.ContainsKey(fileName))
                     {
                         LoadPresetIntoCache(fileName);
                     }
                 }
 
+                //删除表
                 if (GUILayout.Button("X", UIStyleManager.RedButtonStyle, GUILayout.Width(25)))
                 {
                     string pathToDelete = Path.Combine(GetSaveDirectory(), fileName + ".json");
@@ -217,7 +220,6 @@ namespace Oracle.RaidManager
                         File.Delete(pathToDelete);
                         RefreshFileList();
 
-                        // 从内存池里彻底销毁它
                         if (_workspaces.ContainsKey(fileName))
                             _workspaces.Remove(fileName);
 
@@ -236,7 +238,7 @@ namespace Oracle.RaidManager
             GUI.skin.horizontalScrollbar = origHScroll;
             GUI.skin.horizontalScrollbarThumb = origHThumb;
 
-            // ------- 右侧：物品实例列表 -------
+            //物品实例管理区
             _scrollPos = GUILayout.BeginScrollView(_scrollPos, UIStyleManager.BoxStyle);
 
             List<Item> activeList = ActiveList;
@@ -288,12 +290,18 @@ namespace Oracle.RaidManager
                         if (mainPlayer != null) ItemSpawner.CloneAndSpawnItemIntoInventory(mainPlayer, item);
                     }
 
-                    GUI.enabled = !isCurrent;
-                    if (GUILayout.Button(isCurrent ? "text_button_item_instance_manager_selected".i18n() : "text_button_item_instance_manager_select".i18n(), UIStyleManager.BlueButtonStyle, GUILayout.Height(22), GUILayout.MinWidth(70)))
+                    if (GUILayout.Button(isCurrent ? "text_button_item_instance_manager_selected".i18n() : "text_button_item_instance_manager_select".i18n(), isCurrent ? UIStyleManager.RedButtonStyle : UIStyleManager.BlueButtonStyle, GUILayout.Height(22), GUILayout.MinWidth(70)))
                     {
-                        ItemCatcher.savedItem = item;
+                        if (!isCurrent)
+                        {
+                            ItemCatcher.savedItem = item;
+                        }
+                        else
+                        {
+                            ItemCatcher.savedItem = null;
+                        }
+
                     }
-                    GUI.enabled = true;
                     GUILayout.EndHorizontal();
 
                     //掉落和删除
@@ -330,6 +338,7 @@ namespace Oracle.RaidManager
             GUI.DragWindow(new Rect(0, 0, _windowRect.width - 50, 25));
         }
 
+        //中间工具方法
         private string GetSaveDirectory()
         {
             string dir = Path.Combine(PluginsCore.pluginDir, "itemsaves");
@@ -381,7 +390,7 @@ namespace Oracle.RaidManager
                 if (flatItems == null)
                     return;
 
-                // 保存时没有 parentId 的就是根节点
+                //parentId反向寻址, 过滤根节点, 筛掉子节点
                 HashSet<MongoID> rootIds = flatItems
                     .Where(x => !x.parentId.HasValue)
                     .Select(x => x._id)
@@ -410,7 +419,7 @@ namespace Oracle.RaidManager
             }
             catch (Exception ex)
             {
-                Debug.LogError($"Failed to load items into cache: {ex}");
+                OracleCommon.ShowError(ex);
             }
         }
 
@@ -432,22 +441,15 @@ namespace Oracle.RaidManager
 
                 RefreshFileList();
 
-                // ⭐ 智能跳转逻辑：区分“快照导出”和“另存为”
+                //只有非内存表保存才自动跳到新表
                 if (_selectedView != fileName)
                 {
-                    // 场景 B：如果起点是“内存表”，说明玩家在做【战局快照备份】
                     if (_selectedView == CURRENT_SESSION_ID)
                     {
-                        // 不跳转！保留玩家在内存表里的视角，让他可以继续抓取新东西
-                        // 但为了防呆，我们可以把顶部的输入框重置一下，暗示刚才的文件已经出去了
                         //_inputFileName = "Default";
-
-                        // 可选：在这里加个提示音或通知 "已导出快照"
                     }
-                    // 场景 A：如果起点是其他“预设表”，说明玩家在做【另存为】
                     else
                     {
-                        // 执行标准的自动跳转，切换到新文件工作区
                         ItemCatcher.savedItem = null;
                         LoadPresetIntoCache(fileName);
                         _inputFileName = fileName;
@@ -456,7 +458,7 @@ namespace Oracle.RaidManager
             }
             catch (System.Exception ex)
             {
-                Debug.LogError($"Failed to save items: {ex.Message}");
+                OracleCommon.ShowError(ex);
             }
         }
 
