@@ -97,7 +97,10 @@ namespace Oracle.ItemSpawn
                 {
                     //恢复耐久上限和当前耐久
                     repairable.MaxDurability = repairable.TemplateDurability;
-                    repairable.Durability = repairable.TemplateDurability;
+                    if(repairable.Durability< repairable.TemplateDurability)
+                    {
+                        repairable.Durability = repairable.TemplateDurability;
+                    }
                 }
                 //刷新钥匙和钥匙卡的使用次数记录
                 if (item.TryGetItemComponent<KeyComponent>(out var key))
@@ -107,17 +110,28 @@ namespace Oracle.ItemSpawn
                 //恢复医疗物品的耐久度
                 if (item.TryGetItemComponent<MedKitComponent>(out var medkit))
                 {
-                    medkit.HpResource = medkit.MaxHpResource;
+                    if (medkit.HpResource < medkit.MaxHpResource)
+                    {
+                        medkit.HpResource = medkit.MaxHpResource;
+                    }
                 }
                 //恢复食物和饮料的耐久度
                 if (item.TryGetItemComponent<FoodDrinkComponent>(out var food))
                 {
-                    food.HpPercent = food.MaxResource;
+                    if (
+                    food.HpPercent < food.MaxResource)
+                    {
+                        food.HpPercent = food.MaxResource;
+                    }
                 }
                 //恢复过滤器, 燃料桶的耐久度
                 if (item.TryGetItemComponent<ResourceComponent>(out var resource))
                 {
-                    resource.Value = resource.MaxResource;
+                    if(resource.Value < resource.MaxResource)
+                    {
+
+                        resource.Value = resource.MaxResource;
+                    }
                 }
                 //修复面罩的弹孔和裂痕
                 if (item.TryGetItemComponent<FaceShieldComponent>(out var faceShield))
@@ -133,7 +147,10 @@ namespace Oracle.ItemSpawn
                 //重新为维修包充能
                 if (item.TryGetItemComponent<RepairKitComponent>(out var repairKit))
                 {
-                    repairKit.Resource = repairKit.RepairKitsTemplateClass.MaxRepairResource;
+                    if(repairKit.Resource < repairKit.RepairKitsTemplateClass.MaxRepairResource)
+                    {
+                        repairKit.Resource = repairKit.RepairKitsTemplateClass.MaxRepairResource;
+                    }
                 }
             }
             return clonedItem;

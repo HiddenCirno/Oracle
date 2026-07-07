@@ -52,6 +52,10 @@ namespace Oracle.RaidManager
             }
         }
 
+        //仓库生成用缓存
+        public static Item generatedItem;
+
+
         //物品图标缓存
         public Dictionary<string, Texture2D> _iconCache = new Dictionary<string, Texture2D>();
 
@@ -287,7 +291,16 @@ namespace Oracle.RaidManager
                     {
                         if (item.StackObjectsCount <= 0) item.StackObjectsCount = 1;
                         Player mainPlayer = PluginsCore.CorrectPlayer;
-                        if (mainPlayer != null) ItemSpawner.CloneAndSpawnItemIntoInventory(mainPlayer, item);
+                        if (mainPlayer != null)
+                        {
+                            ItemSpawner.CloneAndSpawnItemIntoInventory(mainPlayer, item);
+                        }
+                        else
+                        {
+                            var cloneItem = item.CloneItem().ReassignAllIds().CleanAndResetItem(SpawnedInSession);
+                            generatedItem = cloneItem;
+                            ItemSpawner.CloneAndSpawnItemIntoStash(cloneItem);
+                        }
                     }
 
                     if (GUILayout.Button(isCurrent ? "text_button_item_instance_manager_selected".i18n() : "text_button_item_instance_manager_select".i18n(), isCurrent ? UIStyleManager.RedButtonStyle : UIStyleManager.BlueButtonStyle, GUILayout.Height(22), GUILayout.MinWidth(70)))

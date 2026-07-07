@@ -1,5 +1,6 @@
 ﻿using BepInEx;
 using EFT;
+using EFT.InventoryLogic;
 using HarmonyLib;
 using Newtonsoft.Json;
 using Oracle.Data;
@@ -18,8 +19,12 @@ namespace Oracle
     {
         //游戏变量
         public static Player CorrectPlayer { get; set; }
+
         public static string CorrectGroupId { get; set; }
+
         public static GameWorld CorrectGameWorld { get; set; }
+
+        public static InventoryController StashController { get; set; }
 
         //mod路径
         public static string dllPath = Assembly.GetExecutingAssembly().Location;

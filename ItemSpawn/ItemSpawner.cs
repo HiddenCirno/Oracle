@@ -1,7 +1,6 @@
 ﻿using BepInEx.Configuration;
 using Comfort.Common;
 using EFT;
-using EFT.Communications;
 using EFT.Interactive;
 using EFT.InventoryLogic;
 using Oracle.Data;
@@ -263,6 +262,39 @@ namespace Oracle.ItemSpawn
             }
         }
 
+        public static async void CloneAndSpawnItemIntoStash(Item item)
+        {
+            var controller = PluginsCore.StashController;
+            if (controller == null || item == null) return;
+
+            try
+            {
+                ItemAddress targetLocation = FindEmptyLocationInStash(controller, item);
+                if (targetLocation == null)
+                {
+                    OracleNotify.Warning("仓库已满！");
+                    return;
+                }
+                var addResult = InteractionsHandlerClass.Add(
+                    item,
+                    targetLocation,
+                    controller,
+                    true //模拟， 防止冲突
+                );
+
+                if (addResult.Succeeded)
+                {
+                    controller.TryRunNetworkTransaction(addResult);
+
+                    OracleNotify.Message($"{item.Name.Localized()}发送成功");
+                }
+            }
+            catch (Exception ex)
+            {
+                OracleCommon.ShowError(ex);
+            }
+        }
+
         //物品栏寻址算法
         public static ItemAddress FindEmptyLocation(Player player, Item newItem)
         {
@@ -287,6 +319,25 @@ namespace Oracle.ItemSpawn
                         {
                             return addressInGrid;
                         }
+                    }
+                }
+            }
+            return null;
+        }
+
+        /// <summary>
+        /// 战局外寻址：只找大仓库(Stash)，无视身上装备，绝对安全
+        /// </summary>
+        public static ItemAddress FindEmptyLocationInStash(InventoryController controller, Item newItem)
+        {
+            if (controller?.Inventory?.Stash is CompoundItem stash)
+            {
+                foreach (var grid in stash.Grids)
+                {
+                    var location = grid.FindLocationForItem(newItem);
+                    if (location != null)
+                    {
+                        return (ItemAddress)location;
                     }
                 }
             }
