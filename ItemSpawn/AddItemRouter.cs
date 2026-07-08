@@ -12,10 +12,10 @@ namespace Oracle.ItemSpawn
     {
         //路由请求类型
         [JsonProperty("Action")]
-        public string Action = "DebugAdd";
+        public string Action = "SyncStashExtend";
 
         //物品数据
-        [JsonProperty("itemData")]
+        [JsonProperty("stashData")]
         public FlatItemsDataClass[] ItemData;
     }
 
