@@ -105,7 +105,10 @@ namespace Oracle.ItemSpawn
                 //刷新钥匙和钥匙卡的使用次数记录
                 if (item.TryGetItemComponent<KeyComponent>(out var key))
                 {
-                    key.NumberOfUsages = 0;
+                    if (key.NumberOfUsages > 0)
+                    {
+                        key.NumberOfUsages = 0;
+                    }
                 }
                 //恢复医疗物品的耐久度
                 if (item.TryGetItemComponent<MedKitComponent>(out var medkit))
