@@ -21,6 +21,7 @@ namespace Oracle.RaidManager
             "text_tab_loot_manager_title",
             "text_tab_ai_manager_title",
             "text_tab_bot_generator_title",
+            //"text_tab_overall_manager_title",
             "text_tab_skill_manager_title"
         };
 
@@ -32,6 +33,7 @@ namespace Oracle.RaidManager
         private readonly AIManagerGUI _aiPanel = new AIManagerGUI();
         private readonly BotGeneratorGUI _botGenPanel = new BotGeneratorGUI();
         private readonly SkillManagerGUI _skillPanel = new SkillManagerGUI();
+        private readonly StatsManagerGUI _statsPanel = new StatsManagerGUI();
 
         public void SubscribeEvent()
         {
