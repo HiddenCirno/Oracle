@@ -228,6 +228,6 @@
     "text_skill_manager_mastering_level_set_1": "Reset to Lv.0",
     "text_skill_manager_mastering_level_set_2": "Upgrade to Lv.1",
     "text_skill_manager_mastering_level_set_3": "Max Out (Lv.2)",
-    "text_skill_manager_show_level": "{0}\n(Lv.{1})"
+    "text_skill_manager_show_level": "Lv.{0}"
   }
 }

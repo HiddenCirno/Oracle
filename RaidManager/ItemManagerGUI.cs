@@ -243,7 +243,7 @@ namespace Oracle.RaidManager
             GUI.skin.horizontalScrollbarThumb = origHThumb;
 
             //物品实例管理区
-            _scrollPos = GUILayout.BeginScrollView(_scrollPos, UIStyleManager.BoxStyle);
+            _scrollPos = GUILayout.BeginScrollView(_scrollPos);
 
             List<Item> activeList = ActiveList;
 

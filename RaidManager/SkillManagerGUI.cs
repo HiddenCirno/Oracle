@@ -1,4 +1,6 @@
-﻿using Oracle.Data;
+﻿using EFT.UI;
+using EFT.UI.DragAndDrop;
+using Oracle.Data;
 using Oracle.Utils;
 using System.Collections.Generic;
 using UnityEngine;
@@ -10,6 +12,8 @@ namespace Oracle.RaidManager
     /// </summary>
     public class SkillManagerGUI
     {
+        private Dictionary<string, Texture2D> _masteringIconCache = new Dictionary<string, Texture2D>();
+
         private Vector2 _scrollPos;
         private int _selectedSubTab = 0;
 
@@ -66,7 +70,7 @@ namespace Oracle.RaidManager
             GUI.skin.verticalScrollbar = UIStyleManager.ScrollbarStyle;
             GUI.skin.verticalScrollbarThumb = UIStyleManager.ScrollbarThumbStyle;
 
-            _scrollPos = GUILayout.BeginScrollView(_scrollPos, UIStyleManager.BoxStyle);
+            _scrollPos = GUILayout.BeginScrollView(_scrollPos);
 
             if (_selectedSubTab == 0)
             {
@@ -130,76 +134,292 @@ namespace Oracle.RaidManager
             GUI.skin.verticalScrollbarThumb = origThumb;
         }
 
-        /// <summary>
-        /// 绘制技能区域
-        /// </summary>
-        /// <param name="skills"></param>
         private void DrawSkillGrid(SkillClass[] skills)
         {
             if (skills == null || skills.Length == 0) return;
 
-            int count = 0;
-            GUILayout.BeginHorizontal();
-            GUILayout.FlexibleSpace();
 
-            foreach (var skill in skills)
+            const float itemWidth = 245f;
+
+            for (int i = 0; i < skills.Length; i += 2)
             {
-                bool isSelected = (_selectedSkill == skill);
-                GUIStyle btnStyle = isSelected ? UIStyleManager.BlueButtonStyle : UIStyleManager.NormalButtonStyle;
-                string btnText = string.Format("text_skill_manager_show_level".i18n(), skill.Id.ToString().Localized(), skill.Level);
+                GUILayout.BeginHorizontal();
 
-                if (GUILayout.Button(btnText, btnStyle, GUILayout.Height(40), GUILayout.Width(140)))
+
+                // 左列
+                DrawSkillItem(skills[i], itemWidth);
+
+
+                GUILayout.Space(10);
+
+
+                // 右列
+                if (i + 1 < skills.Length)
                 {
-                    _selectedSkill = skill;
+                    DrawSkillItem(skills[i + 1], itemWidth);
+                }
+                else
+                {
+                    GUILayout.Space(itemWidth);
                 }
 
-                count++;
-                if (count % 3 == 0)
-                {
-                    GUILayout.FlexibleSpace();
-                    GUILayout.EndHorizontal();
-                    GUILayout.BeginHorizontal();
-                    GUILayout.FlexibleSpace();
-                }
+
+                GUILayout.EndHorizontal();
+
+
+                GUILayout.Space(6);
             }
+        }
+
+        private void DrawSkillItem(SkillClass skill, float width)
+        {
+            bool isSelected = (_selectedSkill == skill);
+
+
+            GUILayout.BeginHorizontal(
+                isSelected ? UIStyleManager.SelectedBoxStyle : UIStyleManager.BoxStyle,
+                GUILayout.Width(width),
+                GUILayout.Height(80)
+            );
+
+
+            // 图标
+            Texture2D skillIconTex = null;
+
+            var sprite = EFTHardSettings.Instance.StaticIcons.SkillIdSprites
+                .GetValueOrDefault(skill.Id);
+
+            if (sprite != null)
+                skillIconTex = sprite.texture;
+
+
+            if (skillIconTex != null)
+            {
+                GUILayout.Label(
+                    skillIconTex,
+                    GUILayout.Width(64),
+                    GUILayout.Height(64)
+                );
+            }
+            else
+            {
+                GUILayout.Label(
+                    "text_item_instance_manager_no_icon".i18n(),
+                    GUILayout.Width(64),
+                    GUILayout.Height(64)
+                );
+            }
+
+
+            // 信息
+            GUILayout.BeginVertical();
+
+            GUILayout.Space(8);
+
+            GUILayout.Label(
+                $"<b>{skill.Id.ToString().Localized()}</b>"
+            );
+
+            GUILayout.Label(
+                string.Format("text_skill_manager_show_level".i18n(), skill.Level)
+            );
+
+            GUILayout.EndVertical();
+
+
+
             GUILayout.FlexibleSpace();
+
+
+
+            //按钮
+            string btnText = isSelected
+                ? "text_button_item_instance_manager_selected".i18n()
+                : "text_button_item_instance_manager_select".i18n();
+
+
+            GUIStyle btnStyle = isSelected
+                ? UIStyleManager.RedButtonStyle
+                : UIStyleManager.BlueButtonStyle;
+
+
+            if (GUILayout.Button(
+                btnText,
+                btnStyle,
+                GUILayout.Width(90),
+                GUILayout.Height(30)))
+            {
+                _selectedSkill = isSelected ? null : skill;
+            }
+
+
             GUILayout.EndHorizontal();
         }
 
-        /// <summary>
-        /// 绘制专精区域
-        /// </summary>
-        /// <param name="masterings"></param>
         private void DrawMasteringGrid(IEnumerable<MasterSkillClass> masterings)
         {
             if (masterings == null) return;
 
-            int count = 0;
-            GUILayout.BeginHorizontal();
-            GUILayout.FlexibleSpace();
-
             foreach (var mastering in masterings)
             {
                 bool isSelected = (_selectedMastering == mastering);
-                GUIStyle btnStyle = isSelected ? UIStyleManager.BlueButtonStyle : UIStyleManager.NormalButtonStyle;
-                string btnText = string.Format("text_skill_manager_show_level".i18n(), mastering.MasteringGroup.Id, mastering.Level);
 
-                if (GUILayout.Button(btnText, btnStyle, GUILayout.Height(40), GUILayout.Width(140)))
+                GUILayout.BeginHorizontal(
+                    isSelected ? UIStyleManager.SelectedBoxStyle : UIStyleManager.BoxStyle,
+                    GUILayout.Height(80)
+                );
+
+
+                // 左侧图标
+                Texture2D icon = GetMasteringCachedIcon(mastering);
+
+                if (icon != null)
                 {
-                    _selectedMastering = mastering;
+                    DrawRotatedIcon(icon);
+                }
+                else
+                {
+                    GUILayout.Label(
+                        "text_item_instance_manager_no_icon".i18n(),
+                        GUILayout.Width(64),
+                        GUILayout.Height(64)
+                    );
                 }
 
-                count++;
-                if (count % 3 == 0)
+
+                // 中间信息
+                GUILayout.BeginVertical();
+
+                GUILayout.Space(8);
+
+                GUILayout.Label(
+                    $"<b>{mastering.MasteringGroup.Id}</b>"
+                );
+
+                GUILayout.Label(
+                    string.Format("text_skill_manager_show_level".i18n(), mastering.Level)
+                );
+
+                GUILayout.EndVertical();
+
+
+                GUILayout.FlexibleSpace();
+
+
+                // 右侧选择按钮
+                GUIStyle btnStyle = isSelected
+                    ? UIStyleManager.RedButtonStyle
+                    : UIStyleManager.BlueButtonStyle;
+
+
+                string btnText = isSelected
+                    ? "text_button_item_instance_manager_selected".i18n()
+                    : "text_button_item_instance_manager_select".i18n();
+
+
+                if (GUILayout.Button(
+                    btnText,
+                    btnStyle,
+                    GUILayout.Width(100),
+                    GUILayout.Height(35)))
                 {
-                    GUILayout.FlexibleSpace();
-                    GUILayout.EndHorizontal();
-                    GUILayout.BeginHorizontal();
-                    GUILayout.FlexibleSpace();
+                    _selectedMastering = isSelected ? null : mastering;
+                }
+
+
+                GUILayout.EndHorizontal();
+
+
+                GUILayout.Space(6);
+            }
+        }
+
+        private void DrawRotatedIcon(Texture2D tex)
+        {
+            const float size = 72f;
+
+            Rect rect = GUILayoutUtility.GetRect(
+                size,
+                size
+            );
+
+
+            Matrix4x4 old = GUI.matrix;
+
+
+            GUIUtility.RotateAroundPivot(
+                45f,
+                rect.center
+            );
+
+
+            GUI.DrawTexture(
+                rect,
+                tex,
+                ScaleMode.ScaleToFit
+            );
+
+
+            GUI.matrix = old;
+        }
+
+        private Texture2D GetMasteringCachedIcon(MasterSkillClass mastering)
+        {
+            if (mastering == null)
+                return null;
+
+
+            if (mastering.MasteringGroup?.Templates == null ||
+                mastering.MasteringGroup.Templates.Length == 0)
+                return null;
+
+
+            string templateId = mastering.MasteringGroup.Templates[0];
+
+
+            //缓存
+            if (_masteringIconCache.TryGetValue(templateId, out Texture2D cached))
+            {
+                return cached;
+            }
+
+
+            try
+            {
+                var item = Comfort.Common.Singleton<ItemFactoryClass>
+                    .Instance
+                    .GetPresetItem(templateId);
+
+
+                if (item == null)
+                    return null;
+
+
+                var iconData = ItemViewFactory.LoadItemIcon(
+                    item,
+                    1,
+                    false
+                );
+
+
+                if (iconData != null &&
+                    iconData.Sprite != null &&
+                    iconData.Sprite.texture != null)
+                {
+                    Texture2D tex = iconData.Sprite.texture;
+
+                    _masteringIconCache[templateId] = tex;
+
+                    return tex;
                 }
             }
-            GUILayout.FlexibleSpace();
-            GUILayout.EndHorizontal();
+            catch
+            {
+
+            }
+
+
+            return null;
         }
     }
 }
