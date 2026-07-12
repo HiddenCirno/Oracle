@@ -65,31 +65,25 @@ namespace Oracle.RaidManager
 
             _rolesScrollPos = GUILayout.BeginScrollView(_rolesScrollPos, UIStyleManager.BoxStyle);
 
-            int count = 0;
-            GUILayout.BeginHorizontal();
-            GUILayout.FlexibleSpace();
-
             foreach (WildSpawnType role in _allAvailableRoles)
             {
                 bool isSelected = (_selectedRole == role);
-                GUIStyle btnStyle = isSelected ? UIStyleManager.BlueButtonStyle : UIStyleManager.NormalButtonStyle ?? GUI.skin.button;
 
-                if (GUILayout.Button(role.ToString(), btnStyle, GUILayout.Height(25), GUILayout.Width(130)))
+                GUIStyle btnStyle = isSelected
+                    ? UIStyleManager.BlueButtonStyle
+                    : UIStyleManager.NormalButtonStyle ?? GUI.skin.button;
+
+                if (GUILayout.Button(
+                    role.ToString().i18n(),
+                    btnStyle,
+                    GUILayout.Height(35),
+                    GUILayout.ExpandWidth(true)))
                 {
                     _selectedRole = role;
                 }
 
-                count++;
-                if (count % 3 == 0)
-                {
-                    GUILayout.FlexibleSpace();
-                    GUILayout.EndHorizontal();
-                    GUILayout.BeginHorizontal();
-                    GUILayout.FlexibleSpace();
-                }
+                GUILayout.Space(4);
             }
-            GUILayout.FlexibleSpace();
-            GUILayout.EndHorizontal();
 
             GUILayout.EndScrollView();
 
@@ -98,7 +92,7 @@ namespace Oracle.RaidManager
             //生成按钮
             GUI.enabled = !_isSpawning;
 
-            string spawnBtnText = _isSpawning ? "text_button_bot_generator_generating".i18n() : string.Format("text_button_bot_generator_generate".i18n(), _selectedRole);
+            string spawnBtnText = _isSpawning ? "text_button_bot_generator_generating".i18n() : string.Format("text_button_bot_generator_generate".i18n(), _selectedRole.ToString().i18n());
             if (GUILayout.Button(spawnBtnText, UIStyleManager.BlueButtonStyle, GUILayout.Height(40)))
             {
                 //DebugBotData.UseDebugData.MustBeTrue();

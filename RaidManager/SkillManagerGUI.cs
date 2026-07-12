@@ -138,20 +138,15 @@ namespace Oracle.RaidManager
         {
             if (skills == null || skills.Length == 0) return;
 
-
             const float itemWidth = 245f;
 
             for (int i = 0; i < skills.Length; i += 2)
             {
                 GUILayout.BeginHorizontal();
 
-
                 // 左列
                 DrawSkillItem(skills[i], itemWidth);
-
-
                 GUILayout.Space(10);
-
 
                 // 右列
                 if (i + 1 < skills.Length)
@@ -163,9 +158,7 @@ namespace Oracle.RaidManager
                     GUILayout.Space(itemWidth);
                 }
 
-
                 GUILayout.EndHorizontal();
-
 
                 GUILayout.Space(6);
             }
@@ -175,13 +168,11 @@ namespace Oracle.RaidManager
         {
             bool isSelected = (_selectedSkill == skill);
 
-
             GUILayout.BeginHorizontal(
                 isSelected ? UIStyleManager.SelectedBoxStyle : UIStyleManager.BoxStyle,
                 GUILayout.Width(width),
                 GUILayout.Height(80)
             );
-
 
             // 图标
             Texture2D skillIconTex = null;
@@ -191,7 +182,6 @@ namespace Oracle.RaidManager
 
             if (sprite != null)
                 skillIconTex = sprite.texture;
-
 
             if (skillIconTex != null)
             {
@@ -210,7 +200,6 @@ namespace Oracle.RaidManager
                 );
             }
 
-
             // 信息
             GUILayout.BeginVertical();
 
@@ -226,22 +215,16 @@ namespace Oracle.RaidManager
 
             GUILayout.EndVertical();
 
-
-
             GUILayout.FlexibleSpace();
-
-
 
             //按钮
             string btnText = isSelected
                 ? "text_button_item_instance_manager_selected".i18n()
                 : "text_button_item_instance_manager_select".i18n();
 
-
             GUIStyle btnStyle = isSelected
                 ? UIStyleManager.RedButtonStyle
                 : UIStyleManager.BlueButtonStyle;
-
 
             if (GUILayout.Button(
                 btnText,
@@ -251,7 +234,6 @@ namespace Oracle.RaidManager
             {
                 _selectedSkill = isSelected ? null : skill;
             }
-
 
             GUILayout.EndHorizontal();
         }
@@ -269,7 +251,6 @@ namespace Oracle.RaidManager
                     GUILayout.Height(80)
                 );
 
-
                 // 左侧图标
                 Texture2D icon = GetMasteringCachedIcon(mastering);
 
@@ -286,7 +267,6 @@ namespace Oracle.RaidManager
                     );
                 }
 
-
                 // 中间信息
                 GUILayout.BeginVertical();
 
@@ -302,20 +282,16 @@ namespace Oracle.RaidManager
 
                 GUILayout.EndVertical();
 
-
                 GUILayout.FlexibleSpace();
-
 
                 // 右侧选择按钮
                 GUIStyle btnStyle = isSelected
                     ? UIStyleManager.RedButtonStyle
                     : UIStyleManager.BlueButtonStyle;
 
-
                 string btnText = isSelected
                     ? "text_button_item_instance_manager_selected".i18n()
                     : "text_button_item_instance_manager_select".i18n();
-
 
                 if (GUILayout.Button(
                     btnText,
@@ -326,9 +302,7 @@ namespace Oracle.RaidManager
                     _selectedMastering = isSelected ? null : mastering;
                 }
 
-
                 GUILayout.EndHorizontal();
-
 
                 GUILayout.Space(6);
             }
@@ -343,22 +317,18 @@ namespace Oracle.RaidManager
                 size
             );
 
-
             Matrix4x4 old = GUI.matrix;
-
 
             GUIUtility.RotateAroundPivot(
                 45f,
                 rect.center
             );
 
-
             GUI.DrawTexture(
                 rect,
                 tex,
                 ScaleMode.ScaleToFit
             );
-
 
             GUI.matrix = old;
         }
@@ -368,14 +338,11 @@ namespace Oracle.RaidManager
             if (mastering == null)
                 return null;
 
-
             if (mastering.MasteringGroup?.Templates == null ||
                 mastering.MasteringGroup.Templates.Length == 0)
                 return null;
 
-
             string templateId = mastering.MasteringGroup.Templates[0];
-
 
             //缓存
             if (_masteringIconCache.TryGetValue(templateId, out Texture2D cached))
@@ -383,24 +350,20 @@ namespace Oracle.RaidManager
                 return cached;
             }
 
-
             try
             {
                 var item = Comfort.Common.Singleton<ItemFactoryClass>
                     .Instance
                     .GetPresetItem(templateId);
 
-
                 if (item == null)
                     return null;
-
 
                 var iconData = ItemViewFactory.LoadItemIcon(
                     item,
                     1,
                     false
                 );
-
 
                 if (iconData != null &&
                     iconData.Sprite != null &&
@@ -417,7 +380,6 @@ namespace Oracle.RaidManager
             {
 
             }
-
 
             return null;
         }
