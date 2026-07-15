@@ -20,7 +20,7 @@ namespace Oracle.Combat
             static bool Prefix(Player.FirearmController __instance, ref Weapon.EMalfunctionState __result, ref Weapon.EMalfunctionSource malfunctionSource)
             {
                 //判断是否为自己
-                if (__instance != null && __instance == PluginsCore.CorrectPlayer.HandsController && NoMalfunctionCfg.EnableNoMalfunction.Value)
+                if (__instance != null && PluginsCore.CorrectPlayer!=null && __instance == PluginsCore.CorrectPlayer.HandsController && NoMalfunctionCfg.EnableNoMalfunction.Value)
                 {
                     //ref结果直接改为无故障
                     __result = Weapon.EMalfunctionState.None;
