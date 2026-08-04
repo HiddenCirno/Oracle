@@ -24,12 +24,12 @@ namespace Oracle.Data
         /// </summary>
         /// <param name="info"></param>
         /// <returns></returns>
-        public static string GetPlayerName(InfoClass info)
+        public static string GetPlayerName(ProfileInfo info)
         {
             if (info == null) return "Nikita Buyanov";
             var role = info.Settings?.Role.ToString().ToLower() ?? "assault";
             //迷宫小弟、玩家和全英文名不经过转换，反向筛选西里尔字母
-            return ((info.Side == EPlayerSide.Bear || info.Side == EPlayerSide.Usec) || (role == "tagillahelperagro") || OracleCommon.IsAllEnglish(info.Nickname)) ? info.Nickname : GStruct21.ConvertToLatinic(info.Nickname);
+            return ((info.Side == EPlayerSide.Bear || info.Side == EPlayerSide.Usec) || (role == "tagillahelperagro") || OracleCommon.IsAllEnglish(info.Nickname)) ? info.Nickname : DebugGroupStruct.ConvertToLatinic(info.Nickname);
         }
 
         /// <summary>
@@ -37,7 +37,7 @@ namespace Oracle.Data
         /// </summary>
         /// <param name="info"></param>
         /// <returns></returns>
-        public static bool IsTeammate(InfoClass info)
+        public static bool IsTeammate(ProfileInfo info)
         {
             if(info == null) return false;
             string targetGroupId = info?.GroupId ?? "";
@@ -75,7 +75,7 @@ namespace Oracle.Data
         /// <summary>
         /// 获取玩家数据富文本
         /// </summary>
-        public static void DeterminePlayerText(InfoClass info, string name, bool isTeammate, bool includeName, out string sideText, out string levelText)
+        public static void DeterminePlayerText(ProfileInfo info, string name, bool isTeammate, bool includeName, out string sideText, out string levelText)
         {
             sideText = "Unheard";
             levelText = "";

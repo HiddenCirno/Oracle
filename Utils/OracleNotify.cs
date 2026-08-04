@@ -15,7 +15,7 @@ namespace Oracle.Utils
         {
             if (!isMute)
             {
-                NotificationManagerClass.DisplayMessageNotification(
+                NotificationManager.DisplayMessageNotification(
                     message,
                     ENotificationDurationType.Default,
                     notificationType,
@@ -31,7 +31,7 @@ namespace Oracle.Utils
             //等会儿回来补
             if (!GlobalCfg.MuteNotice.Value)
             {
-                NotificationManagerClass.DisplayMessageNotification(
+                NotificationManager.DisplayMessageNotification(
                     message,
                     ENotificationDurationType.Default,
                     notificationType,

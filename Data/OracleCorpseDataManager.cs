@@ -83,7 +83,7 @@ namespace Oracle.Data
                             Player deadPlayer = PluginsCore.CorrectGameWorld.GetEverExistedPlayerByID(profileId);
                             if (deadPlayer != null && deadPlayer.Profile != null)
                             {
-                                InfoClass info = deadPlayer.Profile.Info;
+                                ProfileInfo info = deadPlayer.Profile.Info;
                                 if (info != null)
                                 {
                                     OraclePlayerDataManager.DeterminePlayerText(info,OraclePlayerDataManager.GetPlayerName(info),OraclePlayerDataManager.IsTeammate(info),true,out result,out string levelText);

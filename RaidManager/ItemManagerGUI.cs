@@ -299,7 +299,7 @@ namespace Oracle.RaidManager
                         {
                             var cloneItem = item.CloneItem().ReassignAllIds().CleanAndResetItem(SpawnedInSession);
                             generatedItem = cloneItem;
-                            ItemSpawner.CloneAndSpawnItemIntoStash(cloneItem);
+                            //ItemSpawner.CloneAndSpawnItemIntoStash(cloneItem);
                         }
                     }
 
@@ -398,7 +398,7 @@ namespace Oracle.RaidManager
             try
             {
                 string json = File.ReadAllText(savePath, Encoding.UTF8);
-                var flatItems = json.ParseJsonTo<FlatItemsDataClass[]>();
+                var flatItems = json.ParseJsonTo<JsonType.FlatItem[]>();
 
                 if (flatItems == null)
                     return;
@@ -409,7 +409,7 @@ namespace Oracle.RaidManager
                     .Select(x => x._id)
                     .ToHashSet();
 
-                var result = Comfort.Common.Singleton<ItemFactoryClass>
+                var result = Comfort.Common.Singleton<ItemFactory>
                     .Instance
                     .FlatItemsToTree(flatItems, false, null);
 
@@ -420,7 +420,7 @@ namespace Oracle.RaidManager
                     foreach (string id in rootIds)
                     {
                         if (result.Items.TryGetValue(id, out Item item) &&
-                            !(item is StashItemClass))
+                            !(item is Stash))
                         {
                             loadedItems.Add(item);
                         }
@@ -446,7 +446,7 @@ namespace Oracle.RaidManager
 
                 if (itemsToSave == null) return;
 
-                var flatItems = Comfort.Common.Singleton<ItemFactoryClass>.Instance.TreeToFlatItems(itemsToSave);
+                var flatItems = Comfort.Common.Singleton<ItemFactory>.Instance.TreeToFlatItems(itemsToSave);
                 string json = flatItems.ToPrettyJson();
 
                 string savePath = Path.Combine(GetSaveDirectory(), fileName + ".json");

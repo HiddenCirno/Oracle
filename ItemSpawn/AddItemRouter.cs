@@ -8,23 +8,23 @@ namespace Oracle.ItemSpawn
 {
     //路由层客户端通信协议
     [Serializable]
-    public class OracleAddCommand : GClass3473 
+    public class OracleAddCommand : EFT.InventoryLogic.Operations.CommandWithOwners
     {
         //路由请求类型
         [JsonProperty("Action")]
-        public string Action = "SyncStashExtend";
+        public string Action = "OracleAdd";
 
         //物品数据
-        [JsonProperty("stashData")]
-        public FlatItemsDataClass[] ItemData;
+        [JsonProperty("ItemData")]
+        public JsonType.FlatItem[] ItemData;
     }
 
     //行为描述
-    public class OracleAddDescriptor : BaseDescriptorClass
+    public class OracleAddDescriptor : InventoryOperationDescriptor
     {
         public Item ItemData;
 
-        public override GStruct152<BaseInventoryOperationClass> ToInventoryOperation(IPlayer player)
+        public override Diz.LanguageExtensions.OperationCreationResult<EFT.InventoryLogic.Operations.AbstractOperation> ToInventoryOperation(IPlayer player)
         {
             var operation = new OracleAddOperationClass(
                 OperationId,
@@ -36,14 +36,14 @@ namespace Oracle.ItemSpawn
     }
 
     //行为执行体
-    public class OracleAddOperationClass : BaseInventoryOperationClass
+    public class OracleAddOperationClass : EFT.InventoryLogic.Operations.AbstractOperation
     {
         private Item _itemToSpawn;
 
         //构造函数
         public OracleAddOperationClass(
         ushort id,
-        TraderControllerClass controller,
+        ItemController controller,
         Item item)
         : base(id, controller)
         {
@@ -56,7 +56,7 @@ namespace Oracle.ItemSpawn
         }
 
         //描述
-        public override BaseDescriptorClass ToDescriptor()
+        public override EFT.InventoryOperationDescriptor ToDescriptor()
         {
             return new OracleAddDescriptor
             {
@@ -66,9 +66,9 @@ namespace Oracle.ItemSpawn
         }
 
         //传递数据
-        public override GClass3471 ToBaseInventoryCommand(string ownerId)
+        public override EFT.InventoryLogic.Operations.BaseInventoryCommand ToBaseInventoryCommand(string ownerId)
         {
-            var itemFactory = Singleton<ItemFactoryClass>.Instance;
+            var itemFactory = Singleton<EFT.ItemFactory>.Instance;
             return new OracleAddCommand
             {
                 ItemData = itemFactory.TreeToFlatItems(new Item[] { _itemToSpawn })

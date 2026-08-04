@@ -1,4 +1,5 @@
-﻿using EFT.UI;
+﻿using EFT;
+using EFT.UI;
 using EFT.UI.DragAndDrop;
 using Oracle.Data;
 using Oracle.Utils;
@@ -23,8 +24,8 @@ namespace Oracle.RaidManager
         public string _targetLevelStr = "51";
 
         // 直接保存选中项的引用
-        private SkillClass _selectedSkill = null;
-        private MasterSkillClass _selectedMastering = null;
+        private Skill _selectedSkill = null;
+        private Mastering _selectedMastering = null;
 
         public void RefreshLocalizedCache()
         {
@@ -115,14 +116,14 @@ namespace Oracle.RaidManager
                 string btnText2 = _selectedMastering != null ? "text_skill_manager_mastering_level_set_2".i18n() : "text_skill_manager_mastering_level_select".i18n();
                 if (GUILayout.Button(btnText2, UIStyleManager.BlueButtonStyle, GUILayout.Height(40)))
                 {
-                    float expForLv2 = _selectedMastering.Int32_0;
+                    float expForLv2 = _selectedMastering.Lvl1;
                     _selectedMastering.SetCurrent(expForLv2, false);
                 }
 
                 string btnText3 = _selectedMastering != null ? "text_skill_manager_mastering_level_set_3".i18n() : "text_skill_manager_mastering_level_select".i18n();
                 if (GUILayout.Button(btnText3, UIStyleManager.BlueButtonStyle, GUILayout.Height(40)))
                 {
-                    float expForLv3 = _selectedMastering.Int32_0 + _selectedMastering.Int32_1;
+                    float expForLv3 = _selectedMastering.Lvl1 + _selectedMastering.Lvl2;
                     _selectedMastering.SetCurrent(expForLv3, false);
                 }
 
@@ -134,7 +135,7 @@ namespace Oracle.RaidManager
             GUI.skin.verticalScrollbarThumb = origThumb;
         }
 
-        private void DrawSkillGrid(SkillClass[] skills)
+        private void DrawSkillGrid(Skill[] skills)
         {
             if (skills == null || skills.Length == 0) return;
 
@@ -164,7 +165,7 @@ namespace Oracle.RaidManager
             }
         }
 
-        private void DrawSkillItem(SkillClass skill, float width)
+        private void DrawSkillItem(Skill skill, float width)
         {
             bool isSelected = (_selectedSkill == skill);
 
@@ -238,7 +239,7 @@ namespace Oracle.RaidManager
             GUILayout.EndHorizontal();
         }
 
-        private void DrawMasteringGrid(IEnumerable<MasterSkillClass> masterings)
+        private void DrawMasteringGrid(IEnumerable<Mastering> masterings)
         {
             if (masterings == null) return;
 
@@ -333,7 +334,7 @@ namespace Oracle.RaidManager
             GUI.matrix = old;
         }
 
-        private Texture2D GetMasteringCachedIcon(MasterSkillClass mastering)
+        private Texture2D GetMasteringCachedIcon(Mastering mastering)
         {
             if (mastering == null)
                 return null;
@@ -352,7 +353,7 @@ namespace Oracle.RaidManager
 
             try
             {
-                var item = Comfort.Common.Singleton<ItemFactoryClass>
+                var item = Comfort.Common.Singleton<ItemFactory>
                     .Instance
                     .GetPresetItem(templateId);
 

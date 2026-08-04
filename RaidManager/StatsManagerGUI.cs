@@ -1,9 +1,10 @@
-﻿using Oracle.Data;
-using Oracle.Utils;
+﻿using Oracle.Utils;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
-using EFT.Counters; // 引入计数器命名空间
+using EFT.Counters;
+using EFT;
+// 引入计数器命名空间
 // 可能需要引入包含 SessionCounterIdentifierValueClass 的命名空间
 
 namespace Oracle.RaidManager
@@ -305,7 +306,7 @@ namespace Oracle.RaidManager
         {
             try
             {
-                var identifier = keyObj as SessionCountersClass.SessionCounterIdentifierValueClass;
+                var identifier = keyObj as CountersCollection.Identifier;
                 if (identifier == null || identifier.Set == null) return keyObj.ToString();
 
                 var tags = identifier.Set.ToList();

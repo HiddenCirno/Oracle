@@ -28,7 +28,7 @@ namespace Oracle.ItemSpawn
         public static void AddItemToManager(string templateId)
         {
 
-            var itemFactory = Singleton<ItemFactoryClass>.Instance;
+            var itemFactory = Singleton<EFT.ItemFactory>.Instance;
             if (itemFactory == null || !itemFactory.ItemTemplates.ContainsKey(templateId)) return;
             //随机生成一个新的唯一ID
             string newId = MongoID.Generate();
@@ -63,7 +63,7 @@ namespace Oracle.ItemSpawn
             if (targetLocation != null)
             {
                 //配置网络包
-                var addOperationResult = InteractionsHandlerClass.Add(
+                var addOperationResult = EFT.InventoryLogic.ItemManipulator.Add(
                     clonedItem,
                     targetLocation,
                     player.InventoryController,
@@ -197,7 +197,7 @@ namespace Oracle.ItemSpawn
         private static async Task LoadItemBundlesAsync(Item rootItem)
         {
             //全局实例
-            var poolManager = Singleton<PoolManagerClass>.Instance;
+            var poolManager = Singleton<ObjectsFactory>.Instance;
             if (poolManager == null) return;
             //去重
             var keys = new HashSet<ResourceKey>();
@@ -213,9 +213,9 @@ namespace Oracle.ItemSpawn
                 //异步加载
                 await poolManager.LoadBundlesAndCreatePools(
                     0,
-                    PoolManagerClass.AssemblyType.Local,
+                    ObjectsFactory.AssemblyType.Local,
                     keys.ToArray(),
-                    JobPriorityClass.Immediate,
+                    Diz.Jobs.JobYieldPriority.Immediate,
                     null,
                     CancellationToken.None
                 );
@@ -275,7 +275,7 @@ namespace Oracle.ItemSpawn
                     OracleNotify.Warning("仓库已满！");
                     return;
                 }
-                var addResult = InteractionsHandlerClass.Add(
+                var addResult = ItemManipulator.Add(
                     item,
                     targetLocation,
                     controller,

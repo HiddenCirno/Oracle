@@ -55,7 +55,7 @@ namespace Oracle.Ability
     }
 
     //无限负重Patch
-    [HarmonyPatch(typeof(InventoryEquipment), "smethod_1")]
+    [HarmonyPatch(typeof(InventoryEquipment), nameof(InventoryEquipment.GetTotalWeight))]
     public class InfinityWeightPatch
     {
         public static bool Prefix(InventoryEquipment __instance, IEnumerable<Slot> slots, ref float __result)

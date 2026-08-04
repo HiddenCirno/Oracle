@@ -17,13 +17,13 @@ namespace Oracle.Combat
     public static class InfiniteAmmo
     {
         //Patch
-        [HarmonyPatch(typeof(BallisticsCalculator), "Shoot", new Type[] { typeof(EftBulletClass) })]
+        [HarmonyPatch(typeof(BallisticsCalculator), "Shoot", new Type[] { typeof(EFT.Ballistics.Shot) })]
         public class ShootPatch
         {
             [HarmonyPostfix]
-            public static void Postfix(EftBulletClass shot)
+            public static void Postfix(EFT.Ballistics.Shot shot)
             {
-                if (!PluginsCore.CorrectGameWorld || !Singleton<ItemFactoryClass>.Instantiated)
+                if (!PluginsCore.CorrectGameWorld || !Singleton<EFT.ItemFactory>.Instantiated)
                 {
                     return;
                 }
@@ -43,13 +43,13 @@ namespace Oracle.Combat
                     return;
                 }
 
-                MagazineItemClass currentMagazine = weapon.GetCurrentMagazine();
+                Magazine currentMagazine = weapon.GetCurrentMagazine();
 
                 //提取武器弹药
                 if (currentMagazine != null)
                 {
                     //转轮
-                    if (currentMagazine is CylinderMagazineItemClass cylinderMag)
+                    if (currentMagazine is CylinderMagazine cylinderMag)
                     {
                         foreach (Slot camora in cylinderMag.Camoras)
                         {
@@ -81,7 +81,7 @@ namespace Oracle.Combat
             {
                 //重新生成ID
                 string fakeId = ItemInstanceHelper.GenerateSafeHexId(ammo.Template.StringId, $"{DateTime.Now.Ticks}_{Guid.NewGuid()}");// new MongoID();
-                return Singleton<ItemFactoryClass>.Instance.CreateItem(fakeId, ammo.TemplateId, null);
+                return Singleton<EFT.ItemFactory>.Instance.CreateItem(fakeId, ammo.TemplateId, null);
             }
         }
     }

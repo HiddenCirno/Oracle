@@ -157,7 +157,7 @@ namespace Oracle
     }
 
     //游戏启动Patch, 用于捕获关键实例
-    [HarmonyPatch(typeof(GameWorld), "OnGameStarted")]
+    [HarmonyPatch(typeof(GameWorld), nameof(GameWorld.OnGameStarted))]
     public class GameStartPatch
     {
         [HarmonyPostfix]

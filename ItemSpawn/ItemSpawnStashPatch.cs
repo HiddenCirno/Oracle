@@ -11,17 +11,17 @@ namespace Oracle.ItemSpawn
     public static class ItemSpawnStashPatch
     {
         //捕获invctrler
-        [HarmonyPatch(typeof(InventoryScreen), "Show", new Type[]
+        [HarmonyPatch(typeof(InventoryScreen), nameof(InventoryScreen.Show), new Type[]
         {
         typeof(IHealthController),
         typeof(InventoryController),
-        typeof(AbstractQuestControllerClass),
-        typeof(AbstractAchievementControllerClass),
-        typeof(AbstractPrestigeControllerClass),
+        typeof(EFT.Quests.QuestController),
+        typeof(EFT.Achievements.AchievementsController),
+        typeof(EFT.Prestige.PrestigeController),
         typeof(CompoundItem),
         typeof(EInventoryTab),
-        typeof(ISession),
-        typeof(ItemContextAbstractClass),
+        typeof(EFT.IEftSession),
+        typeof(ItemContext),
         typeof(bool)
         })]
         public class InventoryScreen_Show_Patch
@@ -41,11 +41,11 @@ namespace Oracle.ItemSpawn
         }
 
         //桥接请求
-        [HarmonyPatch(typeof(TraderControllerClass), "ConvertOperationResultToOperation")]
+        [HarmonyPatch(typeof(ItemController), "ConvertOperationResultToOperation")]
         public class Patch_ConvertOperation
         {
             [HarmonyPrefix]
-            public static bool Prefix(TraderControllerClass __instance, IRaiseEvents operationResult, ref BaseInventoryOperationClass __result)
+            public static bool Prefix(ItemController __instance, IOperationResult operationResult, ref EFT.InventoryLogic.Operations.AbstractOperation __result)
             {
                 try
                 {
@@ -59,7 +59,7 @@ namespace Oracle.ItemSpawn
                     //3405是ADD
                     //你妈的这段4.1是不是得改
                     string operationTypeName = operationResult.GetType().Name;
-                    if (targetItem != null && operationTypeName == "GClass3405")
+                    if (targetItem != null && operationTypeName == "AddResult")
                     {
                         var method12 = AccessTools.Method(operationResult.GetType().BaseType, "method_12")
                                     ?? AccessTools.Method(__instance.GetType(), "method_12");
