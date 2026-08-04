@@ -14,8 +14,13 @@ namespace Oracle.Utils
 
         static CursorSettings()
         {
-            var cursorType = PatchConstants.EftTypes.Single(x => x.GetMethod("SetCursor") != null);
-            setCursorMethod = cursorType.GetMethod("SetCursor");
+            setCursorMethod = PatchConstants.EftTypes
+                .SelectMany(t => t.GetMethods(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static | BindingFlags.Instance))
+                .FirstOrDefault(m =>
+                    m.Name == "SetCursor" &&
+                    m.GetParameters().Length == 1 &&
+                    m.GetParameters()[0].ParameterType == typeof(ECursorType)
+                );
         }
 
         public static void SetCursor(ECursorType type)
