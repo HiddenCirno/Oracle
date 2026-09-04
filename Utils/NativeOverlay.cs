@@ -34,10 +34,10 @@ namespace Oracle.Utils
         private static extern IntPtr LoadCursor(IntPtr hInstance, int lpCursorName);
         [DllImport("user32.dll", SetLastError = true)]
         private static extern bool UnregisterClassW(string lpClassName, IntPtr hInstance);
-        [DllImport("user32.dll")]
-        private static extern IntPtr DefWindowProcW(IntPtr hWnd, uint msg, IntPtr wParam, IntPtr lParam);
         [DllImport("kernel32.dll")]
         private static extern IntPtr GetModuleHandle(string lpModuleName);
+        [DllImport("kernel32.dll", CharSet = CharSet.Ansi)]
+        private static extern IntPtr GetProcAddress(IntPtr hModule, string lpProcName);
 
         [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
         private struct WNDCLASSEX
@@ -56,14 +56,12 @@ namespace Oracle.Utils
             public IntPtr hIconSm;
         }
 
-        //WndProc 委托必须保活（GC 根），否则回调时被回收会崩
-        [UnmanagedFunctionPointer(CallingConvention.Winapi)]
-        private delegate IntPtr OverlayWndProcDelegate(IntPtr hWnd, uint msg, IntPtr wParam, IntPtr lParam);
-        private static readonly OverlayWndProcDelegate _wndProc = delegate (IntPtr hWnd, uint msg, IntPtr wParam, IntPtr lParam)
-        {
-            return DefWindowProcW(hWnd, msg, wParam, lParam);
-        };
-
+        //⚠ 不要用托管 delegate 作 WndProc（Marshal.GetFunctionPointerForDelegate 注册到
+        //  RegisterClassExW 后，CreateWindowEx 同步派发 WM_NCCREATE/WM_CREATE 回调托管 thunk，
+        //  在 Unity Mono 下会原生崩溃：0xc000041d STATUS_FATAL_USER_CALLBACK_EXCEPTION，
+        //  崩溃日志无任何叠加层日志、故障模块 StackHash/unknown，实机实测 3 次必现）。
+        //  叠加层窗口只需 UpdateLayeredWindow 上屏、无自定义消息处理，直接用
+        //  user32!DefWindowProcW 的原生地址作窗口过程即可（纯 native 回调，零托管交互）。
         private const string OverlayClassName = "OracleESP_OverlayWnd";
         private static bool _classRegistered;
 
@@ -72,7 +70,8 @@ namespace Oracle.Utils
             if (_classRegistered) return;
             WNDCLASSEX wc = new WNDCLASSEX();
             wc.cbSize = (uint)Marshal.SizeOf(typeof(WNDCLASSEX));
-            wc.lpfnWndProc = Marshal.GetFunctionPointerForDelegate(_wndProc);
+            IntPtr user32 = GetModuleHandle("user32.dll");
+            wc.lpfnWndProc = GetProcAddress(user32, "DefWindowProcW");
             wc.hInstance = GetModuleHandle(null);
             wc.hCursor = LoadCursor(IntPtr.Zero, 32512); // IDC_ARROW 系统箭头光标
             wc.lpszClassName = OverlayClassName;
@@ -110,8 +109,7 @@ namespace Oracle.Utils
         {
             screenW = w;
             screenH = h;
-
-            //创建一个可以让鼠标穿过的透明窗口
+            UnityEngine.Debug.Log($"[Oracle] 叠加层初始化: {w}x{h}");
             //⚠ SW_SHOWNA(8) 而不是 SW_SHOW(5)：SW_SHOW 会激活窗口抢走游戏焦点，
             //  导致 Application.isFocused 变 false，下一帧 UpdateNativeOverlay 就把窗口隐藏，全黑。
             int exStyle = 0x80000 | 0x20 | 0x8 | 0x80; // WS_EX_LAYERED|TRANSPARENT|TOPMOST|TOOLWINDOW
