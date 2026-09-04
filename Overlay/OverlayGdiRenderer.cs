@@ -64,7 +64,7 @@ namespace Oracle.Overlay
         [DllImport("gdi32.dll")] private static extern bool LineTo(IntPtr hdc, int x, int y);
         [DllImport("gdi32.dll")] private static extern IntPtr CreatePen(int fnPenStyle, int nWidth, uint crColor);
         [DllImport("gdi32.dll")] private static extern IntPtr CreateSolidBrush(uint crColor);
-        [DllImport("gdi32.dll")] private static extern bool FillRect(IntPtr hdc, ref RECT lprc, IntPtr hbr);
+        [DllImport("user32.dll")] private static extern bool FillRect(IntPtr hdc, ref RECT lprc, IntPtr hbr);
         [DllImport("gdi32.dll", CharSet = CharSet.Unicode)] private static extern IntPtr CreateFontW(int cHeight, int cWidth, int cEscapement, int cOrientation, int cWeight, int bItalic, int bUnderline, int bStrikeOut, int iCharSet, int iOutPrecision, int iClipPrecision, int iQuality, int iPitchAndFamily, string pszFaceName);
         [DllImport("gdi32.dll")] private static extern int SetBkMode(IntPtr hdc, int iBkMode);
         [DllImport("gdi32.dll")] private static extern uint SetTextColor(IntPtr hdc, uint crColor);
