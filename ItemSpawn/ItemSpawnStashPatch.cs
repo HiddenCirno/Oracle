@@ -51,7 +51,7 @@ namespace Oracle.ItemSpawn
                 {
                     //没有物品直接跳过
                     if (ItemManagerGUI.generatedItem == null) return true;
-                    
+
                     //确认物品
                     Item targetItem = ItemManagerGUI.generatedItem;
 
@@ -61,27 +61,14 @@ namespace Oracle.ItemSpawn
                     string operationTypeName = operationResult.GetType().Name;
                     if (targetItem != null && operationTypeName == "AddResult")
                     {
-                        var method12 = AccessTools.Method(operationResult.GetType().BaseType, "method_12")
-                                    ?? AccessTools.Method(__instance.GetType(), "method_12");
+                        ushort txId = __instance.GetAndIncrementNextOperationId();
+                        __result = new OracleAddOperationClass(txId, __instance, targetItem);
+                        Console.WriteLine($"[Oracle] {operationTypeName}桥接成功");
 
-                        if (method12 != null)
-                        {
-                            ushort txId = (ushort)method12.Invoke(__instance, null);
+                        //清空缓存
 
-                            //桥接到自定义路由
-                            __result = new OracleAddOperationClass(txId, __instance, targetItem);
-                            Console.WriteLine($"[Oracle] {operationTypeName}桥接成功");
-
-                            //清空缓存
-                            ItemManagerGUI.generatedItem = null;
-
-                            //不再执行
-                            return false;
-                        }
-                        else
-                        {
-                            Console.WriteLine("[Oracle] 警告： method_12 获取失败！");
-                        }
+                        //不再执行
+                        return false;
                     }
                 }
                 catch (Exception ex)

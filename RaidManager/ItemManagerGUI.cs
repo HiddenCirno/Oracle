@@ -299,7 +299,7 @@ namespace Oracle.RaidManager
                         {
                             var cloneItem = item.CloneItem().ReassignAllIds().CleanAndResetItem(SpawnedInSession);
                             generatedItem = cloneItem;
-                            //ItemSpawner.CloneAndSpawnItemIntoStash(cloneItem);
+                            ItemSpawner.CloneAndSpawnItemIntoStash(cloneItem);
                         }
                     }
 
