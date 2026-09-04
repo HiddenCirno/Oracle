@@ -36,8 +36,11 @@ namespace Oracle
         //叠加层材质
         public RenderTexture espRT;
 
-        //帧率限制
-        private float espRefreshRate = 1f / 50f;
+        //半分辨率 readback 目标（GPU 降采样后回读，数据量减 75%）
+        private RenderTexture halfRT;
+
+        //帧率限制（叠加层为保留模式，上一帧 DIB 仍在窗口上，降频不会闪烁）
+        private float espRefreshRate = 1f / 30f;
         private float lastEspDrawTime = 0f;
 
         public void Awake()
@@ -63,6 +66,12 @@ namespace Oracle
             //叠加层材质初始化
             espRT = new RenderTexture(Screen.width, Screen.height, 0, RenderTextureFormat.ARGB32);
             espRT.Create();
+            //半分辨率 readback 目标（配置开启时创建，运行时锁定模式）
+            if (NativeOverlayCfg.OverlayHalfResolution.Value)
+            {
+                halfRT = new RenderTexture(Mathf.Max(1, Screen.width / 2), Mathf.Max(1, Screen.height / 2), 0, RenderTextureFormat.ARGB32);
+                halfRT.Create();
+            }
             //启动叠加层
             NativeOverlay.Initialize(Screen.width, Screen.height);
 
@@ -139,6 +148,13 @@ namespace Oracle
             {
                 return;
             }
+
+            //readback 排队：上一帧 GPU 回读尚未完成则跳过本帧，防止请求积压
+            //叠加层为保留模式，上一帧 DIB 仍留在窗口上，跳帧不会闪烁
+            if (NativeOverlay.IsReadbackPending)
+            {
+                return;
+            }
             lastEspDrawTime = Time.time;
 
             //将绘制目标设置为自定义纹理而不是主摄像机
@@ -151,8 +167,18 @@ namespace Oracle
             //恢复窗口焦点
             RenderTexture.active = prevRT;
 
+            //半分辨率优化：全分辨率绘制后 GPU 降采样到 halfRT，readback / DIB 数据量减 75%
+            //使用初始化时锁定的模式，避免运行时切换配置破坏 readback 尺寸匹配
+            RenderTexture readTarget = espRT;
+            if (NativeOverlay.IsHalfResolution && halfRT != null)
+            {
+                Graphics.Blit(espRT, halfRT);
+                readTarget = halfRT;
+            }
+
             //将图像流异步传输给窗口
-            UnityEngine.Rendering.AsyncGPUReadback.Request(espRT, 0, TextureFormat.BGRA32, NativeOverlay.OnReadbackComplete);
+            NativeOverlay.IsReadbackPending = true;
+            UnityEngine.Rendering.AsyncGPUReadback.Request(readTarget, 0, TextureFormat.BGRA32, NativeOverlay.OnReadbackComplete);
         }
     }
 

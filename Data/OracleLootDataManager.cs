@@ -30,6 +30,30 @@ namespace Oracle.Data
         public static Dictionary<MongoID, int?> ItemLevelCache = new Dictionary<MongoID, int?>();
 
         /// <summary>
+        /// 本地化名称缓存（TemplateId → 本地化名），避免每秒扫描对每个物品重复 Localized() 字典查找
+        /// 全名 / 短名分开缓存，互不干扰（ShowItemFullName 切换不影响）
+        /// </summary>
+        private static readonly Dictionary<string, string> FullNameCache = new Dictionary<string, string>();
+        private static readonly Dictionary<string, string> ShortNameCache = new Dictionary<string, string>();
+
+        /// <summary>
+        /// 按模板缓存物品本地化名称
+        /// </summary>
+        private static string GetLocalizedItemName(Item item, bool fullName)
+        {
+            if (item == null) return "";
+            string templateId = item.TemplateId;
+            if (string.IsNullOrEmpty(templateId)) return fullName ? item.Name.Localized() : item.ShortName.Localized();
+
+            var cache = fullName ? FullNameCache : ShortNameCache;
+            if (cache.TryGetValue(templateId, out var cached)) return cached;
+
+            string name = fullName ? item.Name.Localized() : item.ShortName.Localized();
+            cache[templateId] = name;
+            return name;
+        }
+
+        /// <summary>
         /// 价值界限定义
         /// </summary>
         public static class PriceTier
@@ -56,9 +80,14 @@ namespace Oracle.Data
             //初始指针
             CachedLootList = frontBuffer;
 
+            //分帧处理：每处理一批让出主线程一帧，消除巨量战利品导致的单帧长停顿
+            const int BATCH_SIZE = 300;
+            int batchCounter = 0;
+
             while (true)
             {
-                yield return new WaitForSeconds(1f);
+                //扫描频率：2 秒一次（原 1s，降低主线程周期尖峰频率）
+                yield return new WaitForSeconds(2f);
 
                 if (PluginsCore.CorrectGameWorld == null || PluginsCore.CorrectPlayer == null)
                 {
@@ -90,10 +119,17 @@ namespace Oracle.Data
 
                     float dist = Vector3.Distance(playerPos, lootItem.transform.position);
 
-                    //写入缓存
+                    //写入缓存（本地化名走模板缓存，避免重复 Localized 查找）
                     TryAddLootData(backBuffer, positionOffsets, lootItem.Item, lootItem, null,
-                        LootESPCfg.ShowItemFullName.Value ? lootItem.Item.Name.Localized() : lootItem.Item.ShortName.Localized(),
+                        GetLocalizedItemName(lootItem.Item, LootESPCfg.ShowItemFullName.Value),
                         lootItem.transform.position, (int)dist);
+
+                    //分帧让出主线程
+                    if (++batchCounter >= BATCH_SIZE)
+                    {
+                        batchCounter = 0;
+                        yield return null;
+                    }
                 }
 
                 //容器透视
@@ -111,10 +147,17 @@ namespace Oracle.Data
                         {
                             if (item == container.ItemOwner.RootItem) continue;
 
-                            //写入缓存
+                            //写入缓存（本地化名走模板缓存）
                             TryAddLootData(backBuffer, positionOffsets, item, null, container,
-                                LootESPCfg.ShowItemFullName.Value ? item.Name.Localized() : item.ShortName.Localized(),
+                                GetLocalizedItemName(item, LootESPCfg.ShowItemFullName.Value),
                                 container.transform.position, dist, string.Format("text_esp_container_tag".i18n(), containerName));
+
+                            //分帧让出主线程
+                            if (++batchCounter >= BATCH_SIZE)
+                            {
+                                batchCounter = 0;
+                                yield return null;
+                            }
                         }
                     }
                 }

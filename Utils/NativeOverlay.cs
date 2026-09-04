@@ -18,6 +18,20 @@ namespace Oracle.Utils
         //图像流缓存
         private static byte[] pixelBuffer;
 
+        //readback 排队标志：上一帧 GPU 回读完成前不再发起新请求，防止请求积压
+        //在渲染线程回调写入、主线程 OnGUI 读取，volatile 保证跨线程可见
+        public static volatile bool IsReadbackPending;
+
+        //初始化时锁定的半分辨率模式（运行时固定，防止 F12 动态切换导致 readback 尺寸与缓存不匹配冻结）
+        public static bool IsHalfResolution;
+
+        // ---- DIB section 复用缓存（避免每帧 Create/Delete 8MB 级 GDI 对象） ----
+        private static IntPtr _cachedDibBitmap = IntPtr.Zero;
+        private static IntPtr _cachedMemDC = IntPtr.Zero;
+        private static IntPtr _cachedDibBits = IntPtr.Zero;
+        private static IntPtr _cachedOldBmp = IntPtr.Zero;
+        private static int _dibWidth, _dibHeight;
+
         //引入Windows底层API
         [DllImport("user32.dll", SetLastError = true)]
         private static extern IntPtr CreateWindowEx(int dwExStyle, string lpClassName, string lpWindowName, int dwStyle, int x, int y, int nWidth, int nHeight, IntPtr hWndParent, IntPtr hMenu, IntPtr hInstance, IntPtr lpParam);
@@ -59,50 +73,112 @@ namespace Oracle.Utils
         /// <param name="h">窗口高度</param>
         public static void Initialize(int w, int h)
         {
-            //预分配缓存, 高效GC
-            pixelBuffer = new byte[Screen.width * Screen.height * 4];
-
-            screenW = w; 
+            screenW = w;
             screenH = h;
+
+            //半分辨率：readback / DIB 数据量减 75%，窗口仍全屏（GDI 拉伸显示，骨骼线条无影响，文本轻微柔化）
+            //锁定模式，运行时不再读取配置，防止动态切换破坏尺寸匹配
+            IsHalfResolution = NativeOverlayCfg.OverlayHalfResolution.Value;
+            int dibW = IsHalfResolution ? Math.Max(1, w / 2) : w;
+            int dibH = IsHalfResolution ? Math.Max(1, h / 2) : h;
+
+            //预分配缓存, 高效GC
+            pixelBuffer = new byte[dibW * dibH * 4];
+
+            //预建 DIB section（复用，避免每帧 8MB 级分配/释放）
+            EnsureDib(dibW, dibH);
+
             //创建一个可以让鼠标穿过的透明窗口
-            int exStyle = 0x80000 | 0x20 | 0x8 | 0x80; 
+            int exStyle = 0x80000 | 0x20 | 0x8 | 0x80;
             int style = unchecked((int)0x80000000);
             hwnd = CreateWindowEx(exStyle, "STATIC", "OracleESP_Overlay", style, 0, 0, w, h, IntPtr.Zero, IntPtr.Zero, IntPtr.Zero, IntPtr.Zero);
             ShowWindow(hwnd, 5);
         }
 
         /// <summary>
-        /// 接受图像流然后投射到窗口上
+        /// 接受图像流然后投射到窗口上（复用缓存的 DIB section，不再每帧创建/销毁）
         /// </summary>
         /// <param name="bgraData">数据流</param>
         public static void UpdateFrame(byte[] bgraData)
         {
             if (hwnd == IntPtr.Zero) return;
+            if (_cachedDibBitmap == IntPtr.Zero || _cachedDibBits == IntPtr.Zero || _cachedMemDC == IntPtr.Zero)
+            {
+                //DIB 尚未就绪（如销毁期间），直接丢弃本帧
+                return;
+            }
+
             IntPtr screenDC = GetDC(IntPtr.Zero);
-            IntPtr memDC = CreateCompatibleDC(screenDC);
+
+            //整帧拷贝到缓存位图像素区
+            Marshal.Copy(bgraData, 0, _cachedDibBits, bgraData.Length);
+
+            POINT ptSrc = new POINT { x = 0, y = 0 };
+            POINT ptDst = new POINT { x = 0, y = 0 };
+            //窗口尺寸始终为全屏（半分辨率 DIB 会被 GDI 拉伸铺满，骨骼线条无感，文本轻微柔化）
+            SIZE size = new SIZE { cx = screenW, cy = screenH };
+            BLENDFUNCTION blend = new BLENDFUNCTION { BlendOp = 0, BlendFlags = 0, SourceConstantAlpha = 255, AlphaFormat = 1 }; // 开启 Alpha 透明通道
+            UpdateLayeredWindow(hwnd, screenDC, ref ptDst, ref size, _cachedMemDC, ref ptSrc, 0, ref blend, 2);
+
+            ReleaseDC(IntPtr.Zero, screenDC);
+        }
+
+        /// <summary>
+        /// 确保缓存的 DIB section 存在且尺寸匹配（分辨率变化时自动重建）
+        /// </summary>
+        private static void EnsureDib(int w, int h)
+        {
+            if (_cachedDibBitmap != IntPtr.Zero && _dibWidth == w && _dibHeight == h)
+            {
+                return;
+            }
+
+            //重建：先释放旧的
+            FreeDib();
+
+            IntPtr screenDC = GetDC(IntPtr.Zero);
+            _cachedMemDC = CreateCompatibleDC(screenDC);
             BITMAPINFO bmi = new BITMAPINFO();
             bmi.bmiHeader.biSize = (uint)Marshal.SizeOf(typeof(BITMAPINFOHEADER));
-            bmi.bmiHeader.biWidth = screenW;
-            bmi.bmiHeader.biHeight = screenH;
+            bmi.bmiHeader.biWidth = w;
+            bmi.bmiHeader.biHeight = h;
             bmi.bmiHeader.biPlanes = 1;
             bmi.bmiHeader.biBitCount = 32;
             bmi.bmiHeader.biCompression = 0;
-            IntPtr pBits = IntPtr.Zero;
-            IntPtr hBitmap = CreateDIBSection(screenDC, ref bmi, 0, out pBits, IntPtr.Zero, 0);
-            if (hBitmap != IntPtr.Zero)
+            _cachedDibBitmap = CreateDIBSection(screenDC, ref bmi, 0, out _cachedDibBits, IntPtr.Zero, 0);
+            if (_cachedDibBitmap != IntPtr.Zero)
             {
-                Marshal.Copy(bgraData, 0, pBits, bgraData.Length);
-                IntPtr hOldBmp = SelectObject(memDC, hBitmap);
-                POINT ptSrc = new POINT { x = 0, y = 0 };
-                POINT ptDst = new POINT { x = 0, y = 0 };
-                SIZE size = new SIZE { cx = screenW, cy = screenH };
-                BLENDFUNCTION blend = new BLENDFUNCTION { BlendOp = 0, BlendFlags = 0, SourceConstantAlpha = 255, AlphaFormat = 1 }; // 开启 Alpha 透明通道
-                UpdateLayeredWindow(hwnd, screenDC, ref ptDst, ref size, memDC, ref ptSrc, 0, ref blend, 2);
-                SelectObject(memDC, hOldBmp);
-                DeleteObject(hBitmap);
+                _cachedOldBmp = SelectObject(_cachedMemDC, _cachedDibBitmap);
+                _dibWidth = w;
+                _dibHeight = h;
             }
-            DeleteDC(memDC);
             ReleaseDC(IntPtr.Zero, screenDC);
+        }
+
+        /// <summary>
+        /// 释放缓存的 DIB section / 兼容 DC
+        /// </summary>
+        private static void FreeDib()
+        {
+            if (_cachedMemDC != IntPtr.Zero && _cachedOldBmp != IntPtr.Zero)
+            {
+                SelectObject(_cachedMemDC, _cachedOldBmp);
+            }
+            if (_cachedDibBitmap != IntPtr.Zero)
+            {
+                DeleteObject(_cachedDibBitmap);
+            }
+            if (_cachedMemDC != IntPtr.Zero)
+            {
+                DeleteDC(_cachedMemDC);
+            }
+
+            _cachedDibBitmap = IntPtr.Zero;
+            _cachedMemDC = IntPtr.Zero;
+            _cachedDibBits = IntPtr.Zero;
+            _cachedOldBmp = IntPtr.Zero;
+            _dibWidth = 0;
+            _dibHeight = 0;
         }
 
         /// <summary>
@@ -114,9 +190,16 @@ namespace Oracle.Utils
 
             try
             {
-                //清除画面
+                //清除画面（缓冲区尺寸与 DIB 一致）
                 ShowWindow(hwnd, SW_HIDE);
-                UpdateFrame(new byte[screenW * screenH * 4]);
+                if (pixelBuffer != null)
+                {
+                    UpdateFrame(new byte[pixelBuffer.Length]);
+                }
+                else
+                {
+                    UpdateFrame(new byte[_dibWidth * _dibHeight * 4]);
+                }
 
                 //销毁窗口
                 DestroyWindow(hwnd);
@@ -129,6 +212,8 @@ namespace Oracle.Utils
                 //重置句柄
                 hwnd = IntPtr.Zero;
                 isVisible = false;
+                //释放缓存 DIB
+                FreeDib();
             }
         }
 
@@ -148,8 +233,15 @@ namespace Oracle.Utils
             else if (!show && isVisible)
             {
                 ShowWindow(hwnd, SW_HIDE);
-                //清空画布
-                UpdateFrame(new byte[screenW * screenH * 4]);
+                //清空画布（缓冲区尺寸与 DIB 一致）
+                if (pixelBuffer != null)
+                {
+                    UpdateFrame(new byte[pixelBuffer.Length]);
+                }
+                else
+                {
+                    UpdateFrame(new byte[_dibWidth * _dibHeight * 4]);
+                }
                 isVisible = false;
             }
         }
@@ -189,12 +281,15 @@ namespace Oracle.Utils
         /// <param name="req"></param>
         public static void OnReadbackComplete(UnityEngine.Rendering.AsyncGPUReadbackRequest req)
         {
+            //解除排队标志：允许下一帧发起新的 readback 请求
+            IsReadbackPending = false;
+
             if (req.hasError || pixelBuffer == null) return;
-            //GPU数据传输
-            req.GetData<byte>().CopyTo(pixelBuffer); 
-            //分辨率防御
+            //分辨率防御（半分辨率 readback 的尺寸必须与预分配缓存一致）
             var data = req.GetData<byte>();
             if (data.Length != pixelBuffer.Length) return;
+            //GPU数据传输
+            data.CopyTo(pixelBuffer);
             //将图像流传输给窗口
             NativeOverlay.UpdateFrame(pixelBuffer);
         }
@@ -207,6 +302,7 @@ namespace Oracle.Utils
     {
 
         internal static ConfigEntry<bool> EnableNativeOverlay { get; set; }
+        internal static ConfigEntry<bool> OverlayHalfResolution { get; set; }
 
         /// <summary>
         /// 配置项初始化
@@ -226,6 +322,21 @@ namespace Oracle.Utils
                         DispName = "cfg_global_module_overlay_enable_name".i18n(),
                         IsAdvanced = false,
                         Order = 397
+                    }
+                )
+            );
+            OverlayHalfResolution = config.Bind(
+                "0. 联觉信标 / Draw Module",
+                "叠加层半分辨率（性能优化）",
+                true,
+                new ConfigDescription(
+                    "cfg_global_module_overlay_half_res_desc".i18n(),
+                    null,
+                    new ConfigurationManagerAttributes
+                    {
+                        DispName = "cfg_global_module_overlay_half_res_name".i18n(),
+                        IsAdvanced = false,
+                        Order = 396
                     }
                 )
             );

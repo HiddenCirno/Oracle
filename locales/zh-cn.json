@@ -45,6 +45,8 @@
     "cfg_global_module_overlay_fps_limit_enable_desc": "限制叠加层的最大绘制帧率，可以降低叠加层的性能占用。",
     "cfg_global_module_overlay_enable_name": "启用叠加层",
     "cfg_global_module_overlay_enable_desc": "启用后捕获游戏窗口将无法捕获到管理菜单之外的绘制画面，会造成性能损耗。",
+    "cfg_global_module_overlay_half_res_name": "叠加层半分辨率（性能优化）",
+    "cfg_global_module_overlay_half_res_desc": "在 GPU 回读前将叠加层降采样为半分辨率，转译数据量减少 75%，文本会有轻微柔化。",
     "message_uni_gui_enable": "全局绘制已{0}",
     "cfg_global_module_screen_crosshair_enable_name": "启用自定义准星",
     "cfg_global_module_screen_crosshair_enable_desc": "是否在屏幕中心显示自定义的辅助准星。",
