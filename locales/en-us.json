@@ -46,7 +46,7 @@
     "cfg_global_module_overlay_enable_name": "Enable Overlay",
     "cfg_global_module_overlay_enable_desc": "Enabling may prevent capture of in-game rendering outside the menu and may impact performance.",
     "cfg_global_module_overlay_half_res_name": "Overlay Half Resolution (Perf)",
-    "cfg_global_module_overlay_half_res_desc": "Downsample overlay to half resolution before GPU readback. Cuts transfer data by 75% with minor text softening.",
+    "cfg_global_module_overlay_half_res_desc": "Downsample overlay to half resolution before GPU readback. Cuts transfer data by 75% with minor text softening. Apply on next overlay re-enable or game restart.",
     "message_uni_gui_enable": "Global rendering has been {0}",
     "cfg_global_module_screen_crosshair_enable_name": "Enable Custom Crosshair",
     "cfg_global_module_screen_crosshair_enable_desc": "Display a custom crosshair at screen center.",

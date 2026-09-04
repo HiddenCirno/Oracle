@@ -402,7 +402,7 @@ namespace Oracle.Utils
             OverlayHalfResolution = config.Bind(
                 "0. 联觉信标 / Draw Module",
                 "叠加层半分辨率（性能优化）",
-                true,
+                false,
                 new ConfigDescription(
                     "cfg_global_module_overlay_half_res_desc".i18n(),
                     null,

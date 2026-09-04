@@ -66,14 +66,14 @@ namespace Oracle
             //叠加层材质初始化
             espRT = new RenderTexture(Screen.width, Screen.height, 0, RenderTextureFormat.ARGB32);
             espRT.Create();
-            //半分辨率 readback 目标（配置开启时创建，运行时锁定模式）
-            if (NativeOverlayCfg.OverlayHalfResolution.Value)
-            {
-                halfRT = new RenderTexture(Mathf.Max(1, Screen.width / 2), Mathf.Max(1, Screen.height / 2), 0, RenderTextureFormat.ARGB32);
-                halfRT.Create();
-            }
-            //启动叠加层
-            NativeOverlay.Initialize(Screen.width, Screen.height);
+            //半分辨率 readback 目标：无条件创建，运行时始终可用。
+            //注意：不能按启动时的 OverlayHalfResolution 配置来决定是否创建——
+            //叠加层在运行时会重新 Initialize（按当时配置定型 pixelBuffer），若 halfRT 缺失
+            //会导致 readback 尺寸与 pixelBuffer 不匹配，叠加层内容无法刷新（先开优化再开叠加层即触发）。
+            halfRT = new RenderTexture(Mathf.Max(1, Screen.width / 2), Mathf.Max(1, Screen.height / 2), 0, RenderTextureFormat.ARGB32);
+            halfRT.Create();
+            //叠加层由 UpdateNativeOverlay 统一管理生命周期（EnableNativeOverlay 首次启用时才初始化），
+            //不在 Start 提前 Initialize，避免重复初始化泄漏窗口、并确保 pixelBuffer 尺寸与当时配置一致。
 
             //战利品扫描协程
             StartCoroutine(OracleLootDataManager.LootScannerCoroutine());
