@@ -197,6 +197,11 @@ namespace Oracle.Utils
             //调试自检帧开关同步（渲染线程轮询此标志，配置改动即时生效）
             OverlayGdiRenderer.ForceTestFrame = NativeOverlayCfg.OverlayDebugTestFrame.Value;
 
+            //失焦自动停止：游戏窗口失焦时暂停渲染线程（不绘制、保留最后一帧），聚焦自动恢复。
+            //⚠ 只暂停渲染、绝不 SW_HIDE 窗口——全屏窗口化下 Application.isFocused 抖动会导致
+            //   SW_HIDE 后"一闪而过消失"黑屏（b274c8c 已踩过坑）。
+            OverlayGdiRenderer.RenderPaused = !Application.isFocused;
+
             bool enable = NativeOverlayCfg.EnableNativeOverlay.Value;
             if (enable != _lastEnableState)
             {

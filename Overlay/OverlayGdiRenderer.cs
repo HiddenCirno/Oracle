@@ -38,6 +38,13 @@ namespace Oracle.Overlay
         /// <summary>调试开关：强制绘制自检测试帧（红块+文字），绕过数据桥，验证窗口/GDI 管线是否通畅</summary>
         public static bool ForceTestFrame;
 
+        /// <summary>
+        /// 失焦自动停止：游戏窗口失焦时置 true，渲染线程跳过取块/绘制，保留最后一帧画面省性能。
+        /// 仅暂停绘制，不 SW_HIDE 窗口——避免全屏窗口化下 isFocused 抖动导致叠加层闪黑。
+        /// 主线程 UpdateNativeOverlay 每帧同步，渲染线程只读。
+        /// </summary>
+        public static volatile bool RenderPaused;
+
         //上一帧脏区（清屏用：union(prev, cur)）
         private static int _prevDirtyX0, _prevDirtyY0, _prevDirtyX1, _prevDirtyY1;
         private static bool _hasPrevDirty;
@@ -196,28 +203,46 @@ namespace Oracle.Overlay
             int framesTaken = 0;       // 累计消费到的块
             int framesNull = 0;        // 累计 TakePublished 返回 null
             System.Console.WriteLine("[Oracle][Overlay] RenderLoop: 渲染线程主循环开始");
+            bool wasPaused = false;
             while (_running)
             {
                 try
                 {
-                    //调试自检帧：绕过数据桥直接画，定位黑屏是"窗口/GDI 问题"还是"数据桥问题"
-                    if (ForceTestFrame)
+                    //失焦暂停：不消费数据桥、不绘制，窗口保留最后一帧（省性能）
+                    if (RenderPaused)
                     {
-                        RenderTestFrame();
-                        framesTaken++;
+                        if (!wasPaused)
+                        {
+                            System.Console.WriteLine("[Oracle][Overlay] RenderLoop: 失焦，渲染暂停（保留最后一帧）");
+                            wasPaused = true;
+                        }
                     }
                     else
                     {
-                        OverlayPrimitiveBlock block = _store.TakePublished();
-                        if (block != null)
+                        if (wasPaused)
                         {
-                            Render(block);
-                            _store.ReturnBlock(block);
+                            System.Console.WriteLine("[Oracle][Overlay] RenderLoop: 聚焦，渲染恢复");
+                            wasPaused = false;
+                        }
+                        //调试自检帧：绕过数据桥直接画，定位黑屏是"窗口/GDI 问题"还是"数据桥问题"
+                        if (ForceTestFrame)
+                        {
+                            RenderTestFrame();
                             framesTaken++;
                         }
                         else
                         {
-                            framesNull++;
+                            OverlayPrimitiveBlock block = _store.TakePublished();
+                            if (block != null)
+                            {
+                                Render(block);
+                                _store.ReturnBlock(block);
+                                framesTaken++;
+                            }
+                            else
+                            {
+                                framesNull++;
+                            }
                         }
                     }
                 }
