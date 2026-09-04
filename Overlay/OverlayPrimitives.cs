@@ -150,11 +150,19 @@ namespace Oracle.Overlay
             }
         }
 
-        /// <summary>主线程：发布已填充的块</summary>
+        /// <summary>
+        /// 主线程：发布已填充的块。
+        /// 若上一帧还没被渲染线程取走（积压），先把旧块归还 free 池——
+        /// 否则 block 凭空消失，3 块耗尽后 AcquireWriteBlock 永远返回 null，叠加层停摆全黑。
+        /// </summary>
         public void Publish(OverlayPrimitiveBlock block)
         {
             lock (_sync)
             {
+                if (_published != null)
+                {
+                    _free[_freeCount++] = _published;
+                }
                 _published = block;
             }
         }

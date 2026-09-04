@@ -32,6 +32,12 @@ namespace Oracle.Overlay
         private static Thread _renderThread;
         private static volatile bool _running;
 
+        //屏幕尺寸缓存（渲染线程读取，不依赖 UnityEngine.Screen）
+        private static int _screenW, _screenH;
+
+        /// <summary>调试开关：强制绘制自检测试帧（红块+文字），绕过数据桥，验证窗口/GDI 管线是否通畅</summary>
+        public static bool ForceTestFrame;
+
         //上一帧脏区（清屏用：union(prev, cur)）
         private static int _prevDirtyX0, _prevDirtyY0, _prevDirtyX1, _prevDirtyY1;
         private static bool _hasPrevDirty;
@@ -44,24 +50,26 @@ namespace Oracle.Overlay
         private const int FrameRateMs = 33;
 
         // ---- P/Invoke ----
+        //⚠ 所有 *W 函数必须 CharSet.Unicode：默认 Ansi marshaling 会把宽字符函数当 ANSI 调，
+        //   CreateFontW/TextOutW/GetTextExtentPoint32W 的字符串会全部错乱
         [DllImport("gdi32.dll")] private static extern IntPtr CreateCompatibleDC(IntPtr hdc);
         [DllImport("gdi32.dll")] private static extern bool DeleteDC(IntPtr hdc);
         [DllImport("gdi32.dll")] private static extern IntPtr SelectObject(IntPtr hdc, IntPtr hObject);
         [DllImport("gdi32.dll")] private static extern bool DeleteObject(IntPtr hObject);
-        [DllImport("gdi32.dll")] private static extern IntPtr CreateDIBSection(IntPtr hdc, ref BITMAPINFO pbmi, uint iUsage, out IntPtr ppvBits, IntPtr hSection, uint dwOffset);
+        [DllImport("gdi32.dll", SetLastError = true)] private static extern IntPtr CreateDIBSection(IntPtr hdc, ref BITMAPINFO pbmi, uint iUsage, out IntPtr ppvBits, IntPtr hSection, uint dwOffset);
         [DllImport("gdi32.dll")] private static extern bool MoveToEx(IntPtr hdc, int x, int y, IntPtr lppt);
         [DllImport("gdi32.dll")] private static extern bool LineTo(IntPtr hdc, int x, int y);
         [DllImport("gdi32.dll")] private static extern IntPtr CreatePen(int fnPenStyle, int nWidth, uint crColor);
         [DllImport("gdi32.dll")] private static extern IntPtr CreateSolidBrush(uint crColor);
         [DllImport("gdi32.dll")] private static extern bool FillRect(IntPtr hdc, ref RECT lprc, IntPtr hbr);
-        [DllImport("gdi32.dll")] private static extern IntPtr CreateFontW(int cHeight, int cWidth, int cEscapement, int cOrientation, int cWeight, int bItalic, int bUnderline, int bStrikeOut, int iCharSet, int iOutPrecision, int iClipPrecision, int iQuality, int iPitchAndFamily, string pszFaceName);
+        [DllImport("gdi32.dll", CharSet = CharSet.Unicode)] private static extern IntPtr CreateFontW(int cHeight, int cWidth, int cEscapement, int cOrientation, int cWeight, int bItalic, int bUnderline, int bStrikeOut, int iCharSet, int iOutPrecision, int iClipPrecision, int iQuality, int iPitchAndFamily, string pszFaceName);
         [DllImport("gdi32.dll")] private static extern int SetBkMode(IntPtr hdc, int iBkMode);
         [DllImport("gdi32.dll")] private static extern uint SetTextColor(IntPtr hdc, uint crColor);
-        [DllImport("gdi32.dll")] private static extern bool GetTextExtentPoint32W(IntPtr hdc, string lpString, int c, out SIZE psizl);
-        [DllImport("gdi32.dll")] private static extern bool TextOutW(IntPtr hdc, int x, int y, string lpString, int c);
+        [DllImport("gdi32.dll", CharSet = CharSet.Unicode)] private static extern bool GetTextExtentPoint32W(IntPtr hdc, string lpString, int c, out SIZE psizl);
+        [DllImport("gdi32.dll", CharSet = CharSet.Unicode)] private static extern bool TextOutW(IntPtr hdc, int x, int y, string lpString, int c);
         [DllImport("user32.dll")] private static extern IntPtr GetDC(IntPtr hWnd);
         [DllImport("user32.dll")] private static extern int ReleaseDC(IntPtr hWnd, IntPtr hDC);
-        [DllImport("user32.dll")] private static extern bool UpdateLayeredWindow(IntPtr hwnd, IntPtr hdcDst, ref POINT pptDst, ref SIZE psize, IntPtr hdcSrc, ref POINT pptSrc, int crKey, ref BLENDFUNCTION pblend, int dwFlags);
+        [DllImport("user32.dll", SetLastError = true)] private static extern bool UpdateLayeredWindow(IntPtr hwnd, IntPtr hdcDst, ref POINT pptDst, ref SIZE psize, IntPtr hdcSrc, ref POINT pptSrc, int crKey, ref BLENDFUNCTION pblend, int dwFlags);
 
         [StructLayout(LayoutKind.Sequential)] private struct POINT { public int x, y; }
         [StructLayout(LayoutKind.Sequential)] private struct SIZE { public int cx, cy; }
@@ -84,6 +92,8 @@ namespace Oracle.Overlay
             _hwnd = hwnd;
             _dibWidth = w;
             _dibHeight = h;
+            _screenW = w;
+            _screenH = h;
             _store = store;
             _hasPrevDirty = false;
 
@@ -104,6 +114,12 @@ namespace Oracle.Overlay
                 if (_dibBitmap != IntPtr.Zero)
                 {
                     _oldBmp = SelectObject(_memDC, _dibBitmap);
+                }
+                else
+                {
+                    //创建失败防御：ppvBits 内容未定义，必须清零，否则渲染线程会按非零指针写内存
+                    _dibBits = IntPtr.Zero;
+                    UnityEngine.Debug.LogError($"[Oracle] CreateDIBSection 失败! GetLastError={Marshal.GetLastWin32Error()}");
                 }
 
                 //非抗锯齿粗体 12px 字体（中文支持用微软雅黑，Win10 内置）
@@ -167,11 +183,27 @@ namespace Oracle.Overlay
             long lastFrameMs = 0;
             while (_running)
             {
-                OverlayPrimitiveBlock block = _store.TakePublished();
-                if (block != null)
+                try
                 {
-                    Render(block);
-                    _store.ReturnBlock(block);
+                    //调试自检帧：绕过数据桥直接画，定位黑屏是"窗口/GDI 问题"还是"数据桥问题"
+                    if (ForceTestFrame)
+                    {
+                        RenderTestFrame();
+                    }
+                    else
+                    {
+                        OverlayPrimitiveBlock block = _store.TakePublished();
+                        if (block != null)
+                        {
+                            Render(block);
+                            _store.ReturnBlock(block);
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    //⚠ 渲染线程异常必须兜住：线程静默死亡会导致主线程 3 块耗尽后停摆，永久全黑
+                    UnityEngine.Debug.LogError($"[Oracle] 叠加层渲染线程异常: {ex}");
                 }
 
                 //保留模式：无新帧时窗口保留上一帧内容，仅节流到 30fps
@@ -231,6 +263,64 @@ namespace Oracle.Overlay
             _prevDirtyX1 = (int)block.DirtyX1 + 1;
             _prevDirtyY1 = (int)block.DirtyY1 + 1;
             _hasPrevDirty = true;
+        }
+
+        /// <summary>
+        /// 自检测试帧：绕过数据桥，直接全屏清空 + 画红色矩形 + 白色文字 + alpha 修正 + 上屏。
+        /// 打开配置若能看到红块白字，说明窗口/GDI/ULW 管线通畅，问题在数据桥侧；
+        /// 若看不到，问题在窗口创建或 GDI 绘制本身。
+        /// </summary>
+        private static void RenderTestFrame()
+        {
+            if (_hwnd == IntPtr.Zero || _memDC == IntPtr.Zero || _dibBits == IntPtr.Zero) return;
+
+            //全屏清空（透明黑）
+            for (int y = 0; y < _dibHeight; y++)
+            {
+                IntPtr row = IntPtr.Add(_dibBits, y * _dibWidth * 4);
+                Marshal.Copy(_zeroRow, 0, row, _dibWidth * 4);
+            }
+
+            //红色矩形（GDI FillRect，COLORREF = 0x000000FF）
+            RECT rc = new RECT
+            {
+                Left = _dibWidth / 2 - 120,
+                Top = _dibHeight / 2 - 60,
+                Right = _dibWidth / 2 + 120,
+                Bottom = _dibHeight / 2 + 60
+            };
+            IntPtr brush = CreateSolidBrush(0x000000FF);
+            if (brush != IntPtr.Zero)
+            {
+                FillRect(_memDC, ref rc, brush);
+                DeleteObject(brush);
+            }
+
+            //白色文字
+            SetTextColor(_memDC, 0x00FFFFFF);
+            TextOutW(_memDC, _dibWidth / 2 - 100, _dibHeight / 2 - 15, "Oracle GDI TEST", 15);
+
+            //alpha 修正（全屏）
+            FixAlpha(0, 0, _dibWidth, _dibHeight);
+
+            //上屏
+            IntPtr screenDC = GetDC(IntPtr.Zero);
+            try
+            {
+                POINT ptSrc = new POINT { x = 0, y = 0 };
+                POINT ptDst = new POINT { x = 0, y = 0 };
+                SIZE size = new SIZE { cx = _dibWidth, cy = _dibHeight };
+                BLENDFUNCTION blend = new BLENDFUNCTION { BlendOp = 0, BlendFlags = 0, SourceConstantAlpha = 255, AlphaFormat = 1 };
+                bool ok = UpdateLayeredWindow(_hwnd, screenDC, ref ptDst, ref size, _memDC, ref ptSrc, 0, ref blend, 2);
+                if (!ok)
+                {
+                    UnityEngine.Debug.LogError($"[Oracle] 测试帧 ULW 失败! GetLastError={Marshal.GetLastWin32Error()}");
+                }
+            }
+            finally
+            {
+                ReleaseDC(IntPtr.Zero, screenDC);
+            }
         }
 
         // ═══════════════════ GDI 绘制 ═══════════════════
