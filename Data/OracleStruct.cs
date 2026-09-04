@@ -21,12 +21,19 @@ namespace Oracle.Data
         public LootableContainer? Container;
         public Vector3 Position;
         public int ItemLevel;
+        /// <summary>富文本（OnGUI 模式专用，叠加层数据桥不拆解它）</summary>
         public string Name;
         public int Distance;
         public int Price;
         public OracleColor ItemColor;
         public int YOffset;
         public int StackCount;
+
+        // ⭐ 叠加层数据桥并行字段（窗口原生绘制专用，纯文本不带任何颜色标签）
+        /// <summary>纯文本："{容器前缀} {物品名} {价格}"，等级色段</summary>
+        public string OverlayText;
+        /// <summary>纯文本："{距离}米"，黄色段</summary>
+        public string OverlayDistanceText;
     }
     /// <summary>
     /// 绊雷数据缓存
@@ -36,6 +43,8 @@ namespace Oracle.Data
         public Vector3 StartPos;
         public Vector3 EndPos;
         public Vector3 CenterPos;
+        /// <summary>纯文本：绊雷标签（红色段）</summary>
+        public string OverlayLabel;
     }
 
     /// <summary>
@@ -44,8 +53,21 @@ namespace Oracle.Data
     public struct CorpseData
     {
         public Vector3 Position;
+        /// <summary>富文本（OnGUI 模式专用，叠加层数据桥不拆解它）</summary>
         public string FormattedText;
         public int Distance;
+
+        // ⭐ 叠加层数据桥并行字段（纯文本不带颜色标签，颜色单独用 OracleColor 传递）
+        /// <summary>纯文本："[已死亡]"（Corpse 色段）</summary>
+        public string OverlayTag;
+        /// <summary>纯文本："友军 "（AllyPlayer 色段，非队友为空串）</summary>
+        public string OverlayTeammateText;
+        /// <summary>纯文本："Lv.45"（PlayerLevel 色段，Scav 为空串）</summary>
+        public string OverlayLevelText;
+        /// <summary>纯文本："USEC John" / "Boss Killa"（阵营色段）</summary>
+        public string OverlaySideText;
+        /// <summary>Side 段颜色（USEC/BEAR/Scav 角色色）</summary>
+        public OracleColor OverlayColor;
     }
 
     public readonly struct EntityDisplayInfo
@@ -105,9 +127,18 @@ namespace Oracle.Data
         public static implicit operator Color(OracleColor oc) => oc.UnityColor;
 
         public static implicit operator string(OracleColor oc) => oc.HexColor;
-        
+
         //覆盖ToString为文本拼接提供兼容
         public override string ToString() => HexColor;
+
+        /// <summary>
+        /// 打包为 ARGB 32 位色值（0xAARRGGBB），供叠加层数据桥原生绘制直接取用
+        /// </summary>
+        public uint ToArgb()
+        {
+            Color32 c = (Color32)UnityColor;
+            return ((uint)c.a << 24) | ((uint)c.r << 16) | ((uint)c.g << 8) | c.b;
+        }
     }
 
     /// <summary>

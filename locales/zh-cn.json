@@ -154,6 +154,10 @@
 
     "text_esp_tripwire": "<color={0}>绊雷</color> <color={1}>{2}米</color>",
     "text_spawn_item_error": "生成物品失败！",
+    "text_esp_overlay_unit_distance": "{0}米",
+    "text_esp_overlay_corpse_dead_tag": "[已死亡]",
+    "text_esp_overlay_player_level": "{0}级",
+    "text_esp_overlay_tripwire_label": "绊雷",
     "text_esp_corpse_dead_tag": "<b>[已死亡]</b>",
     "text_esp_corpse_format": "<color={0}>{1}</color> {2}",
     "text_esp_container_tag": "[{0}]",

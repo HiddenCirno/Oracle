@@ -4,6 +4,7 @@ using EFT.InventoryLogic;
 using HarmonyLib;
 using Newtonsoft.Json;
 using Oracle.Data;
+using Oracle.Overlay;
 using Oracle.Utils;
 using System.Collections.Generic;
 using System.IO;
@@ -33,12 +34,6 @@ namespace Oracle
         //价格字典定义
         public static Dictionary<string, int> HandbookDict;
 
-        //叠加层材质
-        public RenderTexture espRT;
-
-        //半分辨率 readback 目标（GPU 降采样后回读，数据量减 75%）
-        private RenderTexture halfRT;
-
         //帧率限制（叠加层为保留模式，上一帧 DIB 仍在窗口上，降频不会闪烁）
         private float espRefreshRate = 1f / 30f;
         private float lastEspDrawTime = 0f;
@@ -63,17 +58,7 @@ namespace Oracle
 
         public void Start()
         {
-            //叠加层材质初始化
-            espRT = new RenderTexture(Screen.width, Screen.height, 0, RenderTextureFormat.ARGB32);
-            espRT.Create();
-            //半分辨率 readback 目标：无条件创建，运行时始终可用。
-            //注意：不能按启动时的 OverlayHalfResolution 配置来决定是否创建——
-            //叠加层在运行时会重新 Initialize（按当时配置定型 pixelBuffer），若 halfRT 缺失
-            //会导致 readback 尺寸与 pixelBuffer 不匹配，叠加层内容无法刷新（先开优化再开叠加层即触发）。
-            halfRT = new RenderTexture(Mathf.Max(1, Screen.width / 2), Mathf.Max(1, Screen.height / 2), 0, RenderTextureFormat.ARGB32);
-            halfRT.Create();
-            //叠加层由 UpdateNativeOverlay 统一管理生命周期（EnableNativeOverlay 首次启用时才初始化），
-            //不在 Start 提前 Initialize，避免重复初始化泄漏窗口、并确保 pixelBuffer 尺寸与当时配置一致。
+            //叠加层由 UpdateNativeOverlay 统一管理生命周期（EnableNativeOverlay 首次启用时才初始化）
 
             //战利品扫描协程
             StartCoroutine(OracleLootDataManager.LootScannerCoroutine());
@@ -150,38 +135,13 @@ namespace Oracle
             }
             lastEspDrawTime = Time.time;
 
-            //将绘制目标设置为自定义纹理而不是主摄像机
-            //try/finally 保证任何异常下都恢复 RenderTexture.active，
-            //避免污染后续 IMGUI 绘制（否则 F12 菜单等会画到 espRT 导致闪烁）
-            RenderTexture prevRT = RenderTexture.active;
-            try
+            //叠加层数据桥：主线程预计算屏幕空间 2D 原语，渲染线程（GDI）只消费原语绘制。
+            //不再创建 RenderTexture / GPU 回读 / 图像流传输。
+            OverlayPrimitiveBlock block = NativeOverlay.Store.AcquireWriteBlock();
+            if (block != null)
             {
-                RenderTexture.active = espRT;
-                GL.Clear(false, true, Color.clear);
-
-                //绘制事件
-                OracleEvent.Draw();
-
-                //半分辨率优化：全分辨率绘制后 GPU 降采样到 halfRT，readback / DIB 数据量减 75%
-                //使用初始化时锁定的模式，避免运行时切换配置破坏 readback 尺寸匹配
-                RenderTexture readTarget = espRT;
-                if (NativeOverlay.IsHalfResolution && halfRT != null)
-                {
-                    Graphics.Blit(espRT, halfRT);
-                    readTarget = halfRT;
-                }
-
-                //readback 排队：仅限制 readback 请求本身，espRT 每帧照常绘制；
-                //readback 未完成时隐形窗口保留上一帧 DIB，不会闪烁
-                if (!NativeOverlay.IsReadbackPending)
-                {
-                    NativeOverlay.IsReadbackPending = true;
-                    UnityEngine.Rendering.AsyncGPUReadback.Request(readTarget, 0, TextureFormat.BGRA32, NativeOverlay.OnReadbackComplete);
-                }
-            }
-            finally
-            {
-                RenderTexture.active = prevRT;
+                OverlayPrimitiveBuilder.Build(cam, block);
+                NativeOverlay.Store.Publish(block);
             }
         }
     }

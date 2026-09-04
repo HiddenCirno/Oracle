@@ -77,6 +77,12 @@ namespace Oracle.Data
                         //保底字符串
                         var result = "Scav Nikita Buyanov";
 
+                        //叠加层数据桥并行字段默认值（镜像 OnGUI 的 fallback）
+                        string overlayTeammate = "";
+                        string overlayLevel = "";
+                        string overlaySide = result;
+                        OracleColor overlayColor = OracleColorManager.Corpse;
+
                         //非空&查找缓存引用
                         if (!string.IsNullOrEmpty(profileId))
                         {
@@ -86,17 +92,27 @@ namespace Oracle.Data
                                 ProfileInfo info = deadPlayer.Profile.Info;
                                 if (info != null)
                                 {
-                                    OraclePlayerDataManager.DeterminePlayerText(info,OraclePlayerDataManager.GetPlayerName(info),OraclePlayerDataManager.IsTeammate(info),true,out result,out string levelText);
+                                    string name = OraclePlayerDataManager.GetPlayerName(info);
+                                    bool isTeammate = OraclePlayerDataManager.IsTeammate(info);
+
+                                    OraclePlayerDataManager.DeterminePlayerText(info, name, isTeammate, true, out result, out string levelText);
 
                                     //拼接
                                     if (!string.IsNullOrEmpty(levelText))
                                     {
                                         result = $"{levelText} {result}";
                                     }
+
+                                    //叠加层数据桥：纯文本 + 颜色（不拆解上面的富文本）
+                                    //等级/友军色是固定常量（PlayerLevel / AllyPlayer），由绘制层直接取用，这里用弃元丢弃
+                                    OraclePlayerDataManager.GetPlayerOverlayLabel(info, name, isTeammate, true,
+                                        out overlayLevel, out _,
+                                        out overlayTeammate, out _,
+                                        out overlaySide, out overlayColor);
                                 }
                             }
                         }
-                        
+
                         string formattedText = string.Format("text_esp_corpse_format".i18n(), OracleColorManager.Corpse, "text_esp_corpse_dead_tag".i18n(), result);
 
                         //写入后台缓存
@@ -104,7 +120,13 @@ namespace Oracle.Data
                         {
                             Position = corpsePos,
                             FormattedText = formattedText,
-                            Distance = dist
+                            Distance = dist,
+                            //叠加层数据桥并行字段
+                            OverlayTag = "text_esp_overlay_corpse_dead_tag".i18n(),
+                            OverlayTeammateText = overlayTeammate,
+                            OverlayLevelText = overlayLevel,
+                            OverlaySideText = overlaySide,
+                            OverlayColor = overlayColor
                         });
                     }
                 }

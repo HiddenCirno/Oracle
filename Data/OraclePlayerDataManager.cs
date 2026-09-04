@@ -73,6 +73,64 @@ namespace Oracle.Data
             return new EntityDisplayInfo(name, sideText, level, distance);
         }
         /// <summary>
+        /// 叠加层数据桥专用：输出纯文本（无颜色标签）+ 独立颜色，供窗口原生绘制直接取用。
+        /// 角色/阵营色逻辑与 DeterminePlayerText 保持一致（镜像，不修改 OnGUI 路径）。
+        /// </summary>
+        /// <param name="info">玩家信息</param>
+        /// <param name="name">玩家名</param>
+        /// <param name="isTeammate">是否友军</param>
+        /// <param name="includeName">是否包含名字</param>
+        /// <param name="levelText">纯文本等级 "Lv.45"（Scav 为空串）</param>
+        /// <param name="levelColor">等级色</param>
+        /// <param name="teammateText">纯文本友军前缀 "友军 "（非友军为空串）</param>
+        /// <param name="teammateColor">友军色</param>
+        /// <param name="sideText">纯文本阵营段 "USEC John" / "Boss Killa"</param>
+        /// <param name="sideColor">阵营段颜色</param>
+        public static void GetPlayerOverlayLabel(ProfileInfo info, string name, bool isTeammate, bool includeName,
+            out string levelText, out OracleColor levelColor,
+            out string teammateText, out OracleColor teammateColor,
+            out string sideText, out OracleColor sideColor)
+        {
+            levelText = "";
+            levelColor = OracleColorManager.PlayerLevel;
+            teammateText = isTeammate ? "text_esp_player_tag_teammate".i18n() : "";
+            teammateColor = OracleColorManager.AllyPlayer;
+            sideText = name;
+            sideColor = OracleColorManager.Scav;
+
+            if (info == null) return;
+
+            if (info.Side.ToString() == "Savage")
+            {
+                //取角色
+                var role = info.Settings?.Role.ToString().ToLower() ?? "assault";
+
+                string roleLabel = "text_esp_player_tag_scav".i18n();
+                OracleColor colorHex = OracleColorManager.Scav;
+
+                //镜像 DeterminePlayerText 的核心优先级逻辑
+                if (role.Contains("boss") || IsSpecialBoss(role)) { roleLabel = "text_esp_player_tag_boss".i18n(); colorHex = OracleColorManager.Boss; }
+                else if (role == "bossboarsniper" || role == "marksman") { roleLabel = "text_esp_player_tag_sniper".i18n(); colorHex = OracleColorManager.Sniper; }
+                else if (role == "pmcbot") { roleLabel = "text_esp_player_tag_raider".i18n(); colorHex = OracleColorManager.Raider; }
+                else if (role == "exusec") { roleLabel = "text_esp_player_tag_rogue".i18n(); colorHex = OracleColorManager.Raider; }
+                else if (role.Contains("follower") || role == "tagillahelperagro") { roleLabel = "text_esp_player_tag_follower".i18n(); colorHex = OracleColorManager.Follower; }
+                else if (role.Contains("sectant")) { roleLabel = "text_esp_player_tag_sectant".i18n(); colorHex = OracleColorManager.Sectant; }
+                else if (role == "gifter") { roleLabel = "text_esp_player_tag_santa".i18n(); colorHex = OracleColorManager.Santa; }
+                else if (role.Contains("btr")) { roleLabel = "text_esp_player_tag_btr".i18n(); colorHex = OracleColorManager.BTR; }
+                else if (role.Contains("black")) { roleLabel = "text_esp_player_tag_bd".i18n(); colorHex = OracleColorManager.BlackDiv; }
+
+                sideText = includeName ? $"{roleLabel} {name}" : roleLabel;
+                sideColor = colorHex;
+            }
+            else
+            {
+                levelText = string.Format("text_esp_overlay_player_level".i18n(), info.Level);
+                sideColor = info.Side.ToString() == "Usec" ? OracleColorManager.PMCUSEC : OracleColorManager.PMCBEAR;
+                sideText = includeName ? $"{info.Side} {name}" : info.Side.ToString();
+            }
+        }
+
+        /// <summary>
         /// 获取玩家数据富文本
         /// </summary>
         public static void DeterminePlayerText(ProfileInfo info, string name, bool isTeammate, bool includeName, out string sideText, out string levelText)

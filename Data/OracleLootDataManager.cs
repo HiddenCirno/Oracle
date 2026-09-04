@@ -232,9 +232,12 @@ namespace Oracle.Data
             itemPrice.ToString();
             //颜色转码
             OracleColor iColor = GetColorByLevel(itemLevel);
-            //富文本合并
+            //富文本合并（OnGUI 模式专用，叠加层数据桥不拆解它）
             string fullName = string.IsNullOrEmpty(prefix) ? itemName : $"{prefix} {itemName}";
             string formattedName = string.Format("text_esp_loot_format".i18n(), iColor, fullName, priceStr, OracleColorManager.Distance, dist);
+            //叠加层数据桥并行字段：纯文本（无颜色标签）—— 名称+价格走等级色段，距离单独一段（黄）
+            string overlayText = $"{fullName} {priceStr}";
+            string overlayDistanceText = string.Format("text_esp_overlay_unit_distance".i18n(), dist);
             int currentYOffset = 0;
 
             // ⭐ 核心优化：只有容器/尸体（StaticLoot）才参与 YOffset 计算
@@ -260,7 +263,9 @@ namespace Oracle.Data
                 Price = itemPrice,
                 ItemColor = iColor,
                 YOffset = currentYOffset,
-                StackCount = item.StackObjectsCount
+                StackCount = item.StackObjectsCount,
+                OverlayText = overlayText,
+                OverlayDistanceText = overlayDistanceText
             });
         }
 

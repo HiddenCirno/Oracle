@@ -1,5 +1,6 @@
 ﻿using EFT.SynchronizableObjects;
 using Oracle.ESP;
+using Oracle.Utils;
 using System;
 using System.Collections.Generic;
 using System.Reflection;
@@ -75,7 +76,8 @@ namespace Oracle.Data
                             {
                                 StartPos = start,
                                 EndPos = end,
-                                CenterPos = center
+                                CenterPos = center,
+                                OverlayLabel = "text_esp_overlay_tripwire_label".i18n()
                             });
                         }
                         catch (Exception ex)

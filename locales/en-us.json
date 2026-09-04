@@ -155,6 +155,10 @@
 
     "text_esp_tripwire": "<color={0}>Tripwire</color> <color={1}>{2}m</color>",
     "text_spawn_item_error": "Failed to spawn item!",
+    "text_esp_overlay_unit_distance": "{0}m",
+    "text_esp_overlay_corpse_dead_tag": "[Dead]",
+    "text_esp_overlay_player_level": "Lv.{0}",
+    "text_esp_overlay_tripwire_label": "Tripwire",
     "text_esp_corpse_dead_tag": "<b>[Dead]</b>",
     "text_esp_corpse_format": "<color={0}>{1}</color> {2}",
     "text_esp_container_tag": "[{0}]",
