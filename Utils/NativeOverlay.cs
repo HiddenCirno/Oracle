@@ -125,9 +125,11 @@ namespace Oracle.Utils
                     isOverlayInitialized = true;
                 }
 
-                //叠加层显隐
-                bool shouldShowOverlay = Application.isFocused && GlobalCfg.UniGUI.Value;
-                SetVisible(shouldShowOverlay);
+                //叠加层显隐。
+                //⚠ 不要用 Application.isFocused 控制显隐：Tarkov 全屏窗口化下该值不稳定，
+                //   窗口会被 SW_HIDE 隐藏导致"一闪而过消失"——叠加层内容画了也看不见。
+                //   叠加层窗口本身是 WS_EX_TRANSPARENT（鼠标穿透），不会干扰游戏交互。
+                SetVisible(GlobalCfg.UniGUI.Value);
             }
             else
             {

@@ -140,6 +140,12 @@ namespace Oracle.Overlay
                 ReleaseDC(IntPtr.Zero, screenDC);
             }
 
+            UnityEngine.Debug.Log($"[Oracle] 叠加层渲染初始化: hwnd={hwnd} memDC={_memDC} dibBitmap={_dibBitmap} dibBits={_dibBits} font={_font} size={w}x{h}");
+            if (_dibBits == IntPtr.Zero)
+            {
+                UnityEngine.Debug.LogError("[Oracle] DIB 未创建成功，叠加层将无法渲染");
+            }
+
             //启动渲染线程
             _running = true;
             _renderThread = new Thread(RenderLoop)
