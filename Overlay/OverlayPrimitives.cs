@@ -128,6 +128,11 @@ namespace Oracle.Overlay
         private int _freeCount;
         private OverlayPrimitiveBlock _published;
 
+        //诊断日志节流（每 1 秒一条，避免刷屏）
+        private long _lastLogMs;
+        private int _acquireNullCount;   // 累计取块失败次数
+        private int _publishCount;       // 累计发布次数
+
         public OverlayPrimitiveStore(int bufferCount = 3)
         {
             _free = new OverlayPrimitiveBlock[bufferCount];
@@ -143,7 +148,12 @@ namespace Oracle.Overlay
         {
             lock (_sync)
             {
-                if (_freeCount == 0) return null;
+                if (_freeCount == 0)
+                {
+                    _acquireNullCount++;
+                    TryLog("AcquireWriteBlock 无空闲块（主线程降帧/渲染线程积压）");
+                    return null;
+                }
                 var block = _free[--_freeCount];
                 block.Reset();
                 return block;
@@ -159,11 +169,25 @@ namespace Oracle.Overlay
         {
             lock (_sync)
             {
+                _publishCount++;
                 if (_published != null)
                 {
                     _free[_freeCount++] = _published;
                 }
                 _published = block;
+                TryLog($"Publish 完成: lines={block.LineCount} texts={block.TextCount} rects={block.RectCount} free={_freeCount}");
+            }
+        }
+
+        private void TryLog(string msg)
+        {
+            long now = Environment.TickCount;
+            if (now - _lastLogMs >= 1000)
+            {
+                UnityEngine.Debug.Log($"[Oracle][Overlay] Store: {msg} 近1秒 publish={_publishCount} acquireNull={_acquireNullCount}");
+                _lastLogMs = now;
+                _publishCount = 0;
+                _acquireNullCount = 0;
             }
         }
 

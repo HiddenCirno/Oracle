@@ -3,6 +3,7 @@ using Oracle.Combat;
 using Oracle.Data;
 using Oracle.ESP;
 using Oracle.Utils;
+using System;
 using UnityEngine;
 
 namespace Oracle.Overlay
@@ -22,6 +23,9 @@ namespace Oracle.Overlay
         private static float _screenH;
         private static Vector2 _screenCenter;
 
+        //Build 开关状态/构建结果日志节流（每 1 秒一条）
+        private static long _lastBuildLogMs;
+
         /// <summary>
         /// 构建一帧原语（仅叠加层模式调用，主线程）
         /// </summary>
@@ -33,6 +37,14 @@ namespace Oracle.Overlay
             _screenH = Screen.height;
             _screenCenter = new Vector2(_screenW / 2f, _screenH / 2f);
 
+            //每 1 秒打一次各 ESP 开关状态，确认构建路径是否被开关拦截
+            long nowMs = Environment.TickCount;
+            if (nowMs - _lastBuildLogMs >= 1000)
+            {
+                UnityEngine.Debug.Log($"[Oracle][Overlay] Builder.Build: PlayerESP={PlayerESPCfg.EnablePlayerESP?.Value} 骨骼={PlayerESPCfg.EnablePlayerBoneESP?.Value} 信息={PlayerESPCfg.EnablePlayerInfoESP?.Value} 血条={PlayerESPCfg.EnablePlayerHealthBarESP?.Value} LootFov={LootESPCfg.EnableLootESPFov?.Value} 尸体={CorpseESPCfg.EnableCorpseESP?.Value} 绊雷={TripwireESPCfg.EnableTripwireESP?.Value}");
+                _lastBuildLogMs = nowMs;
+            }
+
             //绘制顺序与 OnGUI 的 OracleEvent.Draw() 一致：ESP → Aimbot
             BuildPlayerBones();
             BuildPlayerText();
@@ -43,6 +55,13 @@ namespace Oracle.Overlay
             BuildTripwire();
             BuildAimbotFovCircle();
             BuildTargetLine();
+
+            //每 1 秒打一次构建结果（确认原语是否有内容）
+            if (nowMs - _lastBuildLogMs >= 1000)
+            {
+                UnityEngine.Debug.Log($"[Oracle][Overlay] Builder.Build 完成: lines={block.LineCount} texts={block.TextCount} rects={block.RectCount}");
+                _lastBuildLogMs = nowMs;
+            }
         }
 
         // ═══════════════════ 玩家骨骼（y 翻转：与 PlayerESP 默认 GL 矩阵一致） ═══════════════════
