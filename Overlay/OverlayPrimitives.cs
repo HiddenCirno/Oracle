@@ -184,7 +184,7 @@ namespace Oracle.Overlay
             long now = Environment.TickCount;
             if (now - _lastLogMs >= 1000)
             {
-                UnityEngine.Debug.Log($"[Oracle][Overlay] Store: {msg} 近1秒 publish={_publishCount} acquireNull={_acquireNullCount}");
+                System.Console.WriteLine($"[Oracle][Overlay] Store: {msg} 近1秒 publish={_publishCount} acquireNull={_acquireNullCount}");
                 _lastLogMs = now;
                 _publishCount = 0;
                 _acquireNullCount = 0;

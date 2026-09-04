@@ -41,7 +41,7 @@ namespace Oracle.Overlay
             long nowMs = Environment.TickCount;
             if (nowMs - _lastBuildLogMs >= 1000)
             {
-                UnityEngine.Debug.Log($"[Oracle][Overlay] Builder.Build: PlayerESP={PlayerESPCfg.EnablePlayerESP?.Value} 骨骼={PlayerESPCfg.EnablePlayerBoneESP?.Value} 信息={PlayerESPCfg.EnablePlayerInfoESP?.Value} 血条={PlayerESPCfg.EnablePlayerHealthBarESP?.Value} LootFov={LootESPCfg.EnableLootESPFov?.Value} 尸体={CorpseESPCfg.EnableCorpseESP?.Value} 绊雷={TripwireESPCfg.EnableTripwireESP?.Value}");
+                System.Console.WriteLine($"[Oracle][Overlay] Builder.Build: PlayerESP={PlayerESPCfg.EnablePlayerESP?.Value} 骨骼={PlayerESPCfg.EnablePlayerBoneESP?.Value} 信息={PlayerESPCfg.EnablePlayerInfoESP?.Value} 血条={PlayerESPCfg.EnablePlayerHealthBarESP?.Value} LootFov={LootESPCfg.EnableLootESPFov?.Value} 尸体={CorpseESPCfg.EnableCorpseESP?.Value} 绊雷={TripwireESPCfg.EnableTripwireESP?.Value}");
                 _lastBuildLogMs = nowMs;
             }
 
@@ -59,7 +59,7 @@ namespace Oracle.Overlay
             //每 1 秒打一次构建结果（确认原语是否有内容）
             if (nowMs - _lastBuildLogMs >= 1000)
             {
-                UnityEngine.Debug.Log($"[Oracle][Overlay] Builder.Build 完成: lines={block.LineCount} texts={block.TextCount} rects={block.RectCount}");
+                System.Console.WriteLine($"[Oracle][Overlay] Builder.Build 完成: lines={block.LineCount} texts={block.TextCount} rects={block.RectCount}");
                 _lastBuildLogMs = nowMs;
             }
         }

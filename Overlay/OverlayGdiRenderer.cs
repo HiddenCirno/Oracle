@@ -117,13 +117,13 @@ namespace Oracle.Overlay
                 if (_dibBitmap != IntPtr.Zero)
                 {
                     _oldBmp = SelectObject(_memDC, _dibBitmap);
-                    UnityEngine.Debug.Log($"[Oracle][Overlay] CreateDIBSection: 成功 dibBitmap=0x{_dibBitmap.ToInt64():X} dibBits=0x{_dibBits.ToInt64():X} size={w}x{h}(负高度top-down)");
+                    System.Console.WriteLine($"[Oracle][Overlay] CreateDIBSection: 成功 dibBitmap=0x{_dibBitmap.ToInt64():X} dibBits=0x{_dibBits.ToInt64():X} size={w}x{h}(负高度top-down)");
                 }
                 else
                 {
                     //创建失败防御：ppvBits 内容未定义，必须清零，否则渲染线程会按非零指针写内存
                     _dibBits = IntPtr.Zero;
-                    UnityEngine.Debug.LogError($"[Oracle][Overlay] CreateDIBSection 失败! GetLastError={Marshal.GetLastWin32Error()}");
+                    System.Console.WriteLine("ERR " + $"[Oracle][Overlay] CreateDIBSection 失败! GetLastError={Marshal.GetLastWin32Error()}");
                 }
 
                 //抗锯齿粗体 12px 字体（中文支持用微软雅黑，Win10 内置）
@@ -144,10 +144,10 @@ namespace Oracle.Overlay
                 ReleaseDC(IntPtr.Zero, screenDC);
             }
 
-            UnityEngine.Debug.Log($"[Oracle][Overlay] 叠加层渲染初始化: hwnd=0x{hwnd.ToInt64():X} memDC=0x{_memDC.ToInt64():X} dibBitmap=0x{_dibBitmap.ToInt64():X} dibBits=0x{_dibBits.ToInt64():X} font=0x{_font.ToInt64():X} size={w}x{h}");
+            System.Console.WriteLine($"[Oracle][Overlay] 叠加层渲染初始化: hwnd=0x{hwnd.ToInt64():X} memDC=0x{_memDC.ToInt64():X} dibBitmap=0x{_dibBitmap.ToInt64():X} dibBits=0x{_dibBits.ToInt64():X} font=0x{_font.ToInt64():X} size={w}x{h}");
             if (_dibBits == IntPtr.Zero)
             {
-                UnityEngine.Debug.LogError("[Oracle][Overlay] DIB 未创建成功，叠加层将无法渲染");
+                System.Console.WriteLine("ERR " + "[Oracle][Overlay] DIB 未创建成功，叠加层将无法渲染");
             }
 
             //启动渲染线程
@@ -158,7 +158,7 @@ namespace Oracle.Overlay
                 Name = "OracleOverlayGDI"
             };
             _renderThread.Start();
-            UnityEngine.Debug.Log($"[Oracle][Overlay] 渲染线程已启动: Name={_renderThread.Name} IsBackground={_renderThread.IsBackground}");
+            System.Console.WriteLine($"[Oracle][Overlay] 渲染线程已启动: Name={_renderThread.Name} IsBackground={_renderThread.IsBackground}");
         }
 
         /// <summary>
@@ -195,7 +195,7 @@ namespace Oracle.Overlay
             long lastStatusMs = 0;
             int framesTaken = 0;       // 累计消费到的块
             int framesNull = 0;        // 累计 TakePublished 返回 null
-            UnityEngine.Debug.Log("[Oracle][Overlay] RenderLoop: 渲染线程主循环开始");
+            System.Console.WriteLine("[Oracle][Overlay] RenderLoop: 渲染线程主循环开始");
             while (_running)
             {
                 try
@@ -224,14 +224,14 @@ namespace Oracle.Overlay
                 catch (Exception ex)
                 {
                     //⚠ 渲染线程异常必须兜住：线程静默死亡会导致主线程 3 块耗尽后停摆，永久全黑
-                    UnityEngine.Debug.LogError($"[Oracle][Overlay] 叠加层渲染线程异常: {ex}");
+                    System.Console.WriteLine("ERR " + $"[Oracle][Overlay] 叠加层渲染线程异常: {ex}");
                 }
 
                 //每 ~1 秒输出一次状态（判断数据桥是否通：framesTaken/framesNull）
                 long now = clock.ElapsedMilliseconds;
                 if (now - lastStatusMs >= 1000)
                 {
-                    UnityEngine.Debug.Log($"[Oracle][Overlay] RenderLoop 状态: ForceTestFrame={ForceTestFrame} 近1秒 taken={framesTaken} null={framesNull} store可写块数未知(锁内)");
+                    System.Console.WriteLine($"[Oracle][Overlay] RenderLoop 状态: ForceTestFrame={ForceTestFrame} 近1秒 taken={framesTaken} null={framesNull} store可写块数未知(锁内)");
                     lastStatusMs = now;
                     framesTaken = 0;
                     framesNull = 0;
@@ -245,14 +245,14 @@ namespace Oracle.Overlay
                     Thread.Sleep((int)(FrameRateMs - elapsed));
                 }
             }
-            UnityEngine.Debug.Log("[Oracle][Overlay] RenderLoop: 渲染线程主循环退出");
+            System.Console.WriteLine("[Oracle][Overlay] RenderLoop: 渲染线程主循环退出");
         }
 
         private static void Render(OverlayPrimitiveBlock block)
         {
             if (_hwnd == IntPtr.Zero || _memDC == IntPtr.Zero || _dibBits == IntPtr.Zero)
             {
-                UnityEngine.Debug.LogError($"[Oracle][Overlay] Render 提前返回: hwnd=0x{_hwnd.ToInt64():X} memDC=0x{_memDC.ToInt64():X} dibBits=0x{_dibBits.ToInt64():X}");
+                System.Console.WriteLine("ERR " + $"[Oracle][Overlay] Render 提前返回: hwnd=0x{_hwnd.ToInt64():X} memDC=0x{_memDC.ToInt64():X} dibBits=0x{_dibBits.ToInt64():X}");
                 return;
             }
 
@@ -302,7 +302,7 @@ namespace Oracle.Overlay
             long nowMs = Stopwatch.GetTimestamp() / TimeSpan.TicksPerMillisecond;
             if (nowMs - _lastRenderLogMs >= 1000)
             {
-                UnityEngine.Debug.Log($"[Oracle][Overlay] Render: block lines={block.LineCount} texts={block.TextCount} rects={block.RectCount} dirty=({x0},{y0})-({x1},{y1}) ULW={ulwOk} 上次GetLastError={Marshal.GetLastWin32Error()}");
+                System.Console.WriteLine($"[Oracle][Overlay] Render: block lines={block.LineCount} texts={block.TextCount} rects={block.RectCount} dirty=({x0},{y0})-({x1},{y1}) ULW={ulwOk} 上次GetLastError={Marshal.GetLastWin32Error()}");
                 _lastRenderLogMs = nowMs;
             }
 
@@ -364,7 +364,7 @@ namespace Oracle.Overlay
                 bool ok = UpdateLayeredWindow(_hwnd, screenDC, ref ptDst, ref size, _memDC, ref ptSrc, 0, ref blend, 2);
                 if (!ok)
                 {
-                    UnityEngine.Debug.LogError($"[Oracle] 测试帧 ULW 失败! GetLastError={Marshal.GetLastWin32Error()}");
+                    System.Console.WriteLine("ERR " + $"[Oracle] 测试帧 ULW 失败! GetLastError={Marshal.GetLastWin32Error()}");
                 }
             }
             finally

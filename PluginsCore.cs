@@ -142,7 +142,7 @@ namespace Oracle
             //不再创建 RenderTexture / GPU 回读 / 图像流传输。
             if (Time.time - _lastBridgeLogTime >= 1f)
             {
-                UnityEngine.Debug.Log($"[Oracle][Overlay] OnGUI 数据桥: UniGUI={GlobalCfg.UniGUI.Value} EnableNativeOverlay={NativeOverlayCfg.EnableNativeOverlay.Value} 命中Repaint 开始取块");
+                System.Console.WriteLine($"[Oracle][Overlay] OnGUI 数据桥: UniGUI={GlobalCfg.UniGUI.Value} EnableNativeOverlay={NativeOverlayCfg.EnableNativeOverlay.Value} 命中Repaint 开始取块");
                 _lastBridgeLogTime = Time.time;
             }
             OverlayPrimitiveBlock block = NativeOverlay.Store.AcquireWriteBlock();

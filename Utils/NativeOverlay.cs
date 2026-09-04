@@ -72,7 +72,7 @@ namespace Oracle.Utils
         {
             if (_classRegistered)
             {
-                UnityEngine.Debug.Log("[Oracle][Overlay] EnsureOverlayClass: 类已注册，复用");
+                System.Console.WriteLine("[Oracle][Overlay] EnsureOverlayClass: 类已注册，复用");
                 return;
             }
             WNDCLASSEX wc = new WNDCLASSEX();
@@ -82,12 +82,12 @@ namespace Oracle.Utils
             wc.hInstance = GetModuleHandle(null);
             wc.hCursor = LoadCursor(IntPtr.Zero, 32512); // IDC_ARROW 系统箭头光标
             wc.lpszClassName = OverlayClassName;
-            UnityEngine.Debug.Log($"[Oracle][Overlay] EnsureOverlayClass: user32=0x{user32.ToInt64():X} lpfnWndProc=0x{wc.lpfnWndProc.ToInt64():X} hInstance=0x{wc.hInstance.ToInt64():X} hCursor=0x{wc.hCursor.ToInt64():X}");
+            System.Console.WriteLine($"[Oracle][Overlay] EnsureOverlayClass: user32=0x{user32.ToInt64():X} lpfnWndProc=0x{wc.lpfnWndProc.ToInt64():X} hInstance=0x{wc.hInstance.ToInt64():X} hCursor=0x{wc.hCursor.ToInt64():X}");
             ushort atom = RegisterClassExW(ref wc);
             if (atom != 0)
             {
                 _classRegistered = true;
-                UnityEngine.Debug.Log($"[Oracle][Overlay] EnsureOverlayClass: 注册成功 atom={atom}");
+                System.Console.WriteLine($"[Oracle][Overlay] EnsureOverlayClass: 注册成功 atom={atom}");
             }
             else
             {
@@ -96,11 +96,11 @@ namespace Oracle.Utils
                 if (err == 1410)
                 {
                     _classRegistered = true;
-                    UnityEngine.Debug.Log("[Oracle][Overlay] EnsureOverlayClass: ERROR_CLASS_ALREADY_EXISTS(1410)，视为已注册");
+                    System.Console.WriteLine("[Oracle][Overlay] EnsureOverlayClass: ERROR_CLASS_ALREADY_EXISTS(1410)，视为已注册");
                 }
                 else
                 {
-                    UnityEngine.Debug.LogError($"[Oracle][Overlay] EnsureOverlayClass: RegisterClassEx 失败! GetLastError={err}");
+                    System.Console.WriteLine("ERR " + $"[Oracle][Overlay] EnsureOverlayClass: RegisterClassEx 失败! GetLastError={err}");
                 }
             }
         }
@@ -119,7 +119,7 @@ namespace Oracle.Utils
         {
             screenW = w;
             screenH = h;
-            UnityEngine.Debug.Log($"[Oracle][Overlay] Initialize: {w}x{h} isOverlayInitialized={isOverlayInitialized}");
+            System.Console.WriteLine($"[Oracle][Overlay] Initialize: {w}x{h} isOverlayInitialized={isOverlayInitialized}");
             //⚠ SW_SHOWNA(8) 而不是 SW_SHOW(5)：SW_SHOW 会激活窗口抢走游戏焦点，
             //  导致 Application.isFocused 变 false，下一帧 UpdateNativeOverlay 就把窗口隐藏，全黑。
             int exStyle = 0x80000 | 0x20 | 0x8 | 0x80; // WS_EX_LAYERED|TRANSPARENT|TOPMOST|TOOLWINDOW
@@ -129,18 +129,18 @@ namespace Oracle.Utils
                 exStyle = 0x80000 | 0x20 | 0x8 | 0x40000; // WS_EX_LAYERED|TRANSPARENT|TOPMOST|APPWINDOW
             }
             int style = unchecked((int)0x80000000); // WS_POPUP
-            UnityEngine.Debug.Log($"[Oracle][Overlay] Initialize: exStyle=0x{exStyle:X} style=0x{(uint)style:X} class={OverlayClassName}");
+            System.Console.WriteLine($"[Oracle][Overlay] Initialize: exStyle=0x{exStyle:X} style=0x{(uint)style:X} class={OverlayClassName}");
             //⚠ 用自定义类而非 "STATIC"：STATIC 类光标为 NULL，鼠标悬停叠加层时光标不可见
             EnsureOverlayClass();
             hwnd = CreateWindowEx(exStyle, OverlayClassName, "OracleESP_Overlay", style, 0, 0, w, h, IntPtr.Zero, IntPtr.Zero, GetModuleHandle(null), IntPtr.Zero);
-            UnityEngine.Debug.Log($"[Oracle][Overlay] CreateWindowEx: hwnd=0x{hwnd.ToInt64():X} GetLastError={Marshal.GetLastWin32Error()}");
+            System.Console.WriteLine($"[Oracle][Overlay] CreateWindowEx: hwnd=0x{hwnd.ToInt64():X} GetLastError={Marshal.GetLastWin32Error()}");
             if (hwnd == IntPtr.Zero)
             {
-                UnityEngine.Debug.LogError($"[Oracle][Overlay] 叠加层窗口创建失败! GetLastError={Marshal.GetLastWin32Error()}");
+                System.Console.WriteLine("ERR " + $"[Oracle][Overlay] 叠加层窗口创建失败! GetLastError={Marshal.GetLastWin32Error()}");
                 return;
             }
             ShowWindow(hwnd, 8); // SW_SHOWNA
-            UnityEngine.Debug.Log("[Oracle][Overlay] ShowWindow(SW_SHOWNA) 完成");
+            System.Console.WriteLine("[Oracle][Overlay] ShowWindow(SW_SHOWNA) 完成");
 
             //启动 GDI 渲染线程（DIB 为 top-down，坐标与 Builder 输出一致）
             OverlayGdiRenderer.Initialize(hwnd, w, h, Store);
@@ -200,7 +200,7 @@ namespace Oracle.Utils
             bool enable = NativeOverlayCfg.EnableNativeOverlay.Value;
             if (enable != _lastEnableState)
             {
-                UnityEngine.Debug.Log($"[Oracle][Overlay] UpdateNativeOverlay: EnableNativeOverlay {_lastEnableState}->{enable}, isOverlayInitialized={isOverlayInitialized}");
+                System.Console.WriteLine($"[Oracle][Overlay] UpdateNativeOverlay: EnableNativeOverlay {_lastEnableState}->{enable}, isOverlayInitialized={isOverlayInitialized}");
                 _lastEnableState = enable;
             }
 
@@ -209,7 +209,7 @@ namespace Oracle.Utils
                 //重新初始化
                 if (!isOverlayInitialized)
                 {
-                    UnityEngine.Debug.Log($"[Oracle][Overlay] UpdateNativeOverlay: 首次启用，调用 Initialize Screen={Screen.width}x{Screen.height} UniGUI={GlobalCfg.UniGUI.Value}");
+                    System.Console.WriteLine($"[Oracle][Overlay] UpdateNativeOverlay: 首次启用，调用 Initialize Screen={Screen.width}x{Screen.height} UniGUI={GlobalCfg.UniGUI.Value}");
                     Initialize(Screen.width, Screen.height);
                     isOverlayInitialized = true;
                 }
@@ -225,7 +225,7 @@ namespace Oracle.Utils
                 //摧毁叠加层
                 if (isOverlayInitialized)
                 {
-                    UnityEngine.Debug.Log("[Oracle][Overlay] UpdateNativeOverlay: 禁用，调用 Destroy");
+                    System.Console.WriteLine("[Oracle][Overlay] UpdateNativeOverlay: 禁用，调用 Destroy");
                     Destroy();
                     isOverlayInitialized = false;
                 }
