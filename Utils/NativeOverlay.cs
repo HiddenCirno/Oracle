@@ -27,6 +27,74 @@ namespace Oracle.Utils
         [DllImport("user32.dll", SetLastError = true)]
         private static extern bool DestroyWindow(IntPtr hWnd);
         [DllImport("user32.dll")] private static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);
+        //自定义窗口类 + 光标（STATIC 类的类光标为 NULL，鼠标悬停时光标不可见）
+        [DllImport("user32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
+        private static extern ushort RegisterClassExW(ref WNDCLASSEX lpwcx);
+        [DllImport("user32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
+        private static extern IntPtr LoadCursor(IntPtr hInstance, int lpCursorName);
+        [DllImport("user32.dll", SetLastError = true)]
+        private static extern bool UnregisterClassW(string lpClassName, IntPtr hInstance);
+        [DllImport("user32.dll")]
+        private static extern IntPtr DefWindowProcW(IntPtr hWnd, uint msg, IntPtr wParam, IntPtr lParam);
+        [DllImport("kernel32.dll")]
+        private static extern IntPtr GetModuleHandle(string lpModuleName);
+
+        [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
+        private struct WNDCLASSEX
+        {
+            public uint cbSize;
+            public uint style;
+            public IntPtr lpfnWndProc;
+            public int cbClsExtra;
+            public int cbWndExtra;
+            public IntPtr hInstance;
+            public IntPtr hIcon;
+            public IntPtr hCursor;
+            public IntPtr hbrBackground;
+            public string lpszMenuName;
+            public string lpszClassName;
+            public IntPtr hIconSm;
+        }
+
+        //WndProc 委托必须保活（GC 根），否则回调时被回收会崩
+        [UnmanagedFunctionPointer(CallingConvention.Winapi)]
+        private delegate IntPtr OverlayWndProcDelegate(IntPtr hWnd, uint msg, IntPtr wParam, IntPtr lParam);
+        private static readonly OverlayWndProcDelegate _wndProc = delegate (IntPtr hWnd, uint msg, IntPtr wParam, IntPtr lParam)
+        {
+            return DefWindowProcW(hWnd, msg, wParam, lParam);
+        };
+
+        private const string OverlayClassName = "OracleESP_OverlayWnd";
+        private static bool _classRegistered;
+
+        private static void EnsureOverlayClass()
+        {
+            if (_classRegistered) return;
+            WNDCLASSEX wc = new WNDCLASSEX();
+            wc.cbSize = (uint)Marshal.SizeOf(typeof(WNDCLASSEX));
+            wc.lpfnWndProc = Marshal.GetFunctionPointerForDelegate(_wndProc);
+            wc.hInstance = GetModuleHandle(null);
+            wc.hCursor = LoadCursor(IntPtr.Zero, 32512); // IDC_ARROW 系统箭头光标
+            wc.lpszClassName = OverlayClassName;
+            ushort atom = RegisterClassExW(ref wc);
+            if (atom != 0)
+            {
+                _classRegistered = true;
+            }
+            else
+            {
+                //ERROR_CLASS_ALREADY_EXISTS (1410)：叠加层反复启用/禁用后类已存在，视为成功
+                int err = Marshal.GetLastWin32Error();
+                if (err == 1410)
+                {
+                    _classRegistered = true;
+                }
+                else
+                {
+                    UnityEngine.Debug.LogError($"[Oracle] RegisterClassEx 失败! GetLastError={err}");
+                }
+            }
+        }
 
         //定义原点和宽高
         private static IntPtr hwnd = IntPtr.Zero;
@@ -53,7 +121,9 @@ namespace Oracle.Utils
                 exStyle = 0x80000 | 0x20 | 0x8 | 0x40000; // WS_EX_LAYERED|TRANSPARENT|TOPMOST|APPWINDOW
             }
             int style = unchecked((int)0x80000000); // WS_POPUP
-            hwnd = CreateWindowEx(exStyle, "STATIC", "OracleESP_Overlay", style, 0, 0, w, h, IntPtr.Zero, IntPtr.Zero, IntPtr.Zero, IntPtr.Zero);
+            //⚠ 用自定义类而非 "STATIC"：STATIC 类光标为 NULL，鼠标悬停叠加层时光标不可见
+            EnsureOverlayClass();
+            hwnd = CreateWindowEx(exStyle, OverlayClassName, "OracleESP_Overlay", style, 0, 0, w, h, IntPtr.Zero, IntPtr.Zero, GetModuleHandle(null), IntPtr.Zero);
             if (hwnd == IntPtr.Zero)
             {
                 UnityEngine.Debug.LogError($"[Oracle] 叠加层窗口创建失败! GetLastError={Marshal.GetLastWin32Error()}");

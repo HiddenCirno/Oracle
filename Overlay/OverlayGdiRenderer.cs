@@ -78,8 +78,8 @@ namespace Oracle.Overlay
         [StructLayout(LayoutKind.Sequential)] private struct BITMAPINFOHEADER { public uint biSize; public int biWidth, biHeight; public ushort biPlanes, biBitCount; public uint biCompression, biSizeImage, biXPelsPerMeter, biYPelsPerMeter, biClrUsed, biClrImportant; }
         [StructLayout(LayoutKind.Sequential)] private struct BITMAPINFO { public BITMAPINFOHEADER bmiHeader; public int bmiColors; }
 
-        //非抗锯齿（避免 GDI 灰度 AA + a=255 修正产生暗色 halo）
-        private const int NONANTIALIASED_QUALITY = 3;
+        //灰度抗锯齿（配合 FixAlphaText 用最亮通道还原覆盖率，实现平滑边缘）
+        private const int ANTIALIASED_QUALITY = 4;
         private const int FW_BOLD = 700;
         private const int DEFAULT_CHARSET = 1;
         private const int TRANSPARENT = 1;
@@ -122,8 +122,8 @@ namespace Oracle.Overlay
                     UnityEngine.Debug.LogError($"[Oracle] CreateDIBSection 失败! GetLastError={Marshal.GetLastWin32Error()}");
                 }
 
-                //非抗锯齿粗体 12px 字体（中文支持用微软雅黑，Win10 内置）
-                _font = CreateFontW(-12, 0, 0, 0, FW_BOLD, 0, 0, 0, DEFAULT_CHARSET, 0, 0, NONANTIALIASED_QUALITY, 0, "Microsoft YaHei UI");
+                //抗锯齿粗体 12px 字体（中文支持用微软雅黑，Win10 内置）
+                _font = CreateFontW(-12, 0, 0, 0, FW_BOLD, 0, 0, 0, DEFAULT_CHARSET, 0, 0, ANTIALIASED_QUALITY, 0, "Microsoft YaHei UI");
                 if (_font != IntPtr.Zero)
                 {
                     SelectObject(_memDC, _font);
@@ -242,10 +242,15 @@ namespace Oracle.Overlay
             {
                 //1. 清屏（透明黑 = alpha 0）
                 ClearRegion(x0, y0, x1, y1);
-                //2. GDI 绘制
-                DrawPrimitives(block);
-                //3. alpha 修正：GDI 只写 RGB，把 RGB≠0 的像素 alpha 置 255
-                FixAlpha(x0, y0, x1, y1);
+                //2. 绘制图形（矩形 + 线段，统一软件光栅化，alpha 直写）
+                DrawShapes(block);
+                //3. 图形 alpha 修正：把仍全透明的 GDI 残留像素置 255（实心）
+                FixAlphaOpaque(x0, y0, x1, y1);
+                //4. 绘制文本（抗锯齿字体）
+                DrawTexts(block);
+                //5. 文本 alpha 修正：文字画在透明背景上 RGB=文字色×覆盖率，
+                //   用最亮通道近似 alpha，实现真抗锯齿（图形像素 alpha≠0 不受影响）
+                FixAlphaText(x0, y0, x1, y1);
             }
 
             //4. 上屏
@@ -306,8 +311,9 @@ namespace Oracle.Overlay
             SetTextColor(_memDC, 0x00FFFFFF);
             TextOutW(_memDC, _dibWidth / 2 - 100, _dibHeight / 2 - 15, "Oracle GDI TEST", 15);
 
-            //alpha 修正（全屏）
-            FixAlpha(0, 0, _dibWidth, _dibHeight);
+            //alpha 修正（全屏）：图形实心 + 文本抗锯齿
+            FixAlphaOpaque(0, 0, _dibWidth, _dibHeight);
+            FixAlphaText(0, 0, _dibWidth, _dibHeight);
 
             //上屏
             IntPtr screenDC = GetDC(IntPtr.Zero);
@@ -331,9 +337,9 @@ namespace Oracle.Overlay
 
         // ═══════════════════ GDI 绘制 ═══════════════════
 
-        private static void DrawPrimitives(OverlayPrimitiveBlock block)
+        private static void DrawShapes(OverlayPrimitiveBlock block)
         {
-            //矩形（血条）→ FillRect
+            //矩形（血条）→ FillRect（已验证可用）
             for (int i = 0; i < block.RectCount; i++)
             {
                 OverlayRect r = block.Rects[i];
@@ -352,33 +358,20 @@ namespace Oracle.Overlay
                 }
             }
 
-            //线段（骨骼/圆圈/目标线/绊雷线）→ MoveToEx + LineTo
-            //半透明线（Alpha < 255，如自瞄 FOV 圈 0.3）走软件 Bresenham 并预混合 alpha；
-            //不透明线走 GDI（GDI LineTo 只写 RGB，alpha 由 FixAlpha 修正）
+            //线段（骨骼/圆圈/目标线/绊雷线）→ 统一软件 Bresenham。
+            //⚠ 不走 GDI CreatePen/MoveToEx/LineTo：实测该路径在叠加层不显示，
+            //   软件光栅化直写 DIB 像素（带 alpha）更可靠，半透明 FOV 圈已验证
             for (int i = 0; i < block.LineCount; i++)
             {
-                OverlayLine l = block.Lines[i];
-                if (l.Alpha < 255)
-                {
-                    SoftwareLine(l);
-                    continue;
-                }
-                IntPtr pen = CreatePen(0, 1, ArgbToColorRef(l.Color));
-                if (pen != IntPtr.Zero)
-                {
-                    IntPtr oldPen = SelectObject(_memDC, pen);
-                    MoveToEx(_memDC, (int)l.X1, (int)l.Y1, IntPtr.Zero);
-                    LineTo(_memDC, (int)l.X2, (int)l.Y2);
-                    SelectObject(_memDC, oldPen);
-                    DeleteObject(pen);
-                }
+                SoftwareLine(block.Lines[i]);
             }
+        }
 
-            //文本（多色段居中）→ GetTextExtentPoint32 测宽 + TextOut
+        private static void DrawTexts(OverlayPrimitiveBlock block)
+        {
             for (int i = 0; i < block.TextCount; i++)
             {
-                OverlayText t = block.Texts[i];
-                DrawTextPrimitive(t);
+                DrawTextPrimitive(block.Texts[i]);
             }
         }
 
@@ -463,7 +456,7 @@ namespace Oracle.Overlay
             }
         }
 
-        private static void FixAlpha(int x0, int y0, int x1, int y1)
+        private static void FixAlphaOpaque(int x0, int y0, int x1, int y1)
         {
             IntPtr ptr = _dibBits;
             int width = _dibWidth;
@@ -474,11 +467,45 @@ namespace Oracle.Overlay
                 Marshal.Copy(row, _scratchRow, 0, rowBytes);
                 for (int i = 0; i < rowBytes; i += 4)
                 {
-                    //仅修正「仍然完全透明」的 GDI 像素（alpha==0 且 RGB≠0 → 置 255）。
+                    //仅修正「仍然完全透明」的像素（alpha==0 且 RGB≠0 → 置 255）。
                     //软件预混合的半透明像素（alpha>0）保持原样，不被覆盖。
                     if (_scratchRow[i + 3] == 0 && (_scratchRow[i] | _scratchRow[i + 1] | _scratchRow[i + 2]) != 0)
                     {
                         _scratchRow[i + 3] = 255;
+                    }
+                }
+                Marshal.Copy(_scratchRow, 0, row, rowBytes);
+            }
+        }
+
+        /// <summary>
+        /// 文本 alpha 修正：抗锯齿文字画在透明背景上时，边缘像素 RGB = 文字色×覆盖率（已预乘）。
+        /// 用最亮通道近似覆盖率作为 alpha，得到平滑的抗锯齿边缘。
+        /// 图形像素在 FixAlphaOpaque 后 alpha≠0，此处跳过不受影响。
+        /// </summary>
+        private static void FixAlphaText(int x0, int y0, int x1, int y1)
+        {
+            IntPtr ptr = _dibBits;
+            int width = _dibWidth;
+            int rowBytes = (x1 - x0) * 4;
+            for (int y = y0; y < y1; y++)
+            {
+                IntPtr row = IntPtr.Add(ptr, (y * width + x0) * 4);
+                Marshal.Copy(row, _scratchRow, 0, rowBytes);
+                for (int i = 0; i < rowBytes; i += 4)
+                {
+                    if (_scratchRow[i + 3] == 0)
+                    {
+                        byte b = _scratchRow[i];
+                        byte g = _scratchRow[i + 1];
+                        byte r = _scratchRow[i + 2];
+                        if ((b | g | r) != 0)
+                        {
+                            //alpha = max(R,G,B)：白色/亮色文字边缘最亮通道≈覆盖率
+                            byte a = r > g ? r : g;
+                            if (b > a) a = b;
+                            _scratchRow[i + 3] = a;
+                        }
                     }
                 }
                 Marshal.Copy(_scratchRow, 0, row, rowBytes);
@@ -504,9 +531,9 @@ namespace Oracle.Overlay
             int x1 = (int)l.X2, y1 = (int)l.Y2;
             //ARGB 拆通道（alpha 由 l.Alpha 字段单独携带，用于半透明线）
             uint argb = l.Color;
-            byte sr = (byte)((argb >> 16) & 0xFF);
-            byte sg = (byte)((argb >> 8) & 0xFF);
-            byte sb = (byte)(argb & 0xFF);
+            byte sr = (byte)((argb >> 16) & 0xFF); // R
+            byte sg = (byte)((argb >> 8) & 0xFF);  // G
+            byte sb = (byte)(argb & 0xFF);         // B
             int a = l.Alpha;
 
             int dx = Math.Abs(x1 - x0), sx = x0 < x1 ? 1 : -1;
@@ -520,17 +547,18 @@ namespace Oracle.Overlay
                 if (x0 >= 0 && y0 >= 0 && x0 < width && y0 < _dibHeight)
                 {
                     IntPtr p = IntPtr.Add(ptr, (y0 * width + x0) * 4);
-                    byte dr = Marshal.ReadByte(p);
+                    //DIB 32bpp 内存布局是 BGRA：byte0=B, byte1=G, byte2=R, byte3=A
+                    byte db = Marshal.ReadByte(p);
                     byte dg = Marshal.ReadByte(p, 1);
-                    byte db = Marshal.ReadByte(p, 2);
+                    byte dr = Marshal.ReadByte(p, 2);
                     //src-over 预乘合成：RGB 与现有像素混合，alpha 保持源透明度。
                     //半透明线（如自瞄 FOV 圈 α=0.3）像素 α=源 α，FixAlpha 不会覆盖它（α≠0）。
                     byte r = (byte)((sr * a + dr * (255 - a)) / 255);
                     byte g = (byte)((sg * a + dg * (255 - a)) / 255);
                     byte b = (byte)((sb * a + db * (255 - a)) / 255);
-                    Marshal.WriteByte(p, 0, r);
+                    Marshal.WriteByte(p, 0, b);
                     Marshal.WriteByte(p, 1, g);
-                    Marshal.WriteByte(p, 2, b);
+                    Marshal.WriteByte(p, 2, r);
                     Marshal.WriteByte(p, 3, (byte)a);
                 }
                 if (x0 == x1 && y0 == y1) break;

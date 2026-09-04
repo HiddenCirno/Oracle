@@ -366,15 +366,15 @@ namespace Oracle.Overlay
             {
                 if (!OracleCommon.IsInRange(maxDistance, playerPos, trap.CenterPos)) continue;
 
-                //实体线（y 不翻转：与 TripwireESP 的 GL.LoadPixelMatrix 一致）
+                //实体线（⚠ GDI 是左上原点、y 向下：WorldToScreenPoint 是左下原点，必须翻转 y）
                 Vector3 sA = _cam.WorldToScreenPoint(trap.StartPos);
                 Vector3 sB = _cam.WorldToScreenPoint(trap.EndPos);
                 if (sA.z > 0.01f && sB.z > 0.01f)
                 {
                     _block.AddLine(new OverlayLine
                     {
-                        X1 = sA.x, Y1 = sA.y,
-                        X2 = sB.x, Y2 = sB.y,
+                        X1 = sA.x, Y1 = _screenH - sA.y,
+                        X2 = sB.x, Y2 = _screenH - sB.y,
                         Color = OracleColorManager.Tripwire.ToArgb(),
                         Alpha = 255
                     });
@@ -419,10 +419,11 @@ namespace Oracle.Overlay
             Vector3 screenPos = _cam.WorldToScreenPoint(headPos.Value);
             if (screenPos.z <= 0.01f) return;
 
+            //目标线（⚠ GDI 左上原点：终点 y 必须翻转；起点是屏幕中心，对称不受影响）
             _block.AddLine(new OverlayLine
             {
                 X1 = _screenCenter.x, Y1 = _screenCenter.y,
-                X2 = screenPos.x, Y2 = screenPos.y,
+                X2 = screenPos.x, Y2 = _screenH - screenPos.y,
                 Color = OracleColorManager.AimbotCircle.ToArgb(),
                 Alpha = 255
             });
