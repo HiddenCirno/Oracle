@@ -32,6 +32,15 @@ namespace Oracle.Utils
         private static IntPtr _cachedOldBmp = IntPtr.Zero;
         private static int _dibWidth, _dibHeight;
 
+        //readback 目标尺寸（半分辨率时为全屏一半，pixelBuffer 与之匹配）
+        private static int _readbackWidth, _readbackHeight;
+
+        //行放大缓存（半分辨率 → 全屏 DIB 的最近邻放大复用行）
+        private static byte[] _upscaleRowCache;
+
+        //全屏 DIB 缓冲区（半分辨率放大后的目标）
+        private static byte[] _fullScreenBuffer;
+
         //引入Windows底层API
         [DllImport("user32.dll", SetLastError = true)]
         private static extern IntPtr CreateWindowEx(int dwExStyle, string lpClassName, string lpWindowName, int dwStyle, int x, int y, int nWidth, int nHeight, IntPtr hWndParent, IntPtr hMenu, IntPtr hInstance, IntPtr lpParam);
@@ -76,17 +85,21 @@ namespace Oracle.Utils
             screenW = w;
             screenH = h;
 
-            //半分辨率：readback / DIB 数据量减 75%，窗口仍全屏（GDI 拉伸显示，骨骼线条无影响，文本轻微柔化）
+            //半分辨率：readback 数据量减 75%，DIB 始终保持全屏（与窗口同尺寸），
+            //readback 数据在 UpdateFrame 中放大回全屏，避免 UpdateLayeredWindow 尺寸不匹配
             //锁定模式，运行时不再读取配置，防止动态切换破坏尺寸匹配
             IsHalfResolution = NativeOverlayCfg.OverlayHalfResolution.Value;
-            int dibW = IsHalfResolution ? Math.Max(1, w / 2) : w;
-            int dibH = IsHalfResolution ? Math.Max(1, h / 2) : h;
+            _readbackWidth = IsHalfResolution ? Math.Max(1, w / 2) : w;
+            _readbackHeight = IsHalfResolution ? Math.Max(1, h / 2) : h;
 
-            //预分配缓存, 高效GC
-            pixelBuffer = new byte[dibW * dibH * 4];
+            //预分配缓存（readback 尺寸）, 高效GC
+            pixelBuffer = new byte[_readbackWidth * _readbackHeight * 4];
 
-            //预建 DIB section（复用，避免每帧 8MB 级分配/释放）
-            EnsureDib(dibW, dibH);
+            //全屏 DIB 缓冲区（半分辨率放大目标）
+            _fullScreenBuffer = new byte[w * h * 4];
+
+            //预建 DIB section（复用，始终全屏尺寸）
+            EnsureDib(w, h);
 
             //创建一个可以让鼠标穿过的透明窗口
             int exStyle = 0x80000 | 0x20 | 0x8 | 0x80;
@@ -110,17 +123,78 @@ namespace Oracle.Utils
 
             IntPtr screenDC = GetDC(IntPtr.Zero);
 
-            //整帧拷贝到缓存位图像素区
-            Marshal.Copy(bgraData, 0, _cachedDibBits, bgraData.Length);
+            //按数据尺寸自适应：全分辨率直拷，半分辨率放大回全屏 DIB（最近邻，按行缓存复用）
+            int fullBytes = _dibWidth * _dibHeight * 4;
+            if (bgraData.Length == fullBytes)
+            {
+                //整帧拷贝到缓存位图像素区（全分辨率直拷）
+                Marshal.Copy(bgraData, 0, _cachedDibBits, fullBytes);
+            }
+            else if (bgraData.Length == _readbackWidth * _readbackHeight * 4)
+            {
+                //半分辨率 readback 数据放大到全屏 DIB
+                UpscaleBgraToFullScreen(bgraData);
+                Marshal.Copy(_fullScreenBuffer, 0, _cachedDibBits, fullBytes);
+            }
+            else
+            {
+                //尺寸不匹配：丢弃本帧，防止越界
+                ReleaseDC(IntPtr.Zero, screenDC);
+                return;
+            }
 
             POINT ptSrc = new POINT { x = 0, y = 0 };
             POINT ptDst = new POINT { x = 0, y = 0 };
-            //窗口尺寸始终为全屏（半分辨率 DIB 会被 GDI 拉伸铺满，骨骼线条无感，文本轻微柔化）
+            //窗口尺寸始终为全屏，DIB 与其同尺寸，保证 UpdateLayeredWindow 尺寸匹配
             SIZE size = new SIZE { cx = screenW, cy = screenH };
             BLENDFUNCTION blend = new BLENDFUNCTION { BlendOp = 0, BlendFlags = 0, SourceConstantAlpha = 255, AlphaFormat = 1 }; // 开启 Alpha 透明通道
             UpdateLayeredWindow(hwnd, screenDC, ref ptDst, ref size, _cachedMemDC, ref ptSrc, 0, ref blend, 2);
 
             ReleaseDC(IntPtr.Zero, screenDC);
+        }
+
+        /// <summary>
+        /// 将半分辨率 BGRA 数据最近邻放大到全屏 DIB 缓冲区。
+        /// 每行只做一次水平放大并缓存，垂直方向用快拷重复该行，避免逐像素双重循环。
+        /// </summary>
+        /// <param name="src">半分辨率 BGRA 数据（readback 尺寸）</param>
+        private static void UpscaleBgraToFullScreen(byte[] src)
+        {
+            int srcW = _readbackWidth;
+            int srcH = _readbackHeight;
+            int dstW = _dibWidth;
+            int dstH = _dibHeight;
+            byte[] dst = _fullScreenBuffer;
+
+            //行放大缓存复用
+            if (_upscaleRowCache == null || _upscaleRowCache.Length != dstW * 4)
+            {
+                _upscaleRowCache = new byte[dstW * 4];
+            }
+
+            int lastSrcRow = -1;
+            for (int y = 0; y < dstH; y++)
+            {
+                int sy = y * srcH / dstH;
+                if (sy != lastSrcRow)
+                {
+                    //该源行尚未放大：水平最近邻填充缓存行
+                    int srcRowBase = sy * srcW * 4;
+                    for (int x = 0; x < dstW; x++)
+                    {
+                        int sx = x * srcW / dstW;
+                        int si = srcRowBase + sx * 4;
+                        int di = x * 4;
+                        _upscaleRowCache[di] = src[si];
+                        _upscaleRowCache[di + 1] = src[si + 1];
+                        _upscaleRowCache[di + 2] = src[si + 2];
+                        _upscaleRowCache[di + 3] = src[si + 3];
+                    }
+                    lastSrcRow = sy;
+                }
+                //整行快拷到目标 DIB 缓冲区
+                Buffer.BlockCopy(_upscaleRowCache, 0, dst, y * dstW * 4, dstW * 4);
+            }
         }
 
         /// <summary>

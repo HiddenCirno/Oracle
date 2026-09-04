@@ -148,37 +148,41 @@ namespace Oracle
             {
                 return;
             }
-
-            //readback 排队：上一帧 GPU 回读尚未完成则跳过本帧，防止请求积压
-            //叠加层为保留模式，上一帧 DIB 仍留在窗口上，跳帧不会闪烁
-            if (NativeOverlay.IsReadbackPending)
-            {
-                return;
-            }
             lastEspDrawTime = Time.time;
 
             //将绘制目标设置为自定义纹理而不是主摄像机
+            //try/finally 保证任何异常下都恢复 RenderTexture.active，
+            //避免污染后续 IMGUI 绘制（否则 F12 菜单等会画到 espRT 导致闪烁）
             RenderTexture prevRT = RenderTexture.active;
-            RenderTexture.active = espRT;
-            GL.Clear(false, true, Color.clear);
-
-            //绘制事件
-            OracleEvent.Draw();
-            //恢复窗口焦点
-            RenderTexture.active = prevRT;
-
-            //半分辨率优化：全分辨率绘制后 GPU 降采样到 halfRT，readback / DIB 数据量减 75%
-            //使用初始化时锁定的模式，避免运行时切换配置破坏 readback 尺寸匹配
-            RenderTexture readTarget = espRT;
-            if (NativeOverlay.IsHalfResolution && halfRT != null)
+            try
             {
-                Graphics.Blit(espRT, halfRT);
-                readTarget = halfRT;
-            }
+                RenderTexture.active = espRT;
+                GL.Clear(false, true, Color.clear);
 
-            //将图像流异步传输给窗口
-            NativeOverlay.IsReadbackPending = true;
-            UnityEngine.Rendering.AsyncGPUReadback.Request(readTarget, 0, TextureFormat.BGRA32, NativeOverlay.OnReadbackComplete);
+                //绘制事件
+                OracleEvent.Draw();
+
+                //半分辨率优化：全分辨率绘制后 GPU 降采样到 halfRT，readback / DIB 数据量减 75%
+                //使用初始化时锁定的模式，避免运行时切换配置破坏 readback 尺寸匹配
+                RenderTexture readTarget = espRT;
+                if (NativeOverlay.IsHalfResolution && halfRT != null)
+                {
+                    Graphics.Blit(espRT, halfRT);
+                    readTarget = halfRT;
+                }
+
+                //readback 排队：仅限制 readback 请求本身，espRT 每帧照常绘制；
+                //readback 未完成时隐形窗口保留上一帧 DIB，不会闪烁
+                if (!NativeOverlay.IsReadbackPending)
+                {
+                    NativeOverlay.IsReadbackPending = true;
+                    UnityEngine.Rendering.AsyncGPUReadback.Request(readTarget, 0, TextureFormat.BGRA32, NativeOverlay.OnReadbackComplete);
+                }
+            }
+            finally
+            {
+                RenderTexture.active = prevRT;
+            }
         }
     }
 
