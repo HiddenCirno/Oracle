@@ -21,8 +21,8 @@ namespace Oracle.Data
         public static List<TripwireData> CachedTripwires = new List<TripwireData>();
 
         //反射存储
-        private static FieldInfo _tripwireStartField = typeof(TripwireProceduralMesh).GetField("_fromPositionPivot", BindingFlags.NonPublic | BindingFlags.Instance);
-        private static FieldInfo _tripwireEndField = typeof(TripwireProceduralMesh).GetField("_toPositionPivot", BindingFlags.NonPublic | BindingFlags.Instance);
+        private static FieldInfo _tripwireStartField = typeof(TripwireProceduralMesh).GetField("vector3_0", BindingFlags.NonPublic | BindingFlags.Instance);
+        private static FieldInfo _tripwireEndField = typeof(TripwireProceduralMesh).GetField("vector3_1", BindingFlags.NonPublic | BindingFlags.Instance);
 
         /// <summary>
         /// 扫描协程
@@ -30,8 +30,8 @@ namespace Oracle.Data
         public static System.Collections.IEnumerator TripwireScannerCoroutine()
         {
             //反射
-            _tripwireStartField = typeof(TripwireProceduralMesh).GetField("_fromPositionPivot", BindingFlags.NonPublic | BindingFlags.Instance);
-            _tripwireEndField = typeof(TripwireProceduralMesh).GetField("_toPositionPivot", BindingFlags.NonPublic | BindingFlags.Instance);
+            _tripwireStartField = typeof(TripwireProceduralMesh).GetField("vector3_0", BindingFlags.NonPublic | BindingFlags.Instance);
+            _tripwireEndField = typeof(TripwireProceduralMesh).GetField("vector3_1", BindingFlags.NonPublic | BindingFlags.Instance);
 
             //双缓存
             List<TripwireData> frontBuffer = new List<TripwireData>(100);
