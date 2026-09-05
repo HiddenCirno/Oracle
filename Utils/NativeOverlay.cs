@@ -21,6 +21,9 @@ namespace Oracle.Utils
         //上次 EnableNativeOverlay 状态（用于记录开关变化）
         private static bool _lastEnableState;
 
+        //上次焦点状态（用于记录失焦/聚焦变化）
+        private static bool _lastFocusedState = true;
+
         //数据桥三缓冲 store（主线程构建原语 → 渲染线程消费）
         public static OverlayPrimitiveStore Store { get; private set; } = new OverlayPrimitiveStore();
 
@@ -41,6 +44,42 @@ namespace Oracle.Utils
         private static extern IntPtr GetModuleHandle(string lpModuleName);
         [DllImport("kernel32.dll", CharSet = CharSet.Ansi)]
         private static extern IntPtr GetProcAddress(IntPtr hModule, string lpProcName);
+        //前台窗口检测（失焦判断）：Application.isFocused 在 Tarkov 全屏窗口化下不可靠，
+        //切窗后仍返回 true。改用 Win32 查询当前前台窗口是否属于本进程。
+        [DllImport("user32.dll")]
+        private static extern IntPtr GetForegroundWindow();
+        [DllImport("user32.dll")]
+        private static extern uint GetWindowThreadProcessId(IntPtr hWnd, out uint lpdwProcessId);
+
+        //游戏进程 ID（懒缓存，用于前台窗口归属判断）
+        private static uint _gamePid;
+        private static bool _gamePidInited;
+
+        /// <summary>
+        /// 判断游戏是否处于前台（比 Application.isFocused 可靠：
+        /// Tarkov 全屏窗口化下 isFocused 切窗后仍返回 true，导致失焦判断失效）。
+        /// 前台窗口若属于本进程 → 聚焦；否则 → 失焦（切到别的窗口）。
+        /// </summary>
+        private static bool IsGameFocused()
+        {
+            try
+            {
+                if (!_gamePidInited)
+                {
+                    _gamePid = (uint)System.Diagnostics.Process.GetCurrentProcess().Id;
+                    _gamePidInited = true;
+                }
+                IntPtr fg = GetForegroundWindow();
+                if (fg == IntPtr.Zero) return false;
+                GetWindowThreadProcessId(fg, out uint pid);
+                return pid == _gamePid;
+            }
+            catch
+            {
+                //异常时退化为 Unity 判断
+                return Application.isFocused;
+            }
+        }
 
         [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
         private struct WNDCLASSEX
@@ -197,10 +236,15 @@ namespace Oracle.Utils
             //调试自检帧开关同步（渲染线程轮询此标志，配置改动即时生效）
             OverlayGdiRenderer.ForceTestFrame = NativeOverlayCfg.OverlayDebugTestFrame.Value;
 
-            //失焦自动停止：游戏窗口失焦时暂停渲染线程（不绘制、保留最后一帧），聚焦自动恢复。
-            //⚠ 只暂停渲染、绝不 SW_HIDE 窗口——全屏窗口化下 Application.isFocused 抖动会导致
-            //   SW_HIDE 后"一闪而过消失"黑屏（b274c8c 已踩过坑）。
-            OverlayGdiRenderer.RenderPaused = !Application.isFocused;
+            //失焦判断：用 Win32 前台窗口（Application.isFocused 在全屏窗口化下切窗后仍为 true，不可靠）
+            bool focused = IsGameFocused();
+            if (focused != _lastFocusedState)
+            {
+                System.Console.WriteLine($"[Oracle][Overlay] UpdateNativeOverlay: 焦点 {_lastFocusedState}->{focused}");
+                _lastFocusedState = focused;
+            }
+            //失焦时暂停渲染线程绘制（省 GDI/ULW 开销）；聚焦自动恢复
+            OverlayGdiRenderer.RenderPaused = !focused;
 
             bool enable = NativeOverlayCfg.EnableNativeOverlay.Value;
             if (enable != _lastEnableState)
@@ -219,11 +263,9 @@ namespace Oracle.Utils
                     isOverlayInitialized = true;
                 }
 
-                //叠加层显隐。
-                //⚠ 不要用 Application.isFocused 控制显隐：Tarkov 全屏窗口化下该值不稳定，
-                //   窗口会被 SW_HIDE 隐藏导致"一闪而过消失"——叠加层内容画了也看不见。
-                //   叠加层窗口本身是 WS_EX_TRANSPARENT（鼠标穿透），不会干扰游戏交互。
-                SetVisible(GlobalCfg.UniGUI.Value);
+                //叠加层显隐：失焦时 SW_HIDE 完全隐藏（避免 WS_EX_TOPMOST 残留最后一帧悬停桌面），聚焦时 SW_SHOWNA 恢复。
+                //⚠ 之前不用 isFocused 控制显隐是因为它不可靠会误判；现在用 Win32 前台窗口判断是可靠的。
+                SetVisible(GlobalCfg.UniGUI.Value && focused);
             }
             else
             {
