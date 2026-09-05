@@ -70,7 +70,8 @@ namespace Oracle.ESP
             Camera cam = Camera.main;
             if (cam == null) return;
 
-            if (WishlistESPCfg.EnablePlayerWishlistESP.Value)
+            //玩家愿望单随动：与玩家透视联动（任一关闭都不显示）
+            if (WishlistESPCfg.EnablePlayerWishlistESP.Value && PlayerESPCfg.EnablePlayerESP.Value)
             {
                 DrawPlayerWishlist(cam, OracleRendering.EspTextStyle);
             }
