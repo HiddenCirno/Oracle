@@ -24,12 +24,12 @@ namespace Oracle.Data
         /// </summary>
         /// <param name="info"></param>
         /// <returns></returns>
-        public static string GetPlayerName(ProfileInfo info)
+        public static string GetPlayerName(InfoClass info)
         {
             if (info == null) return "Nikita Buyanov";
             var role = info.Settings?.Role.ToString().ToLower() ?? "assault";
             //迷宫小弟、玩家和全英文名不经过转换，反向筛选西里尔字母
-            return ((info.Side == EPlayerSide.Bear || info.Side == EPlayerSide.Usec) || (role == "tagillahelperagro") || OracleCommon.IsAllEnglish(info.Nickname)) ? info.Nickname : DebugGroupStruct.ConvertToLatinic(info.Nickname);
+            return ((info.Side == EPlayerSide.Bear || info.Side == EPlayerSide.Usec) || (role == "tagillahelperagro") || OracleCommon.IsAllEnglish(info.Nickname)) ? info.Nickname : GStruct21.ConvertToLatinic(info.Nickname);
         }
 
         /// <summary>
@@ -37,7 +37,7 @@ namespace Oracle.Data
         /// </summary>
         /// <param name="info"></param>
         /// <returns></returns>
-        public static bool IsTeammate(ProfileInfo info)
+        public static bool IsTeammate(InfoClass info)
         {
             if(info == null) return false;
             string targetGroupId = info?.GroupId ?? "";
@@ -86,7 +86,7 @@ namespace Oracle.Data
         /// <param name="teammateColor">友军色</param>
         /// <param name="sideText">纯文本阵营段 "USEC John" / "Boss Killa"</param>
         /// <param name="sideColor">阵营段颜色</param>
-        public static void GetPlayerOverlayLabel(ProfileInfo info, string name, bool isTeammate, bool includeName,
+        public static void GetPlayerOverlayLabel(InfoClass info, string name, bool isTeammate, bool includeName,
             out string levelText, out OracleColor levelColor,
             out string teammateText, out OracleColor teammateColor,
             out string sideText, out OracleColor sideColor)
@@ -133,7 +133,7 @@ namespace Oracle.Data
         /// <summary>
         /// 获取玩家数据富文本
         /// </summary>
-        public static void DeterminePlayerText(ProfileInfo info, string name, bool isTeammate, bool includeName, out string sideText, out string levelText)
+        public static void DeterminePlayerText(InfoClass info, string name, bool isTeammate, bool includeName, out string sideText, out string levelText)
         {
             sideText = "Unheard";
             levelText = "";

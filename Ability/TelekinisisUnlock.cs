@@ -18,10 +18,10 @@ namespace Oracle.Ability
     public static class TelekinisisUnlock
     {
         //拦截互动菜单
-        [HarmonyPatch(typeof(InteractionContextHelper), nameof(InteractionContextHelper.GetAvailableActions), new Type[] { typeof(GamePlayerOwner), typeof(IInteractive) })]
+        [HarmonyPatch(typeof(GetActionsClass), "GetAvailableActions", new Type[] { typeof(GamePlayerOwner), typeof(GInterface177) })]
         public class GetActionsClassPatch
         {
-            public static void Postfix(GamePlayerOwner owner, IInteractive interactive, ref EFT.UI.AvailableInteractionState __result)
+            public static void Postfix(GamePlayerOwner owner, GInterface177 interactive, ref ActionsReturnClass __result)
             {
                 if (interactive == null || __result == null || !TelekinisisUnlockCfg.EnableTelekinisisUnlock.Value) return;
 
@@ -41,7 +41,7 @@ namespace Oracle.Ability
                     if (!hasUnlock)
                     {
                         //通过Insert让它变为首选项
-                        __result.Actions.Insert(0, new EFT.UI.InteractionAction
+                        __result.Actions.Insert(0, new ActionsTypesClass
                         {
                             Name = "Unlock",
                             Action = new Action(() =>

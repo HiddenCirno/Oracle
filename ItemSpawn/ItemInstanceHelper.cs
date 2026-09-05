@@ -150,9 +150,9 @@ namespace Oracle.ItemSpawn
                 //重新为维修包充能
                 if (item.TryGetItemComponent<RepairKitComponent>(out var repairKit))
                 {
-                    if(repairKit.Resource < repairKit._template.MaxRepairResource)
+                    if(repairKit.Resource < repairKit.RepairKitsTemplateClass.MaxRepairResource)
                     {
-                        repairKit.Resource = repairKit._template.MaxRepairResource;
+                        repairKit.Resource = repairKit.RepairKitsTemplateClass.MaxRepairResource;
                     }
                 }
             }

@@ -14,7 +14,7 @@ namespace Oracle.Ability
     public static class GodMode
     {
         //无敌Patch
-        [HarmonyPatch(typeof(Player), nameof(Player.ApplyDamageInfo))]
+        [HarmonyPatch(typeof(Player), "ApplyDamageInfo")]
         public class GodMode_ApplyDamageInfoPatch
         {
             public static bool Prefix(Player __instance)
@@ -49,7 +49,7 @@ namespace Oracle.Ability
         }
 
         //阻止死亡Patch
-        [HarmonyPatch(typeof(ActiveHealthController), nameof(ActiveHealthController.Kill))]
+        [HarmonyPatch(typeof(ActiveHealthController), "Kill")]
         public static class GodMode_AHCKillPatch
         {
             public static bool Prefix(ActiveHealthController __instance)
@@ -67,7 +67,7 @@ namespace Oracle.Ability
         }
 
         //阻止部位损毁
-        [HarmonyPatch(typeof(ActiveHealthController), nameof(ActiveHealthController.DestroyBodyPart))]
+        [HarmonyPatch(typeof(ActiveHealthController), "DestroyBodyPart")]
         public static class GodMode_AHCDestroyBodyPartPatch
         {
             public static bool Prefix(ActiveHealthController __instance)

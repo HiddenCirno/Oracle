@@ -8,6 +8,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.AI;
+using BotCreationData = BotCreationDataClass;
 
 namespace Oracle.RaidManager
 {
@@ -214,11 +215,11 @@ namespace Oracle.RaidManager
 
                 // 5. 构造 Profile 数据 (完全使用游戏原生管线)
                 var spawnParams = new BotSpawnParams { TriggerType = SpawnTriggerType.none };
-                var profileData = new GetProfileDataParams(side, role, BotDifficulty.normal, 0f, null);
+                var profileData = new BotProfileDataClass(side, role, BotDifficulty.normal, 0f, null);
 
                 BotCreationData botCreationData = await BotCreationData.Create(
                     profileData,
-                    botSpawner._botCreator,
+                    botSpawner.BotCreator,
                     1,
                     botSpawner
                 );

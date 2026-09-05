@@ -306,7 +306,7 @@ namespace Oracle.RaidManager
         {
             try
             {
-                var identifier = keyObj as CountersCollection.Identifier;
+                var identifier = keyObj as SessionCountersClass.SessionCounterIdentifierValueClass;
                 if (identifier == null || identifier.Set == null) return keyObj.ToString();
 
                 var tags = identifier.Set.ToList();

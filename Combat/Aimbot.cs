@@ -181,7 +181,7 @@ namespace Oracle.Combat
     public class MagicBulletPatch
     {
         public static void Prefix(
-            EFT.InventoryLogic.Ammo ammo,
+            AmmoItemClass ammo,
             ref Vector3 origin,
             ref Vector3 direction,
             string player,

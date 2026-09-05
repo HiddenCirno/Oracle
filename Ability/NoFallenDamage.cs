@@ -15,10 +15,10 @@ namespace Oracle.Ability
     {
     }
     //Patch
-    [HarmonyPatch(typeof(Player), nameof(Player.ApplyDamageInfo))]
+    [HarmonyPatch(typeof(Player), "ApplyDamageInfo")]
     public class AntiFallenDamagePatch
     {
-        public static bool Prefix(Player __instance, ref EFT.Ballistics.DamageInfo damageInfo, EBodyPart bodyPartType, EBodyPartColliderType colliderType, float absorbed)
+        public static bool Prefix(Player __instance, ref DamageInfoStruct damageInfo, EBodyPart bodyPartType, EBodyPartColliderType colliderType, float absorbed)
         {
             //不知道是速度太快还是过滤问题，总之都改了
             //奇怪, 为什么玩家Scav可以而玩家不行
@@ -44,10 +44,10 @@ namespace Oracle.Ability
     }
 
     //Patch
-    [HarmonyPatch(typeof(ActiveHealthController), nameof(ActiveHealthController.ApplyDamage))]
+    [HarmonyPatch(typeof(ActiveHealthController), "ApplyDamage")]
     public class AntiFallenDamagePatch2
     {
-        public static bool Prefix(ActiveHealthController __instance, EBodyPart bodyPart, ref float damage, ref EFT.Ballistics.DamageInfo damageInfo)
+        public static bool Prefix(ActiveHealthController __instance, EBodyPart bodyPart, ref float damage, ref DamageInfoStruct damageInfo)
         {
             if (NoFallenDamageCfg.DisableFallenDamage.Value && (damageInfo.DamageType == EDamageType.Fall || damageInfo.DamageType == EDamageType.Impact))
             {

@@ -52,7 +52,7 @@ namespace Oracle.ItemSpawn
 
     //Patch
     //全都是用于捕获物品实例的Patch
-    [HarmonyPatch(typeof(ItemView), nameof(ItemView.OnPointerEnter))]
+    [HarmonyPatch(typeof(ItemView), "OnPointerEnter")]
     internal static class ItemView_PointEnterPatch
     {
         private static void Prefix(ItemView __instance)
@@ -61,22 +61,22 @@ namespace Oracle.ItemSpawn
         }
     }
 
-    [HarmonyPatch(typeof(EntityIcon), nameof(EntityIcon.CG_Awake))]
+    [HarmonyPatch(typeof(EntityIcon), "method_1")]
     internal static class EntityIcon_PointEnterPatch
     {
         private static void Prefix(EntityIcon __instance)
         {
-            Item item = Traverse.Create(__instance).Field("_item").GetValue<Item>();
+            Item item = Traverse.Create(__instance).Field("item_0").GetValue<Item>();
             if (item != null) ItemCatcher.selectedItem = item;
         }
     }
 
-    [HarmonyPatch(typeof(TradingRequisitePanel), nameof(TraderRequirementPanel.CG_Awake))]
+    [HarmonyPatch(typeof(TradingRequisitePanel), "method_1")]
     internal static class TradingRequisitePanel_PointEnterPatch
     {
         private static void Prefix(TradingRequisitePanel __instance)
         {
-            var context = Traverse.Create(__instance).Field("_itemContext").GetValue();
+            var context = Traverse.Create(__instance).Field("itemContextAbstractClass").GetValue();
             if (context != null)
             {
                 Item item = Traverse.Create(context).Property("Item").GetValue<Item>();
@@ -85,7 +85,7 @@ namespace Oracle.ItemSpawn
         }
     }
 
-    [HarmonyPatch(typeof(GridItemView), nameof(GridItemView.OnPointerEnter))]
+    [HarmonyPatch(typeof(GridItemView), "OnPointerEnter")]
     internal static class GridItemView_PointEnterPatch
     {
         private static void Prefix(GridItemView __instance)
@@ -94,7 +94,7 @@ namespace Oracle.ItemSpawn
         }
     }
 
-    [HarmonyPatch(typeof(HideoutItemView), nameof(HideoutItemView.OnPointerEnter))]
+    [HarmonyPatch(typeof(HideoutItemView), "OnPointerEnter")]
     internal static class HideoutItemViewPointEnterPatch
     {
         [HarmonyPrefix]
@@ -105,25 +105,25 @@ namespace Oracle.ItemSpawn
     }
 
     //退出点
-    [HarmonyPatch(typeof(ItemView), nameof(ItemView.OnPointerExit))]
+    [HarmonyPatch(typeof(ItemView), "OnPointerExit")]
     internal static class ItemView_PointOuterPatch
     {
         private static void Prefix() => ItemCatcher.selectedItem = null;
     }
 
-    [HarmonyPatch(typeof(EntityIcon), nameof(EntityIcon.CG_Awake1))]
+    [HarmonyPatch(typeof(EntityIcon), "method_2")]
     internal static class EntityIcon_PointOuterPatch
     {
         private static void Prefix() => ItemCatcher.selectedItem = null;
     }
 
-    [HarmonyPatch(typeof(TradingRequisitePanel), nameof(TradingRequisitePanel.CG_Awake1))]
+    [HarmonyPatch(typeof(TradingRequisitePanel), "method_2")]
     internal static class TradingRequisitePanel_PointOuterPatch
     {
         private static void Prefix() => ItemCatcher.selectedItem = null;
     }
 
-    [HarmonyPatch(typeof(GridItemView), nameof(ItemView.OnPointerExit))]
+    [HarmonyPatch(typeof(GridItemView), "OnPointerExit")]
     internal static class GridItemView_PointOuterPatch
     {
         private static void Prefix() => ItemCatcher.selectedItem = null;

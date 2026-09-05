@@ -11,17 +11,17 @@ namespace Oracle.ItemSpawn
     public static class ItemSpawnStashPatch
     {
         //捕获invctrler
-        [HarmonyPatch(typeof(InventoryScreen), nameof(InventoryScreen.Show), new Type[]
+        [HarmonyPatch(typeof(InventoryScreen), "Show", new Type[]
         {
         typeof(IHealthController),
         typeof(InventoryController),
-        typeof(EFT.Quests.QuestController),
-        typeof(EFT.Achievements.AchievementsController),
-        typeof(EFT.Prestige.PrestigeController),
+        typeof(AbstractQuestControllerClass),
+        typeof(AbstractAchievementControllerClass),
+        typeof(AbstractPrestigeControllerClass),
         typeof(CompoundItem),
         typeof(EInventoryTab),
-        typeof(EFT.IEftSession),
-        typeof(ItemContext),
+        typeof(ISession),
+        typeof(ItemContextAbstractClass),
         typeof(bool)
         })]
         public class InventoryScreen_Show_Patch
@@ -41,11 +41,11 @@ namespace Oracle.ItemSpawn
         }
 
         //桥接请求
-        [HarmonyPatch(typeof(ItemController), "ConvertOperationResultToOperation")]
+        [HarmonyPatch(typeof(TraderControllerClass), "ConvertOperationResultToOperation")]
         public class Patch_ConvertOperation
         {
             [HarmonyPrefix]
-            public static bool Prefix(ItemController __instance, IOperationResult operationResult, ref EFT.InventoryLogic.Operations.AbstractOperation __result)
+            public static bool Prefix(TraderControllerClass __instance, IRaiseEvents operationResult, ref BaseInventoryOperationClass __result)
             {
                 try
                 {
@@ -59,16 +59,29 @@ namespace Oracle.ItemSpawn
                     //3405是ADD
                     //你妈的这段4.1是不是得改
                     string operationTypeName = operationResult.GetType().Name;
-                    if (targetItem != null && operationTypeName == "AddResult")
+                    if (targetItem != null && operationTypeName == "GClass3405")
                     {
-                        ushort txId = __instance.GetAndIncrementNextOperationId();
-                        __result = new OracleAddOperationClass(txId, __instance, targetItem);
-                        Console.WriteLine($"[Oracle] {operationTypeName}桥接成功");
+                        var method12 = AccessTools.Method(operationResult.GetType().BaseType, "method_12")
+                                    ?? AccessTools.Method(__instance.GetType(), "method_12");
 
-                        //清空缓存
+                        if (method12 != null)
+                        {
+                            ushort txId = (ushort)method12.Invoke(__instance, null);
 
-                        //不再执行
-                        return false;
+                            //桥接到自定义路由
+                            __result = new OracleAddOperationClass(txId, __instance, targetItem);
+                            Console.WriteLine($"[Oracle] {operationTypeName}桥接成功");
+
+                            //清空缓存
+                            ItemManagerGUI.generatedItem = null;
+
+                            //不再执行
+                            return false;
+                        }
+                        else
+                        {
+                            Console.WriteLine("[Oracle] 警告： method_12 获取失败！");
+                        }
                     }
                 }
                 catch (Exception ex)

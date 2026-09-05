@@ -12,6 +12,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using static GetActionsClass;
 
 namespace Oracle.RaidManager
 {
@@ -28,7 +29,7 @@ namespace Oracle.RaidManager
         public Dictionary<string, Texture2D> _iconCache = new Dictionary<string, Texture2D>();
 
         //远程搜索的Patch
-        [HarmonyPatch(typeof(ItemManipulator), nameof(ItemManipulator.IsItemLocked))]
+        [HarmonyPatch(typeof(InteractionsHandlerClass), "smethod_14")]
         public class InteractionsHandlerClassPatch
         {
             public static bool Prefix(Item item, out Error error, ref bool __result)
@@ -176,11 +177,11 @@ namespace Oracle.RaidManager
 
                 //组包
                 var pickUpResult =
-                    ItemManipulator.QuickFindAppropriatePlace(
+                    InteractionsHandlerClass.QuickFindAppropriatePlace(
                     item,
                     player.InventoryController,
                     player.Inventory.Equipment.ToEnumerable(),
-                    ItemManipulator.EMoveItemOrder.PickUp,
+                    InteractionsHandlerClass.EMoveItemOrder.PickUp,
                     true
                 );
 
@@ -196,7 +197,7 @@ namespace Oracle.RaidManager
                                 player.UpdateInteractionCast();
                             }
 
-                            var pickupState = player.CurrentState as PickUpState;
+                            var pickupState = player.CurrentState as PickupStateClass;
                             pickupState?.Pickup(false, null);
                         }
                     );
@@ -244,11 +245,11 @@ namespace Oracle.RaidManager
                     if (myOwner == null) return;
 
                     //在内存中构建交互行为
-                    InteractionContextHelper.CG_GetAvailableInteractionState1 context = new InteractionContextHelper.CG_GetAvailableInteractionState1
+                    Class1748 context = new Class1748
                     {
                         owner = myOwner,
                         rootItem = containerItem,
-                        lootItemOwner = containerItem.Owner as ItemController,
+                        lootItemOwner = containerItem.Owner as TraderControllerClass,
                         controller = player.InventoryController
                     };
 

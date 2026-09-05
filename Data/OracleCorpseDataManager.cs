@@ -92,7 +92,7 @@ namespace Oracle.Data
                             Player deadPlayer = PluginsCore.CorrectGameWorld.GetEverExistedPlayerByID(profileId);
                             if (deadPlayer != null && deadPlayer.Profile != null)
                             {
-                                ProfileInfo info = deadPlayer.Profile.Info;
+                                InfoClass info = deadPlayer.Profile.Info;
                                 if (info != null)
                                 {
                                     string name = OraclePlayerDataManager.GetPlayerName(info);

@@ -21,7 +21,7 @@ namespace Oracle.RaidManager
         public Dictionary<string, Texture2D> _iconCache = new Dictionary<string, Texture2D>();
 
         //头像渲染队列
-        public Dictionary<string, ItemIcon> _pendingIcons = new Dictionary<string, ItemIcon>();
+        public Dictionary<string, GClass929> _pendingIcons = new Dictionary<string, GClass929>();
 
         /// <summary>
         /// 绘制
@@ -170,10 +170,10 @@ namespace Oracle.RaidManager
         }
 
         //远程搜索必要的Patch
-        [HarmonyPatch(typeof(SearchController), "TryFindChangedContainer")]
+        [HarmonyPatch(typeof(GClass2234), "TryFindChangedContainer")]
         public class TryFindChangedContainerPatch
         {
-            public static void Postfix(ItemAddress address, [CanBeNull] out ItemInfo changedContainer, ref bool __result)
+            public static void Postfix(ItemAddress address, [CanBeNull] out GClass1802 changedContainer, ref bool __result)
             {
                 changedContainer = null;
                 __result = false;
@@ -201,7 +201,7 @@ namespace Oracle.RaidManager
                 }
 
                 Item aiRootItem = targetPlayer.Profile.Inventory.Equipment;
-                var aiController = aiRootItem.Owner as ItemController;
+                var aiController = aiRootItem.Owner as TraderControllerClass;
 
                 //查找物品栏
                 if (aiRootItem == null || aiController == null)
@@ -211,7 +211,7 @@ namespace Oracle.RaidManager
                 }
 
                 //构建一个虚拟的搜索行为
-                InteractionContextHelper.CG_GetAvailableInteractionState1 context = new InteractionContextHelper.CG_GetAvailableInteractionState1
+                GetActionsClass.Class1748 context = new GetActionsClass.Class1748
                 {
                     owner = myOwner,
                     rootItem = aiRootItem,
@@ -252,7 +252,7 @@ namespace Oracle.RaidManager
             try
             {
                 //检查是否在队列
-                if (_pendingIcons.TryGetValue(profileId, out ItemIcon pendingIcon))
+                if (_pendingIcons.TryGetValue(profileId, out GClass929 pendingIcon))
                 {
                     if (pendingIcon != null && pendingIcon.Sprite != null && pendingIcon.Sprite.texture != null)
                     {
@@ -267,8 +267,8 @@ namespace Oracle.RaidManager
                 //从底层生成头图
                 var equipment = player.Profile.Inventory.Equipment.CloneVisibleItem();
                 var customization = player.Profile.Customization;
-                var request = new PlayerIconRequest(equipment, customization);
-                var iconData = Comfort.Common.Singleton<EFT.PlayerIcons.PlayerIconCreator>.Instance.GetIcon(request);
+                var request = new GClass932(equipment, customization);
+                var iconData = Comfort.Common.Singleton<GClass927>.Instance.GetIcon(request);
 
                 if (iconData != null)
                 {

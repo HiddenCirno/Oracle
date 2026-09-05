@@ -1,0 +1,895 @@
+commit 40dfaca8b1e25d6a19b0be4e2b9395a48d5e0662
+Author: HiddenCirno <2301697863@qq.com>
+Date:   Tue Aug 4 11:27:12 2026 +0800
+
+    4.1
+
+diff --git a/Ability/GodMode.cs b/Ability/GodMode.cs
+index c966c2b..b156145 100644
+--- a/Ability/GodMode.cs
++++ b/Ability/GodMode.cs
+@@ -14,7 +14,7 @@ namespace Oracle.Ability
+     public static class GodMode
+     {
+         //无敌Patch
+-        [HarmonyPatch(typeof(Player), "ApplyDamageInfo")]
++        [HarmonyPatch(typeof(Player), nameof(Player.ApplyDamageInfo))]
+         public class GodMode_ApplyDamageInfoPatch
+         {
+             public static bool Prefix(Player __instance)
+@@ -49,7 +49,7 @@ namespace Oracle.Ability
+         }
+ 
+         //阻止死亡Patch
+-        [HarmonyPatch(typeof(ActiveHealthController), "Kill")]
++        [HarmonyPatch(typeof(ActiveHealthController), nameof(ActiveHealthController.Kill))]
+         public static class GodMode_AHCKillPatch
+         {
+             public static bool Prefix(ActiveHealthController __instance)
+@@ -67,7 +67,7 @@ namespace Oracle.Ability
+         }
+ 
+         //阻止部位损毁
+-        [HarmonyPatch(typeof(ActiveHealthController), "DestroyBodyPart")]
++        [HarmonyPatch(typeof(ActiveHealthController), nameof(ActiveHealthController.DestroyBodyPart))]
+         public static class GodMode_AHCDestroyBodyPartPatch
+         {
+             public static bool Prefix(ActiveHealthController __instance)
+diff --git a/Ability/InfinityStamina.cs b/Ability/InfinityStamina.cs
+index c96225d..d28af89 100644
+--- a/Ability/InfinityStamina.cs
++++ b/Ability/InfinityStamina.cs
+@@ -55,7 +55,7 @@ namespace Oracle.Ability
+     }
+ 
+     //无限负重Patch
+-    [HarmonyPatch(typeof(InventoryEquipment), "smethod_1")]
++    [HarmonyPatch(typeof(InventoryEquipment), nameof(InventoryEquipment.GetTotalWeight))]
+     public class InfinityWeightPatch
+     {
+         public static bool Prefix(InventoryEquipment __instance, IEnumerable<Slot> slots, ref float __result)
+diff --git a/Ability/NoFallenDamage.cs b/Ability/NoFallenDamage.cs
+index f03447e..20a5479 100644
+--- a/Ability/NoFallenDamage.cs
++++ b/Ability/NoFallenDamage.cs
+@@ -15,10 +15,10 @@ namespace Oracle.Ability
+     {
+     }
+     //Patch
+-    [HarmonyPatch(typeof(Player), "ApplyDamageInfo")]
++    [HarmonyPatch(typeof(Player), nameof(Player.ApplyDamageInfo))]
+     public class AntiFallenDamagePatch
+     {
+-        public static bool Prefix(Player __instance, ref DamageInfoStruct damageInfo, EBodyPart bodyPartType, EBodyPartColliderType colliderType, float absorbed)
++        public static bool Prefix(Player __instance, ref EFT.Ballistics.DamageInfo damageInfo, EBodyPart bodyPartType, EBodyPartColliderType colliderType, float absorbed)
+         {
+             //不知道是速度太快还是过滤问题，总之都改了
+             //奇怪, 为什么玩家Scav可以而玩家不行
+@@ -44,10 +44,10 @@ namespace Oracle.Ability
+     }
+ 
+     //Patch
+-    [HarmonyPatch(typeof(ActiveHealthController), "ApplyDamage")]
++    [HarmonyPatch(typeof(ActiveHealthController), nameof(ActiveHealthController.ApplyDamage))]
+     public class AntiFallenDamagePatch2
+     {
+-        public static bool Prefix(ActiveHealthController __instance, EBodyPart bodyPart, ref float damage, ref DamageInfoStruct damageInfo)
++        public static bool Prefix(ActiveHealthController __instance, EBodyPart bodyPart, ref float damage, ref EFT.Ballistics.DamageInfo damageInfo)
+         {
+             if (NoFallenDamageCfg.DisableFallenDamage.Value && (damageInfo.DamageType == EDamageType.Fall || damageInfo.DamageType == EDamageType.Impact))
+             {
+diff --git a/Ability/TelekinisisUnlock.cs b/Ability/TelekinisisUnlock.cs
+index 5324ae1..db7d45b 100644
+--- a/Ability/TelekinisisUnlock.cs
++++ b/Ability/TelekinisisUnlock.cs
+@@ -18,10 +18,10 @@ namespace Oracle.Ability
+     public static class TelekinisisUnlock
+     {
+         //拦截互动菜单
+-        [HarmonyPatch(typeof(GetActionsClass), "GetAvailableActions", new Type[] { typeof(GamePlayerOwner), typeof(GInterface177) })]
++        [HarmonyPatch(typeof(InteractionContextHelper), nameof(InteractionContextHelper.GetAvailableActions), new Type[] { typeof(GamePlayerOwner), typeof(IInteractive) })]
+         public class GetActionsClassPatch
+         {
+-            public static void Postfix(GamePlayerOwner owner, GInterface177 interactive, ref ActionsReturnClass __result)
++            public static void Postfix(GamePlayerOwner owner, IInteractive interactive, ref EFT.UI.AvailableInteractionState __result)
+             {
+                 if (interactive == null || __result == null || !TelekinisisUnlockCfg.EnableTelekinisisUnlock.Value) return;
+ 
+@@ -41,7 +41,7 @@ namespace Oracle.Ability
+                     if (!hasUnlock)
+                     {
+                         //通过Insert让它变为首选项
+-                        __result.Actions.Insert(0, new ActionsTypesClass
++                        __result.Actions.Insert(0, new EFT.UI.InteractionAction
+                         {
+                             Name = "Unlock",
+                             Action = new Action(() =>
+diff --git a/Combat/Aimbot.cs b/Combat/Aimbot.cs
+index 2c7b225..2db3aa8 100644
+--- a/Combat/Aimbot.cs
++++ b/Combat/Aimbot.cs
+@@ -181,7 +181,7 @@ namespace Oracle.Combat
+     public class MagicBulletPatch
+     {
+         public static void Prefix(
+-            AmmoItemClass ammo,
++            EFT.InventoryLogic.Ammo ammo,
+             ref Vector3 origin,
+             ref Vector3 direction,
+             string player,
+diff --git a/Combat/InfiniteAmmo.cs b/Combat/InfiniteAmmo.cs
+index dbf69e9..d77ab48 100644
+--- a/Combat/InfiniteAmmo.cs
++++ b/Combat/InfiniteAmmo.cs
+@@ -17,13 +17,13 @@ namespace Oracle.Combat
+     public static class InfiniteAmmo
+     {
+         //Patch
+-        [HarmonyPatch(typeof(BallisticsCalculator), "Shoot", new Type[] { typeof(EftBulletClass) })]
++        [HarmonyPatch(typeof(BallisticsCalculator), "Shoot", new Type[] { typeof(EFT.Ballistics.Shot) })]
+         public class ShootPatch
+         {
+             [HarmonyPostfix]
+-            public static void Postfix(EftBulletClass shot)
++            public static void Postfix(EFT.Ballistics.Shot shot)
+             {
+-                if (!PluginsCore.CorrectGameWorld || !Singleton<ItemFactoryClass>.Instantiated)
++                if (!PluginsCore.CorrectGameWorld || !Singleton<EFT.ItemFactory>.Instantiated)
+                 {
+                     return;
+                 }
+@@ -43,13 +43,13 @@ namespace Oracle.Combat
+                     return;
+                 }
+ 
+-                MagazineItemClass currentMagazine = weapon.GetCurrentMagazine();
++                Magazine currentMagazine = weapon.GetCurrentMagazine();
+ 
+                 //提取武器弹药
+                 if (currentMagazine != null)
+                 {
+                     //转轮
+-                    if (currentMagazine is CylinderMagazineItemClass cylinderMag)
++                    if (currentMagazine is CylinderMagazine cylinderMag)
+                     {
+                         foreach (Slot camora in cylinderMag.Camoras)
+                         {
+@@ -81,7 +81,7 @@ namespace Oracle.Combat
+             {
+                 //重新生成ID
+                 string fakeId = ItemInstanceHelper.GenerateSafeHexId(ammo.Template.StringId, $"{DateTime.Now.Ticks}_{Guid.NewGuid()}");// new MongoID();
+-                return Singleton<ItemFactoryClass>.Instance.CreateItem(fakeId, ammo.TemplateId, null);
++                return Singleton<EFT.ItemFactory>.Instance.CreateItem(fakeId, ammo.TemplateId, null);
+             }
+         }
+     }
+diff --git a/Data/OracleCorpseDataManager.cs b/Data/OracleCorpseDataManager.cs
+index 632b830..a0e1f73 100644
+--- a/Data/OracleCorpseDataManager.cs
++++ b/Data/OracleCorpseDataManager.cs
+@@ -83,7 +83,7 @@ namespace Oracle.Data
+                             Player deadPlayer = PluginsCore.CorrectGameWorld.GetEverExistedPlayerByID(profileId);
+                             if (deadPlayer != null && deadPlayer.Profile != null)
+                             {
+-                                InfoClass info = deadPlayer.Profile.Info;
++                                ProfileInfo info = deadPlayer.Profile.Info;
+                                 if (info != null)
+                                 {
+                                     OraclePlayerDataManager.DeterminePlayerText(info,OraclePlayerDataManager.GetPlayerName(info),OraclePlayerDataManager.IsTeammate(info),true,out result,out string levelText);
+diff --git a/Data/OracleLootDataManager.cs b/Data/OracleLootDataManager.cs
+index 21f352c..8e35428 100644
+--- a/Data/OracleLootDataManager.cs
++++ b/Data/OracleLootDataManager.cs
+@@ -301,7 +301,7 @@ namespace Oracle.Data
+                 if (ammoItem == null) return 1; // 预防万一有空盒子
+                 return GetAmmoLevel(ammoItem);
+             }
+-            if (template is BackpackTemplateClass backpackTemplate)
++            if (template is BackpackTemplate backpackTemplate)
+             {
+                 var size = 0;
+                 backpackTemplate.Grids.ExecuteForEach(x => size += (x.GridHeight * x.GridWidth));
+@@ -312,7 +312,7 @@ namespace Oracle.Data
+                 if (size >= 12) return 2;
+                 if (size >= 0) return 1;
+             }
+-            if (template is VestTemplateClass vestTemplate)
++            if (template is VestTemplate vestTemplate)
+             {
+                 var size = 0;
+                 vestTemplate.Grids.ExecuteForEach(x => size += (x.GridHeight * x.GridWidth));
+diff --git a/Data/OraclePlayerDataManager.cs b/Data/OraclePlayerDataManager.cs
+index b87367e..38df389 100644
+--- a/Data/OraclePlayerDataManager.cs
++++ b/Data/OraclePlayerDataManager.cs
+@@ -24,12 +24,12 @@ namespace Oracle.Data
+         /// </summary>
+         /// <param name="info"></param>
+         /// <returns></returns>
+-        public static string GetPlayerName(InfoClass info)
++        public static string GetPlayerName(ProfileInfo info)
+         {
+             if (info == null) return "Nikita Buyanov";
+             var role = info.Settings?.Role.ToString().ToLower() ?? "assault";
+             //迷宫小弟、玩家和全英文名不经过转换，反向筛选西里尔字母
+-            return ((info.Side == EPlayerSide.Bear || info.Side == EPlayerSide.Usec) || (role == "tagillahelperagro") || OracleCommon.IsAllEnglish(info.Nickname)) ? info.Nickname : GStruct21.ConvertToLatinic(info.Nickname);
++            return ((info.Side == EPlayerSide.Bear || info.Side == EPlayerSide.Usec) || (role == "tagillahelperagro") || OracleCommon.IsAllEnglish(info.Nickname)) ? info.Nickname : DebugGroupStruct.ConvertToLatinic(info.Nickname);
+         }
+ 
+         /// <summary>
+@@ -37,7 +37,7 @@ namespace Oracle.Data
+         /// </summary>
+         /// <param name="info"></param>
+         /// <returns></returns>
+-        public static bool IsTeammate(InfoClass info)
++        public static bool IsTeammate(ProfileInfo info)
+         {
+             if(info == null) return false;
+             string targetGroupId = info?.GroupId ?? "";
+@@ -75,7 +75,7 @@ namespace Oracle.Data
+         /// <summary>
+         /// 获取玩家数据富文本
+         /// </summary>
+-        public static void DeterminePlayerText(InfoClass info, string name, bool isTeammate, bool includeName, out string sideText, out string levelText)
++        public static void DeterminePlayerText(ProfileInfo info, string name, bool isTeammate, bool includeName, out string sideText, out string levelText)
+         {
+             sideText = "Unheard";
+             levelText = "";
+diff --git a/ItemSpawn/AddItemRouter.cs b/ItemSpawn/AddItemRouter.cs
+index c35ae6c..b32089a 100644
+--- a/ItemSpawn/AddItemRouter.cs
++++ b/ItemSpawn/AddItemRouter.cs
+@@ -8,23 +8,23 @@ namespace Oracle.ItemSpawn
+ {
+     //路由层客户端通信协议
+     [Serializable]
+-    public class OracleAddCommand : GClass3473 
++    public class OracleAddCommand : EFT.InventoryLogic.Operations.CommandWithOwners
+     {
+         //路由请求类型
+         [JsonProperty("Action")]
+-        public string Action = "SyncStashExtend";
++        public string Action = "OracleAdd";
+ 
+         //物品数据
+-        [JsonProperty("stashData")]
+-        public FlatItemsDataClass[] ItemData;
++        [JsonProperty("ItemData")]
++        public JsonType.FlatItem[] ItemData;
+     }
+ 
+     //行为描述
+-    public class OracleAddDescriptor : BaseDescriptorClass
++    public class OracleAddDescriptor : InventoryOperationDescriptor
+     {
+         public Item ItemData;
+ 
+-        public override GStruct152<BaseInventoryOperationClass> ToInventoryOperation(IPlayer player)
++        public override Diz.LanguageExtensions.OperationCreationResult<EFT.InventoryLogic.Operations.AbstractOperation> ToInventoryOperation(IPlayer player)
+         {
+             var operation = new OracleAddOperationClass(
+                 OperationId,
+@@ -36,14 +36,14 @@ namespace Oracle.ItemSpawn
+     }
+ 
+     //行为执行体
+-    public class OracleAddOperationClass : BaseInventoryOperationClass
++    public class OracleAddOperationClass : EFT.InventoryLogic.Operations.AbstractOperation
+     {
+         private Item _itemToSpawn;
+ 
+         //构造函数
+         public OracleAddOperationClass(
+         ushort id,
+-        TraderControllerClass controller,
++        ItemController controller,
+         Item item)
+         : base(id, controller)
+         {
+@@ -56,7 +56,7 @@ namespace Oracle.ItemSpawn
+         }
+ 
+         //描述
+-        public override BaseDescriptorClass ToDescriptor()
++        public override EFT.InventoryOperationDescriptor ToDescriptor()
+         {
+             return new OracleAddDescriptor
+             {
+@@ -66,9 +66,9 @@ namespace Oracle.ItemSpawn
+         }
+ 
+         //传递数据
+-        public override GClass3471 ToBaseInventoryCommand(string ownerId)
++        public override EFT.InventoryLogic.Operations.BaseInventoryCommand ToBaseInventoryCommand(string ownerId)
+         {
+-            var itemFactory = Singleton<ItemFactoryClass>.Instance;
++            var itemFactory = Singleton<EFT.ItemFactory>.Instance;
+             return new OracleAddCommand
+             {
+                 ItemData = itemFactory.TreeToFlatItems(new Item[] { _itemToSpawn })
+diff --git a/ItemSpawn/ItemCatcher.cs b/ItemSpawn/ItemCatcher.cs
+index 6109db4..f5539d2 100644
+--- a/ItemSpawn/ItemCatcher.cs
++++ b/ItemSpawn/ItemCatcher.cs
+@@ -1,8 +1,6 @@
+-﻿using BepInEx.Configuration;
+-using EFT;
++﻿using EFT;
+ using EFT.Communications;
+ using EFT.HandBook;
+-using EFT.HealthSystem;
+ using EFT.Hideout;
+ using EFT.InventoryLogic;
+ using EFT.UI;
+@@ -54,7 +52,7 @@ namespace Oracle.ItemSpawn
+ 
+     //Patch
+     //全都是用于捕获物品实例的Patch
+-    [HarmonyPatch(typeof(ItemView), "OnPointerEnter")]
++    [HarmonyPatch(typeof(ItemView), nameof(ItemView.OnPointerEnter))]
+     internal static class ItemView_PointEnterPatch
+     {
+         private static void Prefix(ItemView __instance)
+@@ -63,22 +61,22 @@ namespace Oracle.ItemSpawn
+         }
+     }
+ 
+-    [HarmonyPatch(typeof(EntityIcon), "method_1")]
++    [HarmonyPatch(typeof(EntityIcon), nameof(EntityIcon.CG_Awake))]
+     internal static class EntityIcon_PointEnterPatch
+     {
+         private static void Prefix(EntityIcon __instance)
+         {
+-            Item item = Traverse.Create(__instance).Field("item_0").GetValue<Item>();
++            Item item = Traverse.Create(__instance).Field("_item").GetValue<Item>();
+             if (item != null) ItemCatcher.selectedItem = item;
+         }
+     }
+ 
+-    [HarmonyPatch(typeof(TradingRequisitePanel), "method_1")]
++    [HarmonyPatch(typeof(TradingRequisitePanel), nameof(TraderRequirementPanel.CG_Awake))]
+     internal static class TradingRequisitePanel_PointEnterPatch
+     {
+         private static void Prefix(TradingRequisitePanel __instance)
+         {
+-            var context = Traverse.Create(__instance).Field("itemContextAbstractClass").GetValue();
++            var context = Traverse.Create(__instance).Field("_itemContext").GetValue();
+             if (context != null)
+             {
+                 Item item = Traverse.Create(context).Property("Item").GetValue<Item>();
+@@ -87,7 +85,7 @@ namespace Oracle.ItemSpawn
+         }
+     }
+ 
+-    [HarmonyPatch(typeof(GridItemView), "OnPointerEnter")]
++    [HarmonyPatch(typeof(GridItemView), nameof(GridItemView.OnPointerEnter))]
+     internal static class GridItemView_PointEnterPatch
+     {
+         private static void Prefix(GridItemView __instance)
+@@ -96,7 +94,7 @@ namespace Oracle.ItemSpawn
+         }
+     }
+ 
+-    [HarmonyPatch(typeof(HideoutItemView), "OnPointerEnter")]
++    [HarmonyPatch(typeof(HideoutItemView), nameof(HideoutItemView.OnPointerEnter))]
+     internal static class HideoutItemViewPointEnterPatch
+     {
+         [HarmonyPrefix]
+@@ -107,25 +105,25 @@ namespace Oracle.ItemSpawn
+     }
+ 
+     //退出点
+-    [HarmonyPatch(typeof(ItemView), "OnPointerExit")]
++    [HarmonyPatch(typeof(ItemView), nameof(ItemView.OnPointerExit))]
+     internal static class ItemView_PointOuterPatch
+     {
+         private static void Prefix() => ItemCatcher.selectedItem = null;
+     }
+ 
+-    [HarmonyPatch(typeof(EntityIcon), "method_2")]
++    [HarmonyPatch(typeof(EntityIcon), nameof(EntityIcon.CG_Awake1))]
+     internal static class EntityIcon_PointOuterPatch
+     {
+         private static void Prefix() => ItemCatcher.selectedItem = null;
+     }
+ 
+-    [HarmonyPatch(typeof(TradingRequisitePanel), "method_2")]
++    [HarmonyPatch(typeof(TradingRequisitePanel), nameof(TradingRequisitePanel.CG_Awake1))]
+     internal static class TradingRequisitePanel_PointOuterPatch
+     {
+         private static void Prefix() => ItemCatcher.selectedItem = null;
+     }
+ 
+-    [HarmonyPatch(typeof(GridItemView), "OnPointerExit")]
++    [HarmonyPatch(typeof(GridItemView), nameof(ItemView.OnPointerExit))]
+     internal static class GridItemView_PointOuterPatch
+     {
+         private static void Prefix() => ItemCatcher.selectedItem = null;
+diff --git a/ItemSpawn/ItemInstanceHelper.cs b/ItemSpawn/ItemInstanceHelper.cs
+index 3c75667..3eec5d7 100644
+--- a/ItemSpawn/ItemInstanceHelper.cs
++++ b/ItemSpawn/ItemInstanceHelper.cs
+@@ -150,9 +150,9 @@ namespace Oracle.ItemSpawn
+                 //重新为维修包充能
+                 if (item.TryGetItemComponent<RepairKitComponent>(out var repairKit))
+                 {
+-                    if(repairKit.Resource < repairKit.RepairKitsTemplateClass.MaxRepairResource)
++                    if(repairKit.Resource < repairKit._template.MaxRepairResource)
+                     {
+-                        repairKit.Resource = repairKit.RepairKitsTemplateClass.MaxRepairResource;
++                        repairKit.Resource = repairKit._template.MaxRepairResource;
+                     }
+                 }
+             }
+diff --git a/ItemSpawn/ItemSpawnStashPatch.cs b/ItemSpawn/ItemSpawnStashPatch.cs
+index aaec5ea..c252dc6 100644
+--- a/ItemSpawn/ItemSpawnStashPatch.cs
++++ b/ItemSpawn/ItemSpawnStashPatch.cs
+@@ -11,17 +11,17 @@ namespace Oracle.ItemSpawn
+     public static class ItemSpawnStashPatch
+     {
+         //捕获invctrler
+-        [HarmonyPatch(typeof(InventoryScreen), "Show", new Type[]
++        [HarmonyPatch(typeof(InventoryScreen), nameof(InventoryScreen.Show), new Type[]
+         {
+         typeof(IHealthController),
+         typeof(InventoryController),
+-        typeof(AbstractQuestControllerClass),
+-        typeof(AbstractAchievementControllerClass),
+-        typeof(AbstractPrestigeControllerClass),
++        typeof(EFT.Quests.QuestController),
++        typeof(EFT.Achievements.AchievementsController),
++        typeof(EFT.Prestige.PrestigeController),
+         typeof(CompoundItem),
+         typeof(EInventoryTab),
+-        typeof(ISession),
+-        typeof(ItemContextAbstractClass),
++        typeof(EFT.IEftSession),
++        typeof(ItemContext),
+         typeof(bool)
+         })]
+         public class InventoryScreen_Show_Patch
+@@ -41,11 +41,11 @@ namespace Oracle.ItemSpawn
+         }
+ 
+         //桥接请求
+-        [HarmonyPatch(typeof(TraderControllerClass), "ConvertOperationResultToOperation")]
++        [HarmonyPatch(typeof(ItemController), "ConvertOperationResultToOperation")]
+         public class Patch_ConvertOperation
+         {
+             [HarmonyPrefix]
+-            public static bool Prefix(TraderControllerClass __instance, IRaiseEvents operationResult, ref BaseInventoryOperationClass __result)
++            public static bool Prefix(ItemController __instance, IOperationResult operationResult, ref EFT.InventoryLogic.Operations.AbstractOperation __result)
+             {
+                 try
+                 {
+@@ -59,7 +59,7 @@ namespace Oracle.ItemSpawn
+                     //3405是ADD
+                     //你妈的这段4.1是不是得改
+                     string operationTypeName = operationResult.GetType().Name;
+-                    if (targetItem != null && operationTypeName == "GClass3405")
++                    if (targetItem != null && operationTypeName == "AddResult")
+                     {
+                         var method12 = AccessTools.Method(operationResult.GetType().BaseType, "method_12")
+                                     ?? AccessTools.Method(__instance.GetType(), "method_12");
+diff --git a/ItemSpawn/ItemSpawner.cs b/ItemSpawn/ItemSpawner.cs
+index 5b1a2b2..918316a 100644
+--- a/ItemSpawn/ItemSpawner.cs
++++ b/ItemSpawn/ItemSpawner.cs
+@@ -28,7 +28,7 @@ namespace Oracle.ItemSpawn
+         public static void AddItemToManager(string templateId)
+         {
+ 
+-            var itemFactory = Singleton<ItemFactoryClass>.Instance;
++            var itemFactory = Singleton<EFT.ItemFactory>.Instance;
+             if (itemFactory == null || !itemFactory.ItemTemplates.ContainsKey(templateId)) return;
+             //随机生成一个新的唯一ID
+             string newId = MongoID.Generate();
+@@ -63,7 +63,7 @@ namespace Oracle.ItemSpawn
+             if (targetLocation != null)
+             {
+                 //配置网络包
+-                var addOperationResult = InteractionsHandlerClass.Add(
++                var addOperationResult = EFT.InventoryLogic.ItemManipulator.Add(
+                     clonedItem,
+                     targetLocation,
+                     player.InventoryController,
+@@ -197,7 +197,7 @@ namespace Oracle.ItemSpawn
+         private static async Task LoadItemBundlesAsync(Item rootItem)
+         {
+             //全局实例
+-            var poolManager = Singleton<PoolManagerClass>.Instance;
++            var poolManager = Singleton<ObjectsFactory>.Instance;
+             if (poolManager == null) return;
+             //去重
+             var keys = new HashSet<ResourceKey>();
+@@ -213,9 +213,9 @@ namespace Oracle.ItemSpawn
+                 //异步加载
+                 await poolManager.LoadBundlesAndCreatePools(
+                     0,
+-                    PoolManagerClass.AssemblyType.Local,
++                    ObjectsFactory.AssemblyType.Local,
+                     keys.ToArray(),
+-                    JobPriorityClass.Immediate,
++                    Diz.Jobs.JobYieldPriority.Immediate,
+                     null,
+                     CancellationToken.None
+                 );
+@@ -275,7 +275,7 @@ namespace Oracle.ItemSpawn
+                     OracleNotify.Warning("仓库已满！");
+                     return;
+                 }
+-                var addResult = InteractionsHandlerClass.Add(
++                var addResult = ItemManipulator.Add(
+                     item,
+                     targetLocation,
+                     controller,
+diff --git a/PluginsCore.cs b/PluginsCore.cs
+index d65ec1c..91c9a3b 100644
+--- a/PluginsCore.cs
++++ b/PluginsCore.cs
+@@ -157,7 +157,7 @@ namespace Oracle
+     }
+ 
+     //游戏启动Patch, 用于捕获关键实例
+-    [HarmonyPatch(typeof(GameWorld), "OnGameStarted")]
++    [HarmonyPatch(typeof(GameWorld), nameof(GameWorld.OnGameStarted))]
+     public class GameStartPatch
+     {
+         [HarmonyPostfix]
+diff --git a/PluginsInfo.cs b/PluginsInfo.cs
+index 07e97fc..98d4445 100644
+--- a/PluginsInfo.cs
++++ b/PluginsInfo.cs
+@@ -1,13 +1,9 @@
+-﻿using System;
+-using System.Collections.Generic;
+-using System.Text;
+-
+-namespace Oracle
++﻿namespace Oracle
+ {
+     public class PluginsInfo
+     {
+         public const string GUID = "eft.hiddenhiraigi.oracle";
+         public const string NAME = "Oracle";
+-        public const string VERSION = "2.0.0";
++        public const string VERSION = "1.0.0";
+     }
+ }
+diff --git a/RaidManager/AIManagerGUI.cs b/RaidManager/AIManagerGUI.cs
+index edcf5b8..da4e8fc 100644
+--- a/RaidManager/AIManagerGUI.cs
++++ b/RaidManager/AIManagerGUI.cs
+@@ -21,7 +21,7 @@ namespace Oracle.RaidManager
+         public Dictionary<string, Texture2D> _iconCache = new Dictionary<string, Texture2D>();
+ 
+         //头像渲染队列
+-        public Dictionary<string, GClass929> _pendingIcons = new Dictionary<string, GClass929>();
++        public Dictionary<string, ItemIcon> _pendingIcons = new Dictionary<string, ItemIcon>();
+ 
+         /// <summary>
+         /// 绘制
+@@ -170,10 +170,10 @@ namespace Oracle.RaidManager
+         }
+ 
+         //远程搜索必要的Patch
+-        [HarmonyPatch(typeof(GClass2234), "TryFindChangedContainer")]
++        [HarmonyPatch(typeof(SearchController), "TryFindChangedContainer")]
+         public class TryFindChangedContainerPatch
+         {
+-            public static void Postfix(ItemAddress address, [CanBeNull] out GClass1802 changedContainer, ref bool __result)
++            public static void Postfix(ItemAddress address, [CanBeNull] out ItemInfo changedContainer, ref bool __result)
+             {
+                 changedContainer = null;
+                 __result = false;
+@@ -201,7 +201,7 @@ namespace Oracle.RaidManager
+                 }
+ 
+                 Item aiRootItem = targetPlayer.Profile.Inventory.Equipment;
+-                var aiController = aiRootItem.Owner as TraderControllerClass;
++                var aiController = aiRootItem.Owner as ItemController;
+ 
+                 //查找物品栏
+                 if (aiRootItem == null || aiController == null)
+@@ -211,7 +211,7 @@ namespace Oracle.RaidManager
+                 }
+ 
+                 //构建一个虚拟的搜索行为
+-                GetActionsClass.Class1748 context = new GetActionsClass.Class1748
++                InteractionContextHelper.CG_GetAvailableInteractionState1 context = new InteractionContextHelper.CG_GetAvailableInteractionState1
+                 {
+                     owner = myOwner,
+                     rootItem = aiRootItem,
+@@ -252,7 +252,7 @@ namespace Oracle.RaidManager
+             try
+             {
+                 //检查是否在队列
+-                if (_pendingIcons.TryGetValue(profileId, out GClass929 pendingIcon))
++                if (_pendingIcons.TryGetValue(profileId, out ItemIcon pendingIcon))
+                 {
+                     if (pendingIcon != null && pendingIcon.Sprite != null && pendingIcon.Sprite.texture != null)
+                     {
+@@ -267,8 +267,8 @@ namespace Oracle.RaidManager
+                 //从底层生成头图
+                 var equipment = player.Profile.Inventory.Equipment.CloneVisibleItem();
+                 var customization = player.Profile.Customization;
+-                var request = new GClass932(equipment, customization);
+-                var iconData = Comfort.Common.Singleton<GClass927>.Instance.GetIcon(request);
++                var request = new PlayerIconRequest(equipment, customization);
++                var iconData = Comfort.Common.Singleton<EFT.PlayerIcons.PlayerIconCreator>.Instance.GetIcon(request);
+ 
+                 if (iconData != null)
+                 {
+diff --git a/RaidManager/BotGeneratorGUI.cs b/RaidManager/BotGeneratorGUI.cs
+index e7bb7aa..0b18171 100644
+--- a/RaidManager/BotGeneratorGUI.cs
++++ b/RaidManager/BotGeneratorGUI.cs
+@@ -8,7 +8,6 @@ using System.Threading;
+ using System.Threading.Tasks;
+ using UnityEngine;
+ using UnityEngine.AI;
+-using BotCreationData = BotCreationDataClass;
+ 
+ namespace Oracle.RaidManager
+ {
+@@ -215,11 +214,11 @@ namespace Oracle.RaidManager
+ 
+                 // 5. 构造 Profile 数据 (完全使用游戏原生管线)
+                 var spawnParams = new BotSpawnParams { TriggerType = SpawnTriggerType.none };
+-                var profileData = new BotProfileDataClass(side, role, BotDifficulty.normal, 0f, null);
++                var profileData = new GetProfileDataParams(side, role, BotDifficulty.normal, 0f, null);
+ 
+                 BotCreationData botCreationData = await BotCreationData.Create(
+                     profileData,
+-                    botSpawner.BotCreator,
++                    botSpawner._botCreator,
+                     1,
+                     botSpawner
+                 );
+diff --git a/RaidManager/ItemManagerGUI.cs b/RaidManager/ItemManagerGUI.cs
+index 977c346..2a5da35 100644
+--- a/RaidManager/ItemManagerGUI.cs
++++ b/RaidManager/ItemManagerGUI.cs
+@@ -299,7 +299,7 @@ namespace Oracle.RaidManager
+                         {
+                             var cloneItem = item.CloneItem().ReassignAllIds().CleanAndResetItem(SpawnedInSession);
+                             generatedItem = cloneItem;
+-                            ItemSpawner.CloneAndSpawnItemIntoStash(cloneItem);
++                            //ItemSpawner.CloneAndSpawnItemIntoStash(cloneItem);
+                         }
+                     }
+ 
+@@ -398,7 +398,7 @@ namespace Oracle.RaidManager
+             try
+             {
+                 string json = File.ReadAllText(savePath, Encoding.UTF8);
+-                var flatItems = json.ParseJsonTo<FlatItemsDataClass[]>();
++                var flatItems = json.ParseJsonTo<JsonType.FlatItem[]>();
+ 
+                 if (flatItems == null)
+                     return;
+@@ -409,7 +409,7 @@ namespace Oracle.RaidManager
+                     .Select(x => x._id)
+                     .ToHashSet();
+ 
+-                var result = Comfort.Common.Singleton<ItemFactoryClass>
++                var result = Comfort.Common.Singleton<ItemFactory>
+                     .Instance
+                     .FlatItemsToTree(flatItems, false, null);
+ 
+@@ -420,7 +420,7 @@ namespace Oracle.RaidManager
+                     foreach (string id in rootIds)
+                     {
+                         if (result.Items.TryGetValue(id, out Item item) &&
+-                            !(item is StashItemClass))
++                            !(item is Stash))
+                         {
+                             loadedItems.Add(item);
+                         }
+@@ -446,7 +446,7 @@ namespace Oracle.RaidManager
+ 
+                 if (itemsToSave == null) return;
+ 
+-                var flatItems = Comfort.Common.Singleton<ItemFactoryClass>.Instance.TreeToFlatItems(itemsToSave);
++                var flatItems = Comfort.Common.Singleton<ItemFactory>.Instance.TreeToFlatItems(itemsToSave);
+                 string json = flatItems.ToPrettyJson();
+ 
+                 string savePath = Path.Combine(GetSaveDirectory(), fileName + ".json");
+diff --git a/RaidManager/LootManagerGUI.cs b/RaidManager/LootManagerGUI.cs
+index e352b5f..95444de 100644
+--- a/RaidManager/LootManagerGUI.cs
++++ b/RaidManager/LootManagerGUI.cs
+@@ -1,4 +1,5 @@
+ ﻿using Diz.LanguageExtensions;
++using Diz.Utils;
+ using EFT;
+ using EFT.Interactive;
+ using EFT.InventoryLogic;
+@@ -11,7 +12,6 @@ using System;
+ using System.Collections.Generic;
+ using System.Linq;
+ using UnityEngine;
+-using static GetActionsClass;
+ 
+ namespace Oracle.RaidManager
+ {
+@@ -28,7 +28,7 @@ namespace Oracle.RaidManager
+         public Dictionary<string, Texture2D> _iconCache = new Dictionary<string, Texture2D>();
+ 
+         //远程搜索的Patch
+-        [HarmonyPatch(typeof(InteractionsHandlerClass), "smethod_14")]
++        [HarmonyPatch(typeof(ItemManipulator), nameof(ItemManipulator.IsItemLocked))]
+         public class InteractionsHandlerClassPatch
+         {
+             public static bool Prefix(Item item, out Error error, ref bool __result)
+@@ -176,11 +176,11 @@ namespace Oracle.RaidManager
+ 
+                 //组包
+                 var pickUpResult =
+-                    InteractionsHandlerClass.QuickFindAppropriatePlace(
++                    ItemManipulator.QuickFindAppropriatePlace(
+                     item,
+                     player.InventoryController,
+                     player.Inventory.Equipment.ToEnumerable(),
+-                    InteractionsHandlerClass.EMoveItemOrder.PickUp,
++                    ItemManipulator.EMoveItemOrder.PickUp,
+                     true
+                 );
+ 
+@@ -196,7 +196,7 @@ namespace Oracle.RaidManager
+                                 player.UpdateInteractionCast();
+                             }
+ 
+-                            var pickupState = player.CurrentState as PickupStateClass;
++                            var pickupState = player.CurrentState as PickUpState;
+                             pickupState?.Pickup(false, null);
+                         }
+                     );
+@@ -244,11 +244,11 @@ namespace Oracle.RaidManager
+                     if (myOwner == null) return;
+ 
+                     //在内存中构建交互行为
+-                    Class1748 context = new Class1748
++                    InteractionContextHelper.CG_GetAvailableInteractionState1 context = new InteractionContextHelper.CG_GetAvailableInteractionState1
+                     {
+                         owner = myOwner,
+                         rootItem = containerItem,
+-                        lootItemOwner = containerItem.Owner as TraderControllerClass,
++                        lootItemOwner = containerItem.Owner as ItemController,
+                         controller = player.InventoryController
+                     };
+ 
+diff --git a/RaidManager/SkillManagerGUI.cs b/RaidManager/SkillManagerGUI.cs
+index d1ff617..13c7d78 100644
+--- a/RaidManager/SkillManagerGUI.cs
++++ b/RaidManager/SkillManagerGUI.cs
+@@ -1,4 +1,5 @@
+-﻿using EFT.UI;
++﻿using EFT;
++using EFT.UI;
+ using EFT.UI.DragAndDrop;
+ using Oracle.Data;
+ using Oracle.Utils;
+@@ -23,8 +24,8 @@ namespace Oracle.RaidManager
+         public string _targetLevelStr = "51";
+ 
+         // 直接保存选中项的引用
+-        private SkillClass _selectedSkill = null;
+-        private MasterSkillClass _selectedMastering = null;
++        private Skill _selectedSkill = null;
++        private Mastering _selectedMastering = null;
+ 
+         public void RefreshLocalizedCache()
+         {
+@@ -115,14 +116,14 @@ namespace Oracle.RaidManager
+                 string btnText2 = _selectedMastering != null ? "text_skill_manager_mastering_level_set_2".i18n() : "text_skill_manager_mastering_level_select".i18n();
+                 if (GUILayout.Button(btnText2, UIStyleManager.BlueButtonStyle, GUILayout.Height(40)))
+                 {
+-                    float expForLv2 = _selectedMastering.Int32_0;
++                    float expForLv2 = _selectedMastering.Lvl1;
+                     _selectedMastering.SetCurrent(expForLv2, false);
+                 }
+ 
+                 string btnText3 = _selectedMastering != null ? "text_skill_manager_mastering_level_set_3".i18n() : "text_skill_manager_mastering_level_select".i18n();
+                 if (GUILayout.Button(btnText3, UIStyleManager.BlueButtonStyle, GUILayout.Height(40)))
+                 {
+-                    float expForLv3 = _selectedMastering.Int32_0 + _selectedMastering.Int32_1;
++                    float expForLv3 = _selectedMastering.Lvl1 + _selectedMastering.Lvl2;
+                     _selectedMastering.SetCurrent(expForLv3, false);
+                 }
+ 
+@@ -134,7 +135,7 @@ namespace Oracle.RaidManager
+             GUI.skin.verticalScrollbarThumb = origThumb;
+         }
+ 
+-        private void DrawSkillGrid(SkillClass[] skills)
++        private void DrawSkillGrid(Skill[] skills)
+         {
+             if (skills == null || skills.Length == 0) return;
+ 
+@@ -164,7 +165,7 @@ namespace Oracle.RaidManager
+             }
+         }
+ 
+-        private void DrawSkillItem(SkillClass skill, float width)
++        private void DrawSkillItem(Skill skill, float width)
+         {
+             bool isSelected = (_selectedSkill == skill);
+ 
+@@ -238,7 +239,7 @@ namespace Oracle.RaidManager
+             GUILayout.EndHorizontal();
+         }
+ 
+-        private void DrawMasteringGrid(IEnumerable<MasterSkillClass> masterings)
++        private void DrawMasteringGrid(IEnumerable<Mastering> masterings)
+         {
+             if (masterings == null) return;
+ 
+@@ -333,7 +334,7 @@ namespace Oracle.RaidManager
+             GUI.matrix = old;
+         }
+ 
+-        private Texture2D GetMasteringCachedIcon(MasterSkillClass mastering)
++        private Texture2D GetMasteringCachedIcon(Mastering mastering)
+         {
+             if (mastering == null)
+                 return null;
+@@ -352,7 +353,7 @@ namespace Oracle.RaidManager
+ 
+             try
+             {
+-                var item = Comfort.Common.Singleton<ItemFactoryClass>
++                var item = Comfort.Common.Singleton<ItemFactory>
+                     .Instance
+                     .GetPresetItem(templateId);
+ 
+diff --git a/RaidManager/StatsManagerGUI.cs b/RaidManager/StatsManagerGUI.cs
+index 3954de2..4997a0b 100644
+--- a/RaidManager/StatsManagerGUI.cs
++++ b/RaidManager/StatsManagerGUI.cs
+@@ -1,9 +1,10 @@
+-﻿using Oracle.Data;
+-using Oracle.Utils;
++﻿using Oracle.Utils;
+ using System.Collections.Generic;
+ using System.Linq;
+ using UnityEngine;
+-using EFT.Counters; // 引入计数器命名空间
++using EFT.Counters;
++using EFT;
++// 引入计数器命名空间
+ // 可能需要引入包含 SessionCounterIdentifierValueClass 的命名空间
+ 
+ namespace Oracle.RaidManager
+@@ -305,7 +306,7 @@ namespace Oracle.RaidManager
+         {
+             try
+             {
+-                var identifier = keyObj as SessionCountersClass.SessionCounterIdentifierValueClass;
++                var identifier = keyObj as CountersCollection.Identifier;
+                 if (identifier == null || identifier.Set == null) return keyObj.ToString();
+ 
+                 var tags = identifier.Set.ToList();
+diff --git a/Utils/OracleNotify.cs b/Utils/OracleNotify.cs
+index b46c22d..d695769 100644
+--- a/Utils/OracleNotify.cs
++++ b/Utils/OracleNotify.cs
+@@ -15,7 +15,7 @@ namespace Oracle.Utils
+         {
+             if (!isMute)
+             {
+-                NotificationManagerClass.DisplayMessageNotification(
++                NotificationManager.DisplayMessageNotification(
+                     message,
+                     ENotificationDurationType.Default,
+                     notificationType,
+@@ -31,7 +31,7 @@ namespace Oracle.Utils
+             //等会儿回来补
+             if (!GlobalCfg.MuteNotice.Value)
+             {
+-                NotificationManagerClass.DisplayMessageNotification(
++                NotificationManager.DisplayMessageNotification(
+                     message,
+                     ENotificationDurationType.Default,
+                     notificationType,

@@ -349,7 +349,7 @@ namespace Oracle.Data
                 if (ammoItem == null) return 1; // 预防万一有空盒子
                 return GetAmmoLevel(ammoItem);
             }
-            if (template is BackpackTemplate backpackTemplate)
+            if (template is BackpackTemplateClass backpackTemplate)
             {
                 var size = 0;
                 backpackTemplate.Grids.ExecuteForEach(x => size += (x.GridHeight * x.GridWidth));
@@ -360,7 +360,7 @@ namespace Oracle.Data
                 if (size >= 12) return 2;
                 if (size >= 0) return 1;
             }
-            if (template is VestTemplate vestTemplate)
+            if (template is VestTemplateClass vestTemplate)
             {
                 var size = 0;
                 vestTemplate.Grids.ExecuteForEach(x => size += (x.GridHeight * x.GridWidth));
