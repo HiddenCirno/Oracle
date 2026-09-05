@@ -39,7 +39,7 @@ namespace Oracle.Data
         /// <summary>
         /// 按模板缓存物品本地化名称
         /// </summary>
-        private static string GetLocalizedItemName(Item item, bool fullName)
+        public static string GetLocalizedItemName(Item item, bool fullName)
         {
             if (item == null) return "";
             string templateId = item.TemplateId;

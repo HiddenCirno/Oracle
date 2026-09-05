@@ -48,6 +48,28 @@ namespace Oracle.Data
     }
 
     /// <summary>
+    /// 实体（玩家/尸体）身上的愿望单战利品条目。
+    /// 数据桥并行字段与 LootData 同款：富文本（OnGUI）+ 纯文本+颜色（叠加层）。
+    /// </summary>
+    public struct WishlistItemData
+    {
+        /// <summary>条目锚点世界坐标（玩家头顶 / 尸体坐标，绘制时投影）</summary>
+        public Vector3 Position;
+        /// <summary>富文本（OnGUI 模式专用）："{颜色}物品名 {数量}x {价格}"</summary>
+        public string FormattedText;
+        /// <summary>距离</summary>
+        public int Distance;
+        /// <summary>叠加层数据桥：纯文本（无颜色标签）</summary>
+        public string OverlayText;
+        /// <summary>叠加层数据桥：物品等级色（愿望单=9 高亮）</summary>
+        public OracleColor Color;
+        /// <summary>多条目垂直堆叠偏移（第 N 条 = N * 间距）</summary>
+        public int YOffset;
+        /// <summary>堆叠数量</summary>
+        public int StackCount;
+    }
+
+    /// <summary>
     /// 尸体透视数据定义
     /// </summary>
     public struct CorpseData
@@ -68,6 +90,9 @@ namespace Oracle.Data
         public string OverlaySideText;
         /// <summary>Side 段颜色（USEC/BEAR/Scav 角色色）</summary>
         public OracleColor OverlayColor;
+
+        /// <summary>尸体身上的愿望单战利品（仅过滤愿望单，由愿望单扫描协程填充）</summary>
+        public List<WishlistItemData> WishlistItems;
     }
 
     public readonly struct EntityDisplayInfo

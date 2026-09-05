@@ -198,6 +198,35 @@ namespace Oracle.Overlay
                 float screenY = _screenH - textScreenPos.y;
 
                 _block.AddText(BuildPlayerLabelRect(screenX, screenY, levelText, levelColor, teammateText, teammateColor, sideText, sideColor, distText));
+
+                //玩家身上的愿望单战利品（叠加层数据桥，仅过滤愿望单）
+                BuildPlayerWishlist(player, screenX, screenY);
+            }
+        }
+
+        /// <summary>
+        /// 玩家身上的愿望单物品（数据桥原语，标签下方逐行堆叠）。
+        /// 数据由 OracleWishlistDataManager 协程 2s 扫描装备栏填充，此处只做投影。
+        /// </summary>
+        private static void BuildPlayerWishlist(Player player, float labelScreenX, float labelScreenY)
+        {
+            if (!WishlistESPCfg.EnablePlayerWishlistESP.Value) return;
+            if (OracleWishlistDataManager.CachedPlayerWishlist == null) return;
+            if (!OracleWishlistDataManager.CachedPlayerWishlist.TryGetValue(player.ProfileId, out var list) || list == null || list.Count == 0) return;
+
+            //从玩家标签下方逐行堆叠（与 OnGUI 一致：18px 行距）
+            for (int i = 0; i < list.Count && i < 6; i++)
+            {
+                WishlistItemData item = list[i];
+                _block.AddText(new OverlayText
+                {
+                    X = labelScreenX - 100,
+                    Y = labelScreenY + 20 + i * 18,
+                    W = 200,
+                    H = 18,
+                    SegmentCount = 1,
+                    Seg0 = new OverlayTextSegment { Text = item.OverlayText, Color = item.Color.ToArgb() }
+                });
             }
         }
 
@@ -367,6 +396,24 @@ namespace Oracle.Overlay
                 segs[count++] = (corpse.OverlaySideText, corpse.OverlayColor.ToArgb());
 
                 _block.AddText(PackText(screenX - 100, screenY - 20, 200, 40, segs, count));
+
+                //尸体身上的愿望单战利品（数据桥原语，标签下方逐行堆叠）
+                if (WishlistESPCfg.EnableCorpseWishlistESP.Value && corpse.WishlistItems != null)
+                {
+                    for (int i = 0; i < corpse.WishlistItems.Count && i < 6; i++)
+                    {
+                        WishlistItemData item = corpse.WishlistItems[i];
+                        _block.AddText(new OverlayText
+                        {
+                            X = screenX - 100,
+                            Y = screenY + 20 + i * 18,
+                            W = 200,
+                            H = 18,
+                            SegmentCount = 1,
+                            Seg0 = new OverlayTextSegment { Text = item.OverlayText, Color = item.Color.ToArgb() }
+                        });
+                    }
+                }
             }
         }
 

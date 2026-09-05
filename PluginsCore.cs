@@ -69,6 +69,8 @@ namespace Oracle
             StartCoroutine(OracleTripwireManager.TripwireScannerCoroutine());
             //尸体扫描协程
             StartCoroutine(OracleCorpseDataManager.CorpseScannerCoroutine());
+            //玩家愿望单扫描协程
+            StartCoroutine(OracleWishlistDataManager.WishlistScannerCoroutine());
 
             //初始化按键监听事件
             OracleEvent.InitializeKeyUpdate();

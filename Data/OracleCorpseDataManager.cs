@@ -46,6 +46,9 @@ namespace Oracle.Data
                 //清空后台缓存
                 backBuffer.Clear();
 
+                //愿望单扫描分帧计数器
+                int batchCounter = 0;
+
                 Vector3 myPos = PluginsCore.CorrectPlayer.Transform.position;
                 float maxDistance = CorpseESPCfg.CorpseESPMaxDistance.Value;
 
@@ -115,6 +118,29 @@ namespace Oracle.Data
 
                         string formattedText = string.Format("text_esp_corpse_format".i18n(), OracleColorManager.Corpse, "text_esp_corpse_dead_tag".i18n(), result);
 
+                        //愿望单战利品：遍历尸体物品栏（InventoryEquipment），仅过滤愿望单。
+                        //⚠ 跳过安全箱槽位及内容；PMC（Usec/Bear）跳过刀鞘槽位（近战武器不可拾取）。
+                        List<WishlistItemData> corpseWishlist = null;
+                        if (WishlistESPCfg.EnableCorpseWishlistESP.Value)
+                        {
+                            var equipment = corpse.ItemOwner?.RootItem as EFT.InventoryLogic.InventoryEquipment;
+                            if (equipment != null)
+                            {
+                                var wishItems = new List<WishlistItemData>();
+                                OracleWishlistDataManager.CollectWishlistItems(equipment, corpse.Side,
+                                    corpsePos, (int)maxDistance, myPos, ref batchCounter, 300,
+                                    entry => wishItems.Add(entry));
+                                if (wishItems.Count > 0) corpseWishlist = wishItems;
+                            }
+
+                            //分帧让出主线程
+                            if (batchCounter >= 300)
+                            {
+                                batchCounter = 0;
+                                yield return null;
+                            }
+                        }
+
                         //写入后台缓存
                         backBuffer.Add(new CorpseData
                         {
@@ -126,7 +152,8 @@ namespace Oracle.Data
                             OverlayTeammateText = overlayTeammate,
                             OverlayLevelText = overlayLevel,
                             OverlaySideText = overlaySide,
-                            OverlayColor = overlayColor
+                            OverlayColor = overlayColor,
+                            WishlistItems = corpseWishlist
                         });
                     }
                 }
