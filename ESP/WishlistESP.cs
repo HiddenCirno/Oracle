@@ -74,7 +74,8 @@ namespace Oracle.ESP
             {
                 DrawPlayerWishlist(cam, OracleRendering.EspTextStyle);
             }
-            if (WishlistESPCfg.EnableCorpseWishlistESP.Value)
+            //尸体愿望单随动：与尸体透视联动（任一关闭都不显示）
+            if (WishlistESPCfg.EnableCorpseWishlistESP.Value && CorpseESPCfg.EnableCorpseESP.Value)
             {
                 DrawCorpseWishlist(cam, OracleRendering.EspTextStyle);
             }
